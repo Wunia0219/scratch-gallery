@@ -1,32 +1,5 @@
 [
   {
-    "id": "eab17e9f-81cc-46af-99db-03749098d2e4",
-    "title": "逃離沙漠",
-    "description": "在沙漠中展開一場刺激的逃離冒險。",
-    "creatorId": "cdc667a5-51a3-4967-ba85-dfda991a9a81",
-    "category": "冒險",
-    "age": "全年齡",
-    "tags": [
-      "冒險",
-      "沙漠"
-    ],
-    "devices": [
-      "desktop"
-    ],
-    "playUrl": "/games/eab17e9f-81cc-46af-99db-03749098d2e4/index.html",
-    "thumbnail": "/games/_shared/assets/a2102a0c7300d15a48671d46118a2fe0.svg",
-    "thumbnailLayers": [
-      {
-        "src": "/games/_shared/assets/56e95c06d0a0676483bd12d66f13ee77.svg",
-        "className": "game-cover-player"
-      },
-      {
-        "src": "/games/_shared/assets/b169784f4b7fbf727bacb8b35fa10192.svg",
-        "className": "game-cover-obstacle"
-      }
-    ]
-  },
-  {
     "id": "c9ad37ed-2add-4be5-b6d5-12c40833009d",
     "title": "放煙火",
     "description": "點擊畫面或按下空白鍵，在城市夜空中施放繽紛煙火。",

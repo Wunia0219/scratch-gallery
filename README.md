@@ -78,12 +78,6 @@ npm run import-game -- "C:\Games\math-v2.sb3" `
 
 同一位學生的新作品沿用作者 UUID，但不要沿用舊作品 UUID；省略 `--id` 即會自動建立新作品。
 
-Anita 老師的作品同樣指定已註冊的作者 UUID，作者資料中的 `role: "teacher"` 會讓作品自動進入老師專區：
-
-```powershell
-npm run import-game -- "C:\Games\anita-game.sb3" --title "Anita 的遊戲" --creator-id "作者 UUID"
-```
-
 查看全部參數：
 
 ```powershell

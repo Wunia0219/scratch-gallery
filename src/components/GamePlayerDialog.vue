@@ -65,7 +65,7 @@ onBeforeUnmount(() => {
           loading="lazy"
         />
       </div>
-      <p class="dialog-note">遊戲由網站內的本機打包檔載入；關閉視窗會停止遊戲。</p>
+      <p class="dialog-note">關閉這個視窗即可結束遊戲。</p>
     </template>
   </dialog>
 </template>

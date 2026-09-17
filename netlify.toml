@@ -4,5 +4,12 @@
 
 [build.environment]
   NODE_VERSION = "24"
+  SITE_URL = "https://giraffegallery.com"
+
+[[redirects]]
+  from = "https://scratch-gallery.netlify.app/*"
+  to = "https://giraffegallery.com/:splat"
+  status = 301
+  force = true
 
 # No SPA catch-all: nonexistent work URLs must remain real 404 responses.

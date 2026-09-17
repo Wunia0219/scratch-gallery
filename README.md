@@ -6,7 +6,7 @@
 
 專案已提供 `netlify.toml`，Netlify 應以此專案根目錄建置、發佈 `dist/`。每次建置會產生首頁與 `/works/<作品 UUID>/` 靜態介紹頁，內含可直接讀取的作品內容、獨立標題、說明及分享標籤；點封面仍直接遊玩，點作品名稱可開啟介紹頁。
 
-正式網址由 Netlify 的 `URL` 自動取得。若使用自訂網域，將建置環境變數 `SITE_URL` 設成 `https://你的網域`，並在 Netlify 設定主要網域及別名轉址。只支援根網域部署，不支援子目錄。
+正式網址固定為 `https://giraffegallery.com`，由 `netlify.toml` 的 `SITE_URL` 提供；Netlify 的舊子網域會永久轉址到正式網域。若日後更換網域，必須同步更新 `SITE_URL`、舊網域轉址與線上檢查。只支援根網域部署，不支援子目錄。
 
 - 正式建置會輸出 canonical、`sitemap.xml` 與 `robots.txt`；預覽與分支部署加上 noindex，避免測試內容收錄。
 - 本機未設定正式網址時，也會產生 noindex 版本；不要把這份本機測試 `dist/` 直接當作正式站上傳。

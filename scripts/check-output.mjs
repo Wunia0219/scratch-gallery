@@ -3,12 +3,14 @@ import { readFile, readdir } from 'node:fs/promises'
 import { siteConfig } from './site-policy.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const { origin, indexable } = siteConfig()
+if (indexable) assert.equal(origin, 'https://giraffegallery.com', 'production origin must use the verified custom domain')
 const home = await readFile('dist/index.html', 'utf8')
 const titles = new Set()
 for (const route of ['/', ...games.map(g => `/works/${g.id}/`)]) {
   const html = await readFile(`dist${route}index.html`, 'utf8')
   assert.equal((html.match(/<h1\b/g) || []).length, 1, `${route} missing or duplicate h1`)
   assert.match(html, /property="og:title"/)
+  if (indexable) assert.ok(html.includes(`property="og:url" content="${origin}${route}"`))
   assert.doesNotMatch(html, /(?:src|href)="\/src\//, 'development asset URL in generated HTML')
   assert.match(html, new RegExp(`content="${indexable ? 'index, follow' : 'noindex, nofollow'}"`))
   if (indexable) assert.ok(html.includes(`rel="canonical" href="${origin}${route}"`))

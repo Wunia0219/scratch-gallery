@@ -18,13 +18,13 @@
 
 這個指令清除子程序的正式部署網址設定，產生不收錄的本機測試版 `dist/`，不要直接把它上傳為正式站。正式上線沿用 Netlify 依正式環境重新建置；Netlify 的使用仍受帳號原有額度限制。
 
-每次新增遊戲、更新套件或準備上架時可先執行一次。這個本機指令不是背景排程；雲端每週檢查則由下述 GitHub Actions 執行。
+每次新增遊戲、更新套件或準備上架時可先執行一次。這個本機指令不是背景排程；雲端完整檢查每月兩次，由下述 GitHub Actions 執行。
 
 ## 部署檢查與套件更新通知
 
 `npm run verify` 會執行資料關聯、資源預算、型別、防護回歸測試、靜態產生及輸出檢查。Netlify 建置另執行 `npm audit --audit-level=high`；高風險漏洞或掃描服務失敗均會阻止新版本部署，既有上線版本不會自動被移除。
 
-`.github/workflows/security.yml` 在 main 更新、pull request、每週一 02:17 UTC（台灣 10:17）及手動觸發時執行。包含資料與資源稽核、型別檢查、安全回歸、正式建置、SEO 輸出、npm 弱點掃描及全部遊戲的瀏覽器測試。CI 安裝與 Playwright 版本配對的 Chromium，不依賴執行器預裝的 Chrome。每週排程需此設定合併至預設分支，且 GitHub Actions 帳號可正常使用；排程可能延遲，失敗通知依 GitHub 帳號設定。
+`.github/workflows/quick-check.yml` 在 main 更新及手動觸發時執行，包含資料與資源稽核、型別檢查、安全回歸、正式建置與 SEO 輸出。`.github/workflows/security.yml` 則在每月 1 日與 15 日 02:17 UTC（台灣約 10:17）及手動觸發時，額外執行 npm 弱點掃描與全部遊戲的 Chromium 瀏覽器測試。完整檢查排程需此設定合併至預設分支，且 GitHub Actions 帳號可正常使用；排程可能延遲，失敗通知依 GitHub 帳號設定。
 
 `.github/dependabot.yml` 每週檢查 npm 與 GitHub Actions 更新。npm 的 minor／patch 更新合併成一組，Actions 更新另成一組，減少每個套件各自建立分支；其他 npm major 更新仍獨立審查。更新不會自動合併。TypeScript 7 已重現與目前 vue-tsc 不相容，暫時排除 7.x 更新通知，使用已通過完整 CI 的 6.0.3；升級 Vue 型別檢查工具鏈時，必須重新評估並移除該排除規則。既有版本仍受 npm 弱點掃描檢查。
 

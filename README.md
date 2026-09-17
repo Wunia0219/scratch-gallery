@@ -13,7 +13,7 @@
 - 若手動上傳，先在 PowerShell 設定 `$env:SITE_URL = 'https://你的正式網址'`，再執行 `npm run verify` 與 `npm audit --audit-level=high`，只上傳產出的 `dist/`。
 - 上線後執行 `npm run check:live -- https://你的正式網址`，並在 Google Search Console 驗證網域、提交 `/sitemap.xml`、檢查首頁及一個作品網址。搜尋收錄與排名由搜尋引擎決定。
 - 新增作品時提供真實且具體的 `description`，可另外填入 `controls`、`objective`；不要只改標題複製介紹。作者署名沿用現有資料，由站主確認公開授權。
-- 安全機制、每週套件檢查、故障處理及上線限制詳見 [SECURITY.md](SECURITY.md)。
+- 安全機制、每月兩次的完整套件檢查、故障處理及上線限制詳見 [SECURITY.md](SECURITY.md)。
 - 不使用 GitHub Actions 時，在本機執行 `npm run verify:local`：包含建置、安全測試、Chrome 遊戲測試及連線 npm 的弱點掃描，不需綁卡。這是手動檢查，產出的 `dist/` 為 noindex 測試版；正式部署仍由 Netlify 重新建置。
 
 參考：[Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)、[Netlify 自訂標頭](https://docs.netlify.com/manage/routing/headers/)、[MDN iframe sandbox](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe)。

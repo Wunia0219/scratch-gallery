@@ -1,14 +1,14 @@
-name: Full site and security checks
+name: Quick site checks
 on:
-  schedule:
-    - cron: '17 2 1,15 * *'
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -19,6 +19,3 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify
-      - run: npm audit --audit-level=high
-      - run: npx --no-install playwright-core install --with-deps chromium
-      - run: npm run test:browser

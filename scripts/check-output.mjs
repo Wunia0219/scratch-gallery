@@ -3,9 +3,10 @@ import { readFile, readdir } from 'node:fs/promises'
 import { siteConfig } from './site-policy.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const { origin, indexable } = siteConfig()
-const home = await readFile('dist/index.html', 'utf8')
+const sitemap = await readFile('dist/sitemap.xml', 'utf8')
 const titles = new Set()
-for (const route of ['/', ...games.map(g => `/works/${g.id}/`)]) {
+const pageRoutes = ['/', '/students/', '/teachers/', ...games.map(g => `/works/${g.id}/`)]
+for (const route of pageRoutes) {
   const html = await readFile(`dist${route}index.html`, 'utf8')
   assert.equal((html.match(/<h1\b/g) || []).length, 1, `${route} missing or duplicate h1`)
   assert.match(html, /property="og:title"/)
@@ -15,10 +16,9 @@ for (const route of ['/', ...games.map(g => `/works/${g.id}/`)]) {
   const title = html.match(/<title>(.*?)<\/title>/s)[1]
   assert.ok(!titles.has(title), `duplicate title: ${title}`)
   titles.add(title)
-  if (route !== '/') assert.ok(home.includes(`href="${route}"`), 'orphan work page')
+  if (route !== '/' && indexable) assert.ok(sitemap.includes(`<loc>${origin}${route}</loc>`), 'page missing from sitemap')
 }
-const sitemap = await readFile('dist/sitemap.xml', 'utf8')
-assert.equal((sitemap.match(/<loc>/g) || []).length, indexable ? games.length + 1 : 0)
+assert.equal((sitemap.match(/<loc>/g) || []).length, indexable ? games.length + 3 : 0)
 assert.doesNotMatch(sitemap, /\/games\//)
 // Prevent common accidental secret/build-source publication; not a comprehensive secret scanner.
 async function inspect(dir) {

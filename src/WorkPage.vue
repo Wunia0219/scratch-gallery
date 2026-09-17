@@ -11,11 +11,11 @@ const related = catalog.filter(g => g.id !== props.game.id && g.category === pro
   <a class="skip-link" href="#main-content">跳到主要內容</a>
   <header class="site-header">
     <a class="brand" href="/"><img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />東勢長頸鹿 Scratch 創作館</a>
-    <nav aria-label="主要導覽"><a href="/#games">所有作品</a></nav>
+    <nav aria-label="主要導覽"><a href="/students/">學生作品</a><a href="/teachers/">老師作品</a></nav>
   </header>
   <main id="main-content">
     <section class="work-intro">
-      <p><a href="/">首頁</a> / {{ game.title }}</p>
+      <p><a href="/">首頁</a> / <a :href="game.creatorType === 'teacher' ? '/teachers/' : '/students/'">{{ game.creatorType === 'teacher' ? '老師作品' : '學生作品' }}</a> / {{ game.title }}</p>
       <p class="eyebrow">SCRATCH · {{ game.category }}</p>
       <h1>{{ game.title }}</h1>
       <p class="hero-text">{{ game.description }}</p>

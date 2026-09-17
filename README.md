@@ -4,7 +4,7 @@
 
 ## Netlify 上架與搜尋收錄
 
-專案已提供 `netlify.toml`，Netlify 應以此專案根目錄建置、發佈 `dist/`。每次建置會產生首頁與 `/works/<作品 UUID>/` 靜態介紹頁，內含可直接讀取的作品內容、獨立標題、說明及分享標籤；點封面仍直接遊玩，點作品名稱可開啟介紹頁。
+專案已提供 `netlify.toml`，Netlify 應以此專案根目錄建置、發佈 `dist/`。每次建置會產生首頁、`/students/`、`/teachers/` 與 `/works/<作品 UUID>/` 靜態介紹頁，內含可直接讀取的作品內容、獨立標題、說明及分享標籤；點封面仍直接遊玩，點作品名稱可開啟介紹頁。
 
 正式網址由 Netlify 的 `URL` 自動取得。若使用自訂網域，將建置環境變數 `SITE_URL` 設成 `https://你的網域`，並在 Netlify 設定主要網域及別名轉址。只支援根網域部署，不支援子目錄。
 
@@ -168,7 +168,7 @@ flowchart TD
   A[可信任 SB3 與作者 UUID] --> B[預覽擷取與 import-game]
   B --> C[games.json／creators.json／遊戲資源]
   C --> D[catalog.js 驗證與關聯作者]
-  D --> E[App.vue 首頁／WorkPage.vue 作品頁]
+  D --> E[App.vue 首頁／GalleryPage.vue 作品庫／WorkPage.vue 作品頁]
   E --> F[Vite + build-site.mjs]
   F --> G[dist：HTML、JS、素材、SEO、安全標頭]
   G --> H[Netlify 靜態託管]
@@ -179,7 +179,7 @@ flowchart TD
 ### 模組責任
 
 - **資料層**：`public/creators.json` 保存作者 UUID、姓名、身分與班級；`public/games.json` 保存作品 UUID、作者關聯與素材路徑。`src/lib/catalog.js` 驗證資料，`src/composables/useGames.js` 在建置與瀏覽器共用同一份目錄，不在執行時請求 API。
-- **呈現層**：`src/main.js` 依網址選擇 `App.vue` 或 `WorkPage.vue`，未使用 Vue Router。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。作品頁連結採一般網頁導覽。
+- **呈現層**：`src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 學生／老師作品庫或 `WorkPage.vue` 作品頁，未使用 Vue Router。首頁不載入作品目錄、卡片或播放器；`/students/` 與 `/teachers/` 依作者 `role` 分流，每次顯示 9 件並逐批載入，班級選項由作者資料自動產生。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。
 - **靜態生成**：`scripts/build-site.mjs` 用 Vue 伺服器渲染 API 在建置時產生 HTML，無 JavaScript 也能讀取介紹；瀏覽器使用 `createApp().mount()` 重新掛載互動介面，目前不是 hydration。作品數增加時，靜態頁數與建置工作量也會增加。
 - **遊戲產線**：`capture-previews.cjs` 擷取候選封面，`import-game.cjs` 匯入作品，`optimize-game-package.cjs` 以內容雜湊共用資源。`public/games/<UUID>/` 保存各作品，`_shared/` 保存共用執行核心及素材。
 - **SEO 與防護**：`scripts/site-policy.mjs` 集中網址、收錄與 CSP 政策；建置產出 metadata、robots、sitemap、`_headers` 與真正的 404。介紹頁與遊戲使用不同安全政策，播放器透過 sandbox 隔離；細節見 [SECURITY.md](SECURITY.md)。
@@ -189,7 +189,7 @@ flowchart TD
 
 此架構適合目前以展示及遊玩為主的網站：維護範圍集中在靜態內容、套件、遊戲隔離與平台帳號。JSON 目錄和已發佈素材皆公開；若新增帳號、私人作品或訪客上傳，需要另設後端與權限機制。
 
-目前首頁及作品頁共用入口，入口也靜態引用兩種頁面元件與完整目錄；目錄增長後可再評估分頁或拆分載入。現階段先保持單一資料驗證與集中安全政策，避免為少量作品增加維護成本。初始化規則放在 [AGENTS.md](AGENTS.md)，操作教學留在本文件，安全維護細節留在 [SECURITY.md](SECURITY.md)。
+首頁、作品庫與作品頁共用一個輕量入口，但依網址動態載入各自元件；完整目錄只進入作品庫與作品頁的程式區塊。作品數增加時，首頁程式與卡片數量不會跟著成長，作品庫則以每批 9 件控制 DOM 與封面請求。初始化規則放在 [AGENTS.md](AGENTS.md)，操作教學留在本文件，安全維護細節留在 [SECURITY.md](SECURITY.md)。
 
 只放入你信任的打包檔，因為打包後的 HTML 與 JavaScript 會在網站內執行。
 

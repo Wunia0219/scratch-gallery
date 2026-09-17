@@ -1,0 +1,143 @@
+[
+  {
+    "id": "eab17e9f-81cc-46af-99db-03749098d2e4",
+    "title": "逃離沙漠",
+    "description": "在沙漠中展開一場刺激的逃離冒險。",
+    "creatorId": "cdc667a5-51a3-4967-ba85-dfda991a9a81",
+    "category": "冒險",
+    "age": "全年齡",
+    "tags": [
+      "冒險",
+      "沙漠"
+    ],
+    "devices": [
+      "desktop"
+    ],
+    "playUrl": "/games/eab17e9f-81cc-46af-99db-03749098d2e4/index.html",
+    "thumbnail": "/games/_shared/assets/a2102a0c7300d15a48671d46118a2fe0.svg",
+    "thumbnailLayers": [
+      {
+        "src": "/games/_shared/assets/56e95c06d0a0676483bd12d66f13ee77.svg",
+        "className": "game-cover-player"
+      },
+      {
+        "src": "/games/_shared/assets/b169784f4b7fbf727bacb8b35fa10192.svg",
+        "className": "game-cover-obstacle"
+      }
+    ]
+  },
+  {
+    "id": "c9ad37ed-2add-4be5-b6d5-12c40833009d",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在城市夜空中施放繽紛煙火。",
+    "creatorId": "bdfe11eb-f38d-4c2d-ac7f-42daddf9f424",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/c9ad37ed-2add-4be5-b6d5-12c40833009d/index.html",
+    "thumbnail": "/games/c9ad37ed-2add-4be5-b6d5-12c40833009d/cover.webp"
+  },
+  {
+    "id": "8222d9d9-05e6-4dfe-8adc-c47307032f54",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在夜空中施放自己設計的繽紛煙火。",
+    "creatorId": "cf543adf-62f5-4896-a307-9cbcac05d9b6",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/8222d9d9-05e6-4dfe-8adc-c47307032f54/index.html",
+    "thumbnail": "/games/8222d9d9-05e6-4dfe-8adc-c47307032f54/cover.webp"
+  },
+  {
+    "id": "6c1c84e6-e295-4a36-a723-4118713df52d",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在夜空中施放自己設計的繽紛煙火。",
+    "creatorId": "1d6b699b-2437-45ae-b90b-4b10c0ebf973",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/6c1c84e6-e295-4a36-a723-4118713df52d/index.html",
+    "thumbnail": "/games/6c1c84e6-e295-4a36-a723-4118713df52d/cover.webp"
+  },
+  {
+    "id": "e7f9682a-7d39-42be-a34a-6f246b72c959",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在夜空中施放自己設計的繽紛煙火。",
+    "creatorId": "9bbf384e-0d99-4d21-a04d-42b5436aae7c",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/e7f9682a-7d39-42be-a34a-6f246b72c959/index.html",
+    "thumbnail": "/games/e7f9682a-7d39-42be-a34a-6f246b72c959/cover.webp"
+  },
+  {
+    "id": "6c5ea09a-9284-405b-ba54-f2f45f5da0fe",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在夜空中施放自己設計的繽紛煙火。",
+    "creatorId": "e1c50351-fabe-45f5-92a8-21a3c221d28a",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/6c5ea09a-9284-405b-ba54-f2f45f5da0fe/index.html",
+    "thumbnail": "/games/6c5ea09a-9284-405b-ba54-f2f45f5da0fe/cover.webp"
+  },
+  {
+    "id": "943e725d-327a-4565-a349-e81751c5a6aa",
+    "title": "放煙火",
+    "description": "點擊畫面或按下空白鍵，在夜空中施放自己設計的繽紛煙火。",
+    "creatorId": "7ead1390-b2ee-4c8f-ae81-58aaa24997c9",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "煙火",
+      "互動",
+      "動畫"
+    ],
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "playUrl": "/games/943e725d-327a-4565-a349-e81751c5a6aa/index.html",
+    "thumbnail": "/games/943e725d-327a-4565-a349-e81751c5a6aa/cover.webp"
+  }
+]

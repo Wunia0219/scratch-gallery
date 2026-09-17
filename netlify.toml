@@ -1,0 +1,8 @@
+[build]
+  command = "npm run verify && npm audit --audit-level=high"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# No SPA catch-all: nonexistent work URLs must remain real 404 responses.

@@ -1,0 +1,37 @@
+{
+  "name": "scratch-gallery",
+  "version": "0.3.0-beta",
+  "private": true,
+  "type": "module",
+  "description": "A minimal Vue 3 gallery for packaged Scratch games.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/build-site.mjs",
+    "test:security": "node --test scripts/security.test.mjs",
+    "test:browser": "node scripts/test-browser.mjs",
+    "check:live": "node scripts/check-live.mjs",
+    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run build && node scripts/check-output.mjs",
+    "verify:local": "node scripts/verify-local.mjs",
+    "preview": "vite preview",
+    "check": "vue-tsc --noEmit",
+    "audit:assets": "node scripts/audit-assets.cjs",
+    "capture-previews": "node scripts/capture-previews.cjs",
+    "import-game": "node scripts/import-game.cjs",
+    "optimize:games": "node scripts/optimize-game-package.cjs",
+    "migrate:game-ids": "node scripts/migrate-game-ids.cjs",
+    "register:creator": "node scripts/register-creator.cjs",
+    "audit:catalog": "node scripts/audit-catalog.cjs"
+  },
+  "dependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@turbowarp/jszip": "3.12.0",
+    "@turbowarp/packager": "3.13.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "playwright-core": "^1.63.0",
+    "typescript": "6.0.3",
+    "vite": "^8.0.0",
+    "vue-tsc": "^3.0.0"
+  }
+}

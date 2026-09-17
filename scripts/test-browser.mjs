@@ -37,8 +37,8 @@ try {
   const creatorRoles = new Map(creators.map(creator => [creator.id, creator.role]))
   const studentCount = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher').length
   const teacherCount = games.filter(game => creatorRoles.get(game.creatorId) === 'teacher').length
-  const initialStudentCards = Math.min(studentCount, 6)
-  const initialTeacherCards = teacherCount ? Math.min(teacherCount, 6) : 1
+  const initialStudentCards = Math.min(studentCount, 9)
+  const initialTeacherCards = Math.min(teacherCount, 9)
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
   await page.goto('http://127.0.0.1:4173/')

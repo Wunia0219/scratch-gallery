@@ -22,7 +22,7 @@
 
 ```powershell
 cd C:\Users\nini9\Work\scratch-gallery
-npm install
+npm ci
 npm run dev
 ```
 

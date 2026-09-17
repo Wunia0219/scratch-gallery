@@ -3,10 +3,11 @@
 ## 專案與入口
 - Vue 3 + Vite 靜態網站，Node.js 24；無後端、登入、資料庫或公開上傳。介面使用繁體中文。
 - 先讀 README.md 的架構與操作說明；修改安全、部署或套件時另讀 SECURITY.md。
-- `src/main.js` 依網址掛載 `App.vue` 首頁或 `WorkPage.vue` 作品頁；共用樣式在 `styles.css`。
+- `src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 師生作品庫或 `WorkPage.vue` 作品頁；共用樣式在 `styles.css`，雙語文案在 `src/i18n.js`。
+- 首頁不載入作品目錄；`/students/` 與 `/teachers/` 依作者身分分流，每批顯示 9 件。維持依頁面拆分載入，不需新增 Router 或全域狀態套件。
 - `src/components/` 放卡片、影片及遊戲對話框；`src/media.js` 管理展示媒體。
 - `public/games.json` 以 `creatorId` 關聯 `public/creators.json`；`src/lib/catalog.js` 驗證並合成目錄，`useGames.js` 供畫面使用。
-- `scripts/build-site.mjs` 預先渲染首頁與 `/works/<UUID>/`，產生 SEO 檔案、404 與安全標頭；政策集中在 `scripts/site-policy.mjs`。
+- `scripts/build-site.mjs` 預先渲染首頁、兩個作品庫與 `/works/<UUID>/`，產生 SEO 檔案、404 與安全標頭；政策集中在 `scripts/site-policy.mjs`。瀏覽器目前重新掛載 Vue，並非 hydration。
 - Netlify 依 `netlify.toml` 建置，只發佈 `dist/`；不要手改產出檔或加入 SPA catch-all 轉址。
 
 ## 驗證
@@ -14,10 +15,10 @@
 - 程式、作品或建置修改後執行 `npm run verify`（目錄、資源、型別、安全、建置與輸出檢查）。純文件修改檢查內容與 `git diff --check` 即可。
 - 遊戲、播放器、安全政策或套件變更另跑 `npm run verify:local`，含瀏覽器測試與連網弱點掃描；需 Chrome，可用 `CHROME_PATH` 指定。
 - `verify:local` 產出 noindex 測試版，不可直接部署。正式網域／標頭變更後執行 `npm run check:live -- <正式網址>`。
-- GitHub Actions 驗證 main、PR 及每週排程；套件合併須確認 CI 與 Netlify 成功，不略過失敗或直接執行 `npm audit fix --force`。
+- GitHub Actions 快速檢查在 main 更新及手動觸發時執行；完整安全檢查每月 1、15 日及手動執行，目前沒有 PR 觸發。Dependabot 每週檢查更新；套件合併須確認 CI 與 Netlify 成功，不略過失敗或直接執行 `npm audit fix --force`。
 
 ## 產品與安全界線
-- 版本讀取 `package.json`；維持藍／黃／橘視覺、寬鬆響應式排版、既有功能及官方品牌素材。
+- 版本讀取 `package.json`，同步更新 lockfile；正式版本顯示 `ver X.Y.Z`。維持藍／黃／橘視覺、寬鬆響應式排版、既有功能及官方品牌素材。
 - 封面是遊玩入口，作品名稱連到介紹頁；不加重複遊玩按鈕。作者 `role` 衍生 `creatorType`，區分師生作品。
 - 控制項至少 44×44 px，保留鍵盤操作、焦點、對比與 reduced-motion；圖示使用 SVG。
 - 遊戲只按需載入，關閉時釋放 iframe；維持 `sandbox="allow-scripts allow-pointer-lock"`，不可加入 `allow-same-origin`。

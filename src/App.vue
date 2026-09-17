@@ -13,7 +13,7 @@ const heroVideoInView = ref(true)
 const siteVersion = packageInfo.version
 const siteVersionLabel = siteVersion.endsWith('-beta')
   ? `Beta ${siteVersion.slice(0, -'-beta'.length)}`
-  : siteVersion
+  : `ver ${siteVersion}`
 let heroVideoObserver
 
 function syncHeroVideo() {

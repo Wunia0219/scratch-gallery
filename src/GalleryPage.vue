@@ -1,7 +1,8 @@
 <script setup>
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import GameCard from './components/GameCard.vue'
 import { useGames } from './composables/useGames.js'
+import { usePlayCounts } from './composables/usePlayCounts.js'
 import { useLanguage } from './i18n.js'
 
 const props = defineProps({ creatorType: { type: String, required: true } })
@@ -13,6 +14,7 @@ const selectedClass = ref('全部')
 const selectedDevice = ref('all')
 const visibleLimit = ref(9)
 const selectedGame = ref(null)
+const { counts: playCounts, loaded: playCountsLoaded, load: loadPlayCounts, record: recordPlay } = usePlayCounts()
 
 const isTeacher = computed(() => props.creatorType === 'teacher')
 const collection = computed(() => games.value.filter(game => isTeacher.value ? game.creatorType === 'teacher' : game.creatorType !== 'teacher'))
@@ -35,6 +37,12 @@ const deviceFilters = [
 ]
 
 watch([query, selectedClass, selectedDevice], () => { visibleLimit.value = 9 })
+onMounted(loadPlayCounts)
+
+function play(game) {
+  selectedGame.value = game
+  void recordPlay(game.id)
+}
 </script>
 
 <template>
@@ -84,7 +92,7 @@ watch([query, selectedClass, selectedDevice], () => { visibleLimit.value = 9 })
       </div>
 
       <div v-if="visibleGames.length" class="game-grid">
-        <GameCard v-for="game in visibleGames" :key="game.id" :game="game" @play="selectedGame = $event" />
+        <GameCard v-for="game in visibleGames" :key="game.id" :game="game" :play-count="playCountsLoaded ? (playCounts[game.id] ?? 0) : null" @play="play" />
       </div>
       <div v-else class="empty-state">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6.5h16v11H4z" /><path d="M8 10h8M8 14h5" /></svg>

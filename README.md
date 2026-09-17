@@ -161,7 +161,7 @@ npm run register:creator -- --name "姓名" --class "班級" # 建立作者 UUID
 
 ## 架構與資料流
 
-本站採用 **靜態頁面生成 + Vue 互動 + 隔離遊戲播放器**，部署到 Netlify；沒有常駐應用伺服器、API、資料庫或登入系統。作品資料隨程式建置，更新內容需要重新部署。
+本站採用 **靜態頁面生成 + Vue 互動 + 隔離遊戲播放器**，部署到 Netlify；沒有常駐應用伺服器、傳統資料庫或登入系統。作品資料隨程式建置，更新內容需要重新部署；遊玩次數另由輕量 Netlify Function 寫入 Netlify Blobs，不需因數字更新而重新部署。
 
 ```mermaid
 flowchart TD
@@ -179,6 +179,7 @@ flowchart TD
 ### 模組責任
 
 - **資料層**：`public/creators.json` 保存作者 UUID、姓名、身分與班級；`public/games.json` 保存作品 UUID、作者關聯與素材路徑。`src/lib/catalog.js` 驗證資料，`src/composables/useGames.js` 在建置與瀏覽器共用同一份目錄，不在執行時請求 API。
+- **遊玩次數**：玩家實際開啟作品時建立匿名事件 UUID，由 `/.netlify/functions/play-counts` 寫入 Netlify Blobs；不保存姓名、IP 或定位，同一瀏覽器在 30 分鐘內不重複計算同一作品。localhost 使用獨立的瀏覽器測試數字，不讀寫正式資料。
 - **呈現層**：`src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 學生／老師作品庫或 `WorkPage.vue` 作品頁，未使用 Vue Router。首頁不載入作品目錄、卡片或播放器；`/students/` 與 `/teachers/` 依作者 `role` 分流，每次顯示 9 件並逐批載入，班級選項由作者資料自動產生。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。
 - **靜態生成**：`scripts/build-site.mjs` 用 Vue 伺服器渲染 API 在建置時產生 HTML，無 JavaScript 也能讀取介紹；瀏覽器使用 `createApp().mount()` 重新掛載互動介面，目前不是 hydration。作品數增加時，靜態頁數與建置工作量也會增加。
 - **遊戲產線**：`capture-previews.cjs` 擷取候選封面，`import-game.cjs` 匯入作品，`optimize-game-package.cjs` 以內容雜湊共用資源。`public/games/<UUID>/` 保存各作品，`_shared/` 保存共用執行核心及素材。

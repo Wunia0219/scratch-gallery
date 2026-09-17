@@ -195,7 +195,11 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .device-badge svg { width: 15px; height: 15px; stroke-width: 2; }
 .game-body h3 { margin-bottom: 8px; }
 .game-body > p:not(.student-credit) { min-height: 3.2em; margin: 0 0 14px; color: var(--muted); }
-.student-credit { margin: 0 0 20px; color: var(--brand); font-size: .9rem; font-weight: 750; }
+.game-card-footer { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
+.student-credit { margin: 0; color: var(--brand); font-size: .9rem; font-weight: 750; }
+.play-count { display: inline-flex; flex: none; align-items: center; gap: 5px; min-width: 42px; margin: 0; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 750; white-space: nowrap; }
+.play-count svg { width: 18px; height: 18px; color: var(--brand); stroke-width: 1.9; }
+.play-count-pending { visibility: hidden; }
 .button:disabled { opacity: .48; cursor: not-allowed; transform: none; }
 .empty-state { padding: 64px 24px; text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius-md); }
 .empty-state svg { width: 52px; height: 52px; color: var(--brand); }

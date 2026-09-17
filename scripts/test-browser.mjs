@@ -59,6 +59,8 @@ try {
   assert.equal(await page.getByText('Class', { exact: true }).count(), 0)
   for (const game of games) {
     await page.goto(`http://127.0.0.1:4173/works/${game.id}/`)
+    await page.locator('.work-cover .play-count').waitFor({ state: 'visible' })
+    assert.equal(await page.locator('.work-cover .play-count span').textContent(), '0', 'a loaded game without plays should show zero')
     await page.locator('.work-cover .game-cover').click()
     const iframe = page.frameLocator('dialog iframe')
     await iframe.locator('#launch').waitFor({ state: 'visible', timeout: 30000 })
@@ -70,6 +72,12 @@ try {
     await frame.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
     await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
     assert.equal(await page.locator('iframe').count(), 0)
+    assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', 'localhost play count should increment')
+    if (game === games[0]) {
+      await page.locator('.work-cover .game-cover').click()
+      assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', '30-minute cooldown should prevent a duplicate count')
+      await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
+    }
     console.log(`PASS sandbox + gameplay + close: ${game.id}`)
   }
   const noJs = await browser.newContext({ javaScriptEnabled: false })

@@ -15,7 +15,7 @@ const messages = {
     learnByDoing: '做中學', crossCurricular: '跨域創作', confidentSharing: '自信分享',
     createTitle: '創造', createText: '從故事、角色到遊戲規則，把腦中的點子化成作品。', communicateTitle: '溝通', communicateText: '說明玩法與設計選擇，練習讓別人理解自己的想法。', collaborateTitle: '合作', collaborateText: '觀摩同學、交換回饋，在彼此作品裡找到新方法。', thinkTitle: '思考', thinkText: '拆解問題、測試條件，從錯誤中找出更好的解法。',
     ideaText: '從生活觀察與故事想像出發，定義角色、目標與玩法。', buildText: '用積木程式逐步測試，讓角色、互動與規則真的運作。', shareText: '以創作者署名公開展示，邀請家長與朋友親自遊玩。',
-    footer: 'Scratch 創作成果展', languageLabel: '選擇語言', play: '遊玩', ready: '可遊玩', preparing: '準備中', creator: '創作者：', closeGame: '關閉這個視窗即可結束遊戲。', nowPlaying: '正在遊玩', close: '關閉',
+    footer: 'Scratch 創作成果展', languageLabel: '選擇語言', play: '遊玩', ready: '可遊玩', preparing: '準備中', creator: '創作者：', playCount: '遊玩次數 {count}', closeGame: '關閉這個視窗即可結束遊戲。', nowPlaying: '正在遊玩', close: '關閉',
   },
   en: {
     explore: 'Explore Games', teacher: "Teacher's Corner", learning: 'Why We Create', hero: 'Kids code it. The world gets to play.',
@@ -30,7 +30,7 @@ const messages = {
     learnByDoing: 'Learn by doing', crossCurricular: 'Create across subjects', confidentSharing: 'Share with confidence',
     createTitle: 'Create', createText: 'Turn stories, characters, and game rules into something real.', communicateTitle: 'Speak up', communicateText: 'Explain how it works and help others see your idea.', collaborateTitle: 'Create together', collaborateText: 'Swap ideas, learn from classmates, and find new ways forward.', thinkTitle: 'Think it through', thinkText: 'Break big problems into steps, test ideas, and learn from mistakes.',
     ideaText: 'Start with something you notice, a story you love, or a wild idea.', buildText: 'Use code blocks to test, tweak, and bring characters and rules to life.', shareText: 'Put your name on your work and invite family and friends to give it a try.',
-    footer: 'Scratch Creation Showcase', languageLabel: 'Choose language', play: 'Play', ready: 'Ready to play', preparing: 'Coming soon', creator: 'Created by: ', closeGame: 'Close this window when you are finished playing.', nowPlaying: 'Now playing', close: 'Close',
+    footer: 'Scratch Creation Showcase', languageLabel: 'Choose language', play: 'Play', ready: 'Ready to play', preparing: 'Coming soon', creator: 'Created by: ', playCount: '{count} plays', closeGame: 'Close this window when you are finished playing.', nowPlaying: 'Now playing', close: 'Close',
   },
 }
 

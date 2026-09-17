@@ -1,6 +1,6 @@
 # Scratch Gallery 安全維護
 
-網站是純靜態展示站，目前沒有登入、資料庫、公開上傳或付款介面。正式部署只發佈 `dist/`。不要把原始專案、`.env`、存取權杖或私人 SB3 放入 `public/`。
+網站以靜態展示為主，沒有登入、公開上傳或付款介面。遊玩次數使用同站 Netlify Function 與 Netlify Blobs 保存匿名事件，不讀取或保存訪客 IP、定位或姓名。正式部署發佈 `dist/` 與 `netlify/functions/`；不要把原始專案、`.env`、存取權杖或私人 SB3 放入 `public/`。
 
 ## 已實作的防護
 
@@ -10,6 +10,7 @@
 - `/games/*` 是可公開讀取的素材，使用無 credentials 的 `Access-Control-Allow-Origin: *`，讓 opaque-origin 遊戲取得自己的 JSON、圖像和音效。這不是私人資料存放區。
 - 停用相機、麥克風、定位、付款與 USB；加上 nosniff、no-referrer、HSTS。需先在 Netlify 確認 HTTPS 憑證與強制 HTTPS 正常。
 - 作品與素材 URL 採本機路徑白名單，建置時拒絕不合法路徑、外站網址與重複 ID。
+- 遊玩計數 API 只接受目錄內既有作品 UUID 與合法匿名事件 UUID；正式寫入限定正式站同源請求，預覽部署與 localhost 不會寫入正式計數。
 - 部署輸出檢查會拒絕常見秘密檔名、私鑰、ZIP、SB3、source map。這是基本防呆，並非能識別所有秘密內容的掃描器。
 
 ## 本機檢查（雲端以外的備援）

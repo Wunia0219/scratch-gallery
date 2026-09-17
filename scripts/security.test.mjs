@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { validateCatalog, isLocalAsset } from '../src/lib/catalog.js'
 import { siteConfig, galleryCsp, gameCsp, buildHeaders, runtimeSources } from './site-policy.mjs'
+import { countPlayEvents, isProductionPlayRequest, isValidPlayEvent, playEventKey } from '../netlify/lib/play-events.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
 test('catalog accepts real games and rejects executable URLs, traversal and duplicates', () => {
@@ -37,4 +38,20 @@ test('preview games allow their deployment asset host without allowing arbitrary
   const sources = runtimeSources('https://gallery.example', { DEPLOY_URL: 'https://123--gallery.netlify.app', DEPLOY_PRIME_URL: 'https://preview--gallery.netlify.app' })
   assert.match(gameCsp(sources), /connect-src https:\/\/gallery.example https:\/\/123--gallery.netlify.app https:\/\/preview--gallery.netlify.app;/)
   assert.throws(() => runtimeSources('https://gallery.example', { DEPLOY_URL: 'https://bad.example/;unsafe' }))
+})
+test('anonymous play events use scoped UUID keys and count concurrent events separately', () => {
+  const gameId = games[0].id
+  const firstEvent = '123e4567-e89b-42d3-a456-426614174000'
+  const secondEvent = '123e4567-e89b-42d3-a456-426614174001'
+  assert.equal(isValidPlayEvent({ gameId, eventId: firstEvent }), true)
+  assert.equal(isValidPlayEvent({ gameId: '../secret', eventId: firstEvent }), false)
+  assert.equal(playEventKey(gameId, firstEvent), `${gameId}/${firstEvent}`)
+  assert.equal(isProductionPlayRequest('https://giraffegallery.com/.netlify/functions/play-counts', 'https://giraffegallery.com'), true)
+  assert.equal(isProductionPlayRequest('https://preview--scratch-gallery.netlify.app/.netlify/functions/play-counts', 'https://preview--scratch-gallery.netlify.app'), false)
+  assert.equal(isProductionPlayRequest('https://giraffegallery.com/.netlify/functions/play-counts', 'https://evil.example'), false)
+  assert.deepEqual(countPlayEvents([
+    { key: `${gameId}/${firstEvent}` },
+    { key: `${gameId}/${secondEvent}` },
+    { key: `unknown/${firstEvent}` },
+  ], [gameId]), { [gameId]: 2 })
 })

@@ -1,6 +1,6 @@
 {
   "name": "scratch-gallery",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "A minimal Vue 3 gallery for packaged Scratch games.",
@@ -23,6 +23,7 @@
     "audit:catalog": "node scripts/audit-catalog.cjs"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {

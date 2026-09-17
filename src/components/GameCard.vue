@@ -4,6 +4,7 @@ import { useLanguage } from '../i18n'
 
 const props = defineProps({
   game: { type: Object, required: true },
+  playCount: { type: Number, default: null },
 })
 
 defineEmits(['play'])
@@ -16,6 +17,10 @@ const deviceLabels = {
 }
 const categoryLabels = { '冒險': 'Adventure', '創意': 'Creativity' }
 const categoryLabel = computed(() => isEnglish.value ? (categoryLabels[props.game.category] || props.game.category || 'Scratch game') : (props.game.category || 'Scratch 作品'))
+const formattedPlayCount = computed(() => Number.isSafeInteger(props.playCount) && props.playCount >= 0
+  ? new Intl.NumberFormat(isEnglish.value ? 'en' : 'zh-Hant').format(props.playCount)
+  : '')
+const playCountLabel = computed(() => t('playCount', { count: formattedPlayCount.value }))
 
 const supportedDevices = computed(() => (props.game.devices || []).filter((device) => deviceLabels[device]))
 </script>
@@ -78,7 +83,18 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
       </div>
       <h3><a :href="game.detailUrl">{{ game.title || '精彩作品' }}<span class="sr-only">：{{ game.student }}的作品介紹</span></a></h3>
       <p>{{ game.description || '一起來看看這件作品吧。' }}</p>
-      <p class="student-credit">{{ t('creator') }}{{ game.student || '學生創作者' }}</p>
+      <div class="game-card-footer">
+        <p class="student-credit">{{ t('creator') }}{{ game.student || '學生創作者' }}</p>
+        <p
+          class="play-count"
+          :class="{ 'play-count-pending': !formattedPlayCount }"
+          :aria-label="formattedPlayCount ? playCountLabel : undefined"
+          :aria-hidden="formattedPlayCount ? undefined : 'true'"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.6" /></svg>
+          <span aria-hidden="true">{{ formattedPlayCount || '0' }}</span>
+        </p>
+      </div>
     </div>
   </article>
 </template>

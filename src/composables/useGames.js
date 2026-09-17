@@ -5,8 +5,10 @@ import { validateCatalog } from '../lib/catalog.js'
 
 // Build-time and browser rendering share the same validated catalog.
 export const catalog = validateCatalog(gameData, creatorData)
+const galleryClasses = ['全部', 'Scratch-115', 'Scratch-114']
+
 export function useGames() {
   const games = ref(catalog)
-  const classes = computed(() => ['全部', ...new Set(catalog.filter(g => g.creatorType !== 'teacher').map(g => g.className))])
+  const classes = computed(() => galleryClasses)
   return { games, classes, loading: ref(false), error: ref('') }
 }

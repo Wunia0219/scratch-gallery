@@ -5,6 +5,7 @@ import packageInfo from '../package.json'
 import { useLanguage } from './i18n'
 
 const HeroVideo = defineAsyncComponent(() => import('./components/HeroVideo.vue'))
+const AnnouncementBoard = defineAsyncComponent(() => import('./components/AnnouncementBoard.vue'))
 const { language, t, setLanguage } = useLanguage()
 const videoOpen = ref(false)
 const heroVideo = ref(null)
@@ -64,7 +65,7 @@ function toggleHeroVideo(event) {
       </a>
     </div>
     <nav aria-label="主要導覽">
-      <a href="/students/">{{ t('explore') }}</a><a href="/teachers/">{{ t('teacher') }}</a><a href="#learning">{{ t('learning') }}</a>
+      <a href="/students/">{{ t('explore') }}</a><a href="#announcements">{{ t('announcementsNav') }}</a><a href="/teachers/">{{ t('teacher') }}</a><a class="learning-nav" href="#learning">{{ t('learning') }}</a>
       <div class="language-switch" role="group" :aria-label="t('languageLabel')"><button type="button" :aria-pressed="language === 'zh-Hant'" @click="setLanguage('zh-Hant')">中</button><button type="button" :aria-pressed="language === 'en'" @click="setLanguage('en')">EN</button></div>
     </nav>
   </header>
@@ -109,7 +110,12 @@ function toggleHeroVideo(event) {
           <span><strong>東勢長頸鹿美語</strong><br />鹿多多 Scratch 創作課</span>
         </div>
       </div>
+      <a class="hero-scroll-cue" href="#announcements" :aria-label="t('viewAnnouncements')">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+      </a>
     </section>
+
+    <AnnouncementBoard />
 
     <section id="learning" class="learning-story" aria-labelledby="learning-title">
       <div class="learning-intro">

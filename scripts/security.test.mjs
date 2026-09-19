@@ -13,10 +13,13 @@ test('catalog accepts real games and rejects executable URLs, traversal and dupl
   }
   for (const value of ['/games/../secret', '/games/%2e%2e/secret', '//evil.example/x', 'data:image/svg+xml,x', '/games/x?y', '/games/x\\y']) assert.equal(isLocalAsset(value), false)
   assert.throws(() => validateCatalog([games[0], games[0]], creators))
+  assert.throws(() => validateCatalog([{ ...games[0], publishedAt: 'not-a-date' }], creators))
   assert.throws(() => validateCatalog([{ ...games[0], thumbnailLayers: [{ src: 'https://evil.example/x' }] }], creators))
 })
 test('production URL and preview indexing fail safely', () => {
   assert.equal(siteConfig({}).indexable, false)
+  assert.equal(siteConfig({ BROWSER_TEST_PORT: '4174' }).origin, 'http://127.0.0.1:4174')
+  assert.throws(() => siteConfig({ BROWSER_TEST_PORT: 'invalid' }))
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'production' }).indexable, true)
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'deploy-preview' }).indexable, false)
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'branch-deploy' }).indexable, false)

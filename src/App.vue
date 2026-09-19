@@ -3,10 +3,11 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showcaseVideoUrl } from './media'
 import packageInfo from '../package.json'
 import { useLanguage } from './i18n'
+import SiteHeader from './components/SiteHeader.vue'
 
 const HeroVideo = defineAsyncComponent(() => import('./components/HeroVideo.vue'))
 const AnnouncementBoard = defineAsyncComponent(() => import('./components/AnnouncementBoard.vue'))
-const { language, t, setLanguage } = useLanguage()
+const { t } = useLanguage()
 const videoOpen = ref(false)
 const heroVideo = ref(null)
 const heroVideoPaused = ref(false)
@@ -16,6 +17,21 @@ const siteVersionLabel = siteVersion.endsWith('-beta')
   ? `Beta ${siteVersion.slice(0, -'-beta'.length)}`
   : `ver ${siteVersion}`
 let heroVideoObserver
+let hashTargetObserver
+const hashTargetTimers = []
+
+function focusHashTarget(hash = window.location.hash) {
+  if (!['#announcements', '#learning'].includes(hash)) return true
+  const section = document.querySelector(hash)
+  if (!(section instanceof HTMLElement)) return false
+  section.scrollIntoView({ block: 'start' })
+  const heading = section.querySelector('h2')
+  if (!(heading instanceof HTMLElement)) return true
+  heading.setAttribute('tabindex', '-1')
+  heading.focus({ preventScroll: true })
+  heading.addEventListener('blur', () => heading.removeAttribute('tabindex'), { once: true })
+  return true
+}
 
 function syncHeroVideo() {
   if (!heroVideo.value) return
@@ -33,10 +49,27 @@ onMounted(() => {
     heroVideoObserver.observe(heroVideo.value)
   }
   document.addEventListener('visibilitychange', syncHeroVideo)
+  const initialHash = window.location.hash
+  if (['#announcements', '#learning'].includes(initialHash)) {
+    hashTargetObserver = new MutationObserver(() => {
+      focusHashTarget(initialHash)
+    })
+    const main = document.querySelector('#main-content')
+    if (main) hashTargetObserver.observe(main, { childList: true, subtree: true })
+    for (const delay of [0, 120, 500]) {
+      hashTargetTimers.push(window.setTimeout(() => focusHashTarget(initialHash), delay))
+    }
+    hashTargetTimers.push(window.setTimeout(() => {
+      hashTargetObserver?.disconnect()
+      hashTargetObserver = undefined
+    }, 1000))
+  }
 })
 
 onBeforeUnmount(() => {
   heroVideoObserver?.disconnect()
+  hashTargetObserver?.disconnect()
+  hashTargetTimers.forEach(timer => window.clearTimeout(timer))
   document.removeEventListener('visibilitychange', syncHeroVideo)
 })
 
@@ -57,18 +90,7 @@ function toggleHeroVideo(event) {
 <template>
   <a class="skip-link" href="#main-content">跳到主要內容</a>
 
-  <header class="site-header">
-    <div class="brand-group">
-      <a class="brand" href="#top" aria-label="Scratch 學習館首頁">
-        <img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />
-        <span class="brand-name"><strong>東勢長頸鹿美語</strong><small>Scratch 創作館</small></span>
-      </a>
-    </div>
-    <nav aria-label="主要導覽">
-      <a href="/students/">{{ t('explore') }}</a><a href="#announcements">{{ t('announcementsNav') }}</a><a href="/teachers/">{{ t('teacher') }}</a><a class="learning-nav" href="#learning">{{ t('learning') }}</a>
-      <div class="language-switch" role="group" :aria-label="t('languageLabel')"><button type="button" :aria-pressed="language === 'zh-Hant'" @click="setLanguage('zh-Hant')">中</button><button type="button" :aria-pressed="language === 'en'" @click="setLanguage('en')">EN</button></div>
-    </nav>
-  </header>
+  <SiteHeader active="home" />
 
   <main id="main-content">
     <section id="top" class="hero" aria-labelledby="hero-title">
@@ -81,7 +103,14 @@ function toggleHeroVideo(event) {
             {{ t('exploreStudents') }}
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
           </a>
-          <a class="button button-secondary" href="#learning">{{ t('learning') }}</a>
+          <a class="button button-secondary" href="#announcements">
+            {{ t('announcementsNav') }}
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3v4M18 3v4M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>
+          </a>
+          <a class="button button-secondary" href="#learning">
+            {{ t('learning') }}
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+          </a>
         </div>
         <ul class="hero-highlights" aria-label="課程特色">
           <li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('learnByDoing') }}</li><li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('crossCurricular') }}</li><li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('confidentSharing') }}</li>

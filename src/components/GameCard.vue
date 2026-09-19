@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { getWorkUpdate } from '../contentUpdates.js'
 import { useLanguage } from '../i18n'
 
 const props = defineProps({
@@ -16,11 +17,20 @@ const deviceLabels = {
   mobile: 'mobile',
 }
 const categoryLabels = { '冒險': 'Adventure', '創意': 'Creativity' }
+const workUpdate = computed(() => getWorkUpdate(props.game))
+const updateLabel = computed(() => workUpdate.value?.kind === 'updated' ? t('updatedWork') : t('newWork'))
+const updateKicker = computed(() => workUpdate.value?.kind === 'updated' ? 'UPDATE' : 'NEW')
 const categoryLabel = computed(() => isEnglish.value ? (categoryLabels[props.game.category] || props.game.category || 'Scratch game') : (props.game.category || 'Scratch 作品'))
 const formattedPlayCount = computed(() => Number.isSafeInteger(props.playCount) && props.playCount >= 0
   ? new Intl.NumberFormat(isEnglish.value ? 'en' : 'zh-Hant').format(props.playCount)
   : '')
 const playCountLabel = computed(() => t('playCount', { count: formattedPlayCount.value }))
+const playButtonLabel = computed(() => {
+  const label = props.game.playUrl
+    ? t('playWork', { title: props.game.title })
+    : t('unavailableWork', { title: props.game.title })
+  return workUpdate.value ? `${label}，${updateLabel.value}` : label
+})
 
 const supportedDevices = computed(() => (props.game.devices || []).filter((device) => deviceLabels[device]))
 </script>
@@ -31,7 +41,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
       class="game-cover"
       type="button"
       :disabled="!game.playUrl"
-      :aria-label="game.playUrl ? `遊玩《${game.title}》` : `《${game.title}》尚未上架`"
+      :aria-label="playButtonLabel"
       @click="$emit('play', game)"
     >
       <template v-if="game.thumbnail">
@@ -64,6 +74,12 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         </svg>
       </div>
       <span class="game-status">{{ game.playUrl ? t('ready') : t('preparing') }}</span>
+      <span v-if="workUpdate" class="work-update-badge" aria-hidden="true">
+        <span class="work-update-emblem">
+          <svg viewBox="0 0 24 24"><path d="m12 3 1.25 4.25L17.5 8.5l-4.25 1.25L12 14l-1.25-4.25L6.5 8.5l4.25-1.25L12 3Z" /><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" /></svg>
+        </span>
+        <span class="work-update-copy"><small>{{ updateKicker }}</small><strong>{{ updateLabel }}</strong></span>
+      </span>
       <span v-if="game.playUrl" class="cover-play" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /></svg>
       </span>

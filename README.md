@@ -102,6 +102,16 @@ npm run import-game -- --help
 npm run audit:assets
 ```
 
+### 導覽列更新提示
+
+首頁、作品庫與作品介紹頁共用同一個導覽列。若學生作品、活動或老師作品有重要更新，可在 `src/contentUpdates.js` 將對應區塊的版本字串改成新的唯一值；使用者尚未看過時，導覽列會顯示橘色提示，進入該區塊後便會在該瀏覽器中自動消失。沒有更新的區塊維持 `null`。
+
+新增作品時，`import-game` 會自動在 `public/games.json` 寫入 `publishedAt`。作品卡片會從該上架時間起顯示「新上架」15 天，之後由瀏覽器自動隱藏，不需要手動設定到期日；更新既有作品會保留原上架時間，不會重新出現 NEW。
+
+活動時程提醒同樣設定在 `src/contentUpdates.js` 的 `featuredActivity`。`isPublished: false` 時不顯示頂部提醒、活動 NEW 或投稿內容，首頁只顯示模糊的「敬請期待」；正式公布前將它改為 `true`。公布後，`remindFrom` 決定何時開始顯示，`startsAt` 後切換為徵稿中，截止前三天切換為即將截止，超過 `endsAt` 自動消失。使用者可關閉各階段提醒；活動進入新階段時會重新顯示一次。
+
+導覽列在所有頁面共用相同入口與狀態，並由左側抽屜滑出。桌面版以 370–440px 寬度顯示完整說明，手機版約佔視窗 88% 並縮短次要文字；兩者共用同一套連結與更新文案。抽屜支援背景遮罩、Esc 關閉、焦點循環與 reduced-motion，修改時需保留這些互動。
+
 ### 遊戲資源共用與清理
 
 匯入工具會自動把重複的 TurboWarp 執行核心與 Scratch 素材移到
@@ -134,6 +144,7 @@ npm run audit:assets
 {
   "id": "123e4567-e89b-42d3-a456-426614174000",
   "creatorId": "另一個作者 UUID",
+  "publishedAt": "2026-09-19T00:00:00.000Z",
   "title": "數學探險島",
   "description": "練習基礎運算與問題解決。",
   "category": "數學",

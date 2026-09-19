@@ -258,6 +258,9 @@ async function main() {
     const entry = {
       id,
       creatorId,
+      ...(existingEntry
+        ? (existingEntry.publishedAt ? { publishedAt: existingEntry.publishedAt } : {})
+        : { publishedAt: new Date().toISOString() }),
       title,
       description: options.description || '尚未提供作品說明。',
       category: options.category || '未分類',

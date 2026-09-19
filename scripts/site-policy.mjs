@@ -1,6 +1,8 @@
 export function siteConfig(env = process.env) {
   const raw = env.SITE_URL || (env.NETLIFY ? env.URL : '')
-  const url = new URL(raw || 'http://127.0.0.1:4173')
+  const localPort = Number(env.BROWSER_TEST_PORT || 4173)
+  if (!raw && (!Number.isInteger(localPort) || localPort < 1 || localPort > 65535)) throw new Error('BROWSER_TEST_PORT 必須是有效連接埠')
+  const url = new URL(raw || `http://127.0.0.1:${localPort}`)
   if (raw && (url.protocol !== 'https:' || url.pathname !== '/' || url.search || url.hash || url.username || url.password)) {
     throw new Error('SITE_URL 必須是 HTTPS 根網址，不可包含路徑、帳密或查詢參數')
   }

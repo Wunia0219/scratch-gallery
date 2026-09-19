@@ -15,6 +15,9 @@ export function validateCatalog(games, creators) {
     for (const asset of [game.thumbnail, ...(game.thumbnailLayers || []).map(layer => layer.src)].filter(Boolean)) {
       if (!isLocalAsset(asset)) throw new Error('禁止外部或非預期素材網址')
     }
+    if (game.publishedAt !== undefined && (typeof game.publishedAt !== 'string' || !Number.isFinite(Date.parse(game.publishedAt)))) {
+      throw new Error('作品上架時間格式無效')
+    }
     if (typeof game.title !== 'string' || !game.title.trim() || typeof game.description !== 'string') throw new Error('作品缺少標題或說明')
     return { ...game, student: creator.name, creatorType: creator.role, className: creator.className, detailUrl: `/works/${game.id}/` }
   })

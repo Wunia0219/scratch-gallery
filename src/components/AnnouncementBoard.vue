@@ -1,17 +1,20 @@
 <script setup>
 import { defineAsyncComponent, ref } from 'vue'
+import { featuredActivity } from '../contentUpdates.js'
 import { useLanguage } from '../i18n'
 
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
 const { t } = useLanguage()
 const submissionUrl = 'https://forms.gle/bFmxHkUJjHcd5uw37'
 const previewOpen = ref(false)
+const activityPublished = featuredActivity.isPublished
 const halloweenPreview = {
   id: 'halloween-activity-intro',
   title: '萬聖節魔法 Scratch 創作挑戰',
   playUrl: '/games/halloween-activity-intro/index.html',
   thumbnail: '/games/halloween-activity-intro/cover.webp',
 }
+
 </script>
 
 <template>
@@ -24,7 +27,8 @@ const halloweenPreview = {
       <p class="section-note">{{ t('announcementsIntro') }}</p>
     </div>
 
-    <article class="announcement-card announcement-card-halloween">
+    <article class="announcement-card announcement-card-halloween" :class="{ 'announcement-card-coming-soon': !activityPublished }">
+      <template v-if="activityPublished">
       <div class="announcement-copy">
         <div class="announcement-meta">
           <span class="announcement-status"><span aria-hidden="true"></span>{{ t('halloweenStatus') }}</span>
@@ -77,8 +81,32 @@ const halloweenPreview = {
         </button>
         <p>{{ t('halloweenArtLine') }}</p>
       </div>
+      </template>
+
+      <template v-else>
+        <div class="announcement-private-preview" aria-hidden="true">
+          <div class="announcement-private-copy">
+            <span class="announcement-private-pill"></span>
+            <span class="announcement-private-title"></span>
+            <span class="announcement-private-line"></span>
+            <span class="announcement-private-line announcement-private-line-short"></span>
+            <div class="announcement-private-details"><span></span><span></span><span></span></div>
+          </div>
+          <div class="announcement-private-art">
+            <img :src="halloweenPreview.thumbnail" alt="" width="480" height="360" loading="lazy" decoding="async" />
+          </div>
+        </div>
+        <div class="announcement-coming-soon" role="status">
+          <span class="announcement-coming-soon-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 3v4M18 3v4M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M9 14h6M12 11v6" /></svg>
+          </span>
+          <p class="eyebrow">COMING SOON</p>
+          <h3>{{ t('activityComingSoon') }}</h3>
+          <p>{{ t('activityComingSoonText') }}</p>
+        </div>
+      </template>
     </article>
 
-    <GamePlayerDialog v-if="previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
+    <GamePlayerDialog v-if="activityPublished && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import GameCard from './components/GameCard.vue'
+import SiteHeader from './components/SiteHeader.vue'
 import { useGames } from './composables/useGames.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 import { useLanguage } from './i18n.js'
@@ -8,7 +9,7 @@ import { useLanguage } from './i18n.js'
 const props = defineProps({ creatorType: { type: String, required: true } })
 const GamePlayerDialog = defineAsyncComponent(() => import('./components/GamePlayerDialog.vue'))
 const { games, classes } = useGames()
-const { language, t, setLanguage } = useLanguage()
+const { t } = useLanguage()
 const query = ref('')
 const selectedClass = ref('全部')
 const selectedDevice = ref('all')
@@ -47,16 +48,7 @@ function play(game) {
 
 <template>
   <a class="skip-link" href="#main-content">跳到主要內容</a>
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="Scratch 創作館首頁">
-      <img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />
-      <span class="brand-name"><strong>東勢長頸鹿美語</strong><small>Scratch 創作館</small></span>
-    </a>
-    <nav aria-label="主要導覽">
-      <a href="/students/">{{ t('studentCollectionNav') }}</a><a href="/teachers/">{{ t('teacherCollectionNav') }}</a>
-      <div class="language-switch" role="group" :aria-label="t('languageLabel')"><button type="button" :aria-pressed="language === 'zh-Hant'" @click="setLanguage('zh-Hant')">中</button><button type="button" :aria-pressed="language === 'en'" @click="setLanguage('en')">EN</button></div>
-    </nav>
-  </header>
+  <SiteHeader :active="isTeacher ? 'teachers' : 'students'" />
 
   <main id="main-content">
     <section class="gallery-hero">
@@ -100,7 +92,10 @@ function play(game) {
         <p>{{ collection.length ? t('tryAgain') : t('collectionEmptyText') }}</p>
       </div>
       <div v-if="remaining" class="load-more">
-        <button class="button button-secondary" type="button" @click="visibleLimit += 9">{{ t('showMore', { count: Math.min(9, remaining) }) }}</button>
+        <button class="button button-secondary" type="button" @click="visibleLimit += 9">
+          {{ t('showMore', { count: Math.min(9, remaining) }) }}
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
         <p>{{ t('showingCount', { shown: visibleGames.length, total: filteredGames.length }) }}</p>
       </div>
     </section>

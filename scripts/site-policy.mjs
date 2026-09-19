@@ -26,5 +26,5 @@ export function buildHeaders(origin, indexable, paths, sources = origin) {
   if (!indexable) common.push('  X-Robots-Tag: noindex, nofollow')
   const pages = [...new Set(['/', '/index.html', '/404.html', ...paths.flatMap(p => [p, `${p}index.html`])])]
   return common.join('\n') + '\n\n' + pages.map(p => `${p}\n  Content-Security-Policy: ${galleryCsp}\n  X-Frame-Options: DENY\n  Cache-Control: public, max-age=0, must-revalidate`).join('\n\n')
-    + `\n\n/games/*\n  Access-Control-Allow-Origin: *\n  X-Robots-Tag: noindex\n  Content-Security-Policy: ${gameCsp(sources)}\n\n/games.json\n  X-Robots-Tag: noindex\n\n/creators.json\n  X-Robots-Tag: noindex\n\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n`
+    + `\n\n/games/*\n  Access-Control-Allow-Origin: *\n  X-Robots-Tag: noindex\n  Content-Security-Policy: ${gameCsp(sources)}\n\n/games.json\n  X-Robots-Tag: noindex\n\n/standalone-games.json\n  X-Robots-Tag: noindex\n\n/creators.json\n  X-Robots-Tag: noindex\n\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n`
 }

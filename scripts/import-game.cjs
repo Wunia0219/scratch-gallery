@@ -9,6 +9,7 @@ const projectRoot = path.resolve(__dirname, '..')
 const publicRoot = path.join(projectRoot, 'public')
 const gamesRoot = path.join(publicRoot, 'games')
 const manifestPath = path.join(publicRoot, 'games.json')
+const standaloneManifestPath = path.join(publicRoot, 'standalone-games.json')
 const creatorsPath = path.join(publicRoot, 'creators.json')
 const packagesRoot = path.join(projectRoot, '.packages')
 
@@ -24,7 +25,8 @@ function usage() {
   --age <年齡>           預設「全年齡」
   --tags <標籤>          逗號分隔，例如「數學,闖關」
   --thumbnail <路徑>     選用封面；會複製進作品資料夾
-  --replace              覆蓋 --id 指定的既有作品
+  --standalone <英文代號> 獨立預覽，不加入作品目錄（例如活動示範）
+  --replace              覆蓋 --id 或 --standalone 指定的既有內容
   --dry-run              只驗證與打包，不寫入網站
   --help                 顯示說明
 `)
@@ -33,7 +35,7 @@ function usage() {
 function parseArguments(argv) {
   const options = { replace: false }
   const positional = []
-  const valueOptions = new Set(['title', 'id', 'creator-id', 'description', 'category', 'age', 'tags', 'thumbnail'])
+  const valueOptions = new Set(['title', 'id', 'creator-id', 'description', 'category', 'age', 'tags', 'thumbnail', 'standalone'])
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index]
     if (!argument.startsWith('--')) {
@@ -107,6 +109,18 @@ async function readManifest() {
   return manifest
 }
 
+async function readStandaloneManifest() {
+  const manifest = JSON.parse(await fs.readFile(standaloneManifestPath, 'utf8'))
+  if (!Array.isArray(manifest)) throw new Error('public/standalone-games.json 必須是 JSON 陣列')
+  return manifest
+}
+
+function validateStandaloneSlug(slug) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error('--standalone 必須是小寫英數與連字號組成的英文代號')
+  }
+}
+
 async function readCreators() {
   const creators = JSON.parse(await fs.readFile(creatorsPath, 'utf8'))
   if (!Array.isArray(creators)) throw new Error('public/creators.json 必須是 JSON 陣列')
@@ -127,25 +141,34 @@ async function main() {
 
   const baseName = path.basename(inputPath, path.extname(inputPath))
   const title = options.title || baseName
-  if (options.replace && !options.id) throw new Error('--replace 必須搭配既有作品的 --id，避免誤覆蓋其他作品')
-  const id = options.id || crypto.randomUUID()
-  validateId(id)
+  const standaloneSlug = options.standalone || ''
+  if (standaloneSlug) {
+    validateStandaloneSlug(standaloneSlug)
+    if (options.id || options['creator-id']) throw new Error('--standalone 不可搭配 --id 或 --creator-id')
+  } else if (options.replace && !options.id) {
+    throw new Error('--replace 必須搭配既有作品的 --id，避免誤覆蓋其他作品')
+  }
+  const id = standaloneSlug || options.id || crypto.randomUUID()
+  if (!standaloneSlug) validateId(id)
 
   const gameDirectory = path.join(gamesRoot, id)
   const packagePath = path.join(packagesRoot, `${id}.zip`)
   let previewCandidatesDirectory = ''
-  const manifest = await readManifest()
+  const manifest = standaloneSlug ? await readStandaloneManifest() : await readManifest()
   const existingIndex = manifest.findIndex((game) => game.id === id)
   const existingEntry = existingIndex === -1 ? null : manifest[existingIndex]
-  const creatorId = options['creator-id'] || existingEntry?.creatorId
-  if (!creatorId) throw new Error('新作品必須使用 --creator-id 指定已註冊作者的 UUID')
-  validateId(creatorId)
-  const creators = await readCreators()
-  const creator = creators.find((item) => item.id === creatorId)
-  if (!creator) throw new Error(`找不到作者 UUID：${creatorId}；請先執行 npm run register:creator`)
+  const creatorId = standaloneSlug ? '' : (options['creator-id'] || existingEntry?.creatorId)
+  if (!standaloneSlug) {
+    if (!creatorId) throw new Error('新作品必須使用 --creator-id 指定已註冊作者的 UUID')
+    validateId(creatorId)
+    const creators = await readCreators()
+    const creator = creators.find((item) => item.id === creatorId)
+    if (!creator) throw new Error(`找不到作者 UUID：${creatorId}；請先執行 npm run register:creator`)
+  }
   const hasDirectory = await exists(gameDirectory)
   if ((existingIndex !== -1 || hasDirectory) && !options.replace) {
-    throw new Error(`作品「${id}」已存在；若確定要覆蓋，請加上 --id ${id} --replace`)
+    const targetOption = standaloneSlug ? `--standalone ${id}` : `--id ${id}`
+    throw new Error(`作品「${id}」已存在；若確定要覆蓋，請加上 ${targetOption} --replace`)
   }
 
   console.log(`[1/5] 讀取 ${inputPath}`)
@@ -218,21 +241,35 @@ async function main() {
     throw error
   }
 
-  console.log('[5/5] 正在更新 public/games.json')
-  const entry = {
-    id,
-    creatorId,
-    title,
-    description: options.description || '尚未提供作品說明。',
-    category: options.category || '未分類',
-    age: options.age || '全年齡',
-    tags: options.tags ? options.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
-    playUrl: `/games/${id}/index.html`,
-    thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : '',
+  const playUrl = `/games/${id}/index.html`
+  if (standaloneSlug) {
+    console.log('[5/5] 正在更新 public/standalone-games.json（不加入師生作品目錄）')
+    const entry = {
+      id,
+      title,
+      playUrl,
+      thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : '',
+    }
+    if (existingIndex === -1) manifest.push(entry)
+    else manifest[existingIndex] = entry
+    await fs.writeFile(standaloneManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+  } else {
+    console.log('[5/5] 正在更新 public/games.json')
+    const entry = {
+      id,
+      creatorId,
+      title,
+      description: options.description || '尚未提供作品說明。',
+      category: options.category || '未分類',
+      age: options.age || '全年齡',
+      tags: options.tags ? options.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+      playUrl,
+      thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : '',
+    }
+    if (existingIndex === -1) manifest.push(entry)
+    else manifest[existingIndex] = entry
+    await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   }
-  if (existingIndex === -1) manifest.push(entry)
-  else manifest[existingIndex] = entry
-  await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   await pruneSharedResources()
   if (previewCandidatesDirectory) {
     await fs.rm(previewCandidatesDirectory, { recursive: true, force: true })
@@ -240,7 +277,7 @@ async function main() {
   }
 
   console.log(`\n完成：${title}`)
-  console.log(`網站路徑：${entry.playUrl}`)
+  console.log(`網站路徑：${playUrl}`)
   console.log(`保留 ZIP：${packagePath}`)
 }
 

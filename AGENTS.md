@@ -17,6 +17,7 @@
 
 ## 正式發布核准
 
+- 使用者準備合併或發布時，主動檢查並提醒待發布作品與 release:mark 步驟；不可把本機／預覽驗證通過當作正式發布就緒。取得核准、標記上架時間後，以正式環境設定執行 verify，再推送或合併。
 - 未取得站主當次明確同意，不得合併／推送 main 或觸發 Netlify 正式發布。每次新發布重新取得核准，不沿用先前授權。
 - 本機、非 main 分支及 Deploy Preview 不代表正式發布授權。
 - 新作品維持 `releasePending: true`；取得當次核准且準備合併前才執行 `npm run release:mark -- <UUID>`，publishedAt 與 NEW 的 15 天由此起算。

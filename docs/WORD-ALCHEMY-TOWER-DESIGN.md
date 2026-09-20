@@ -1,6 +1,6 @@
 # 字根煉金塔維護筆記
 
-目前已有 Scratch 遊戲、像素素材、網站排行榜 Function 與本機模擬；作品仍為 `releasePending: true`，尚待正式發布核准。
+目前已有 Scratch 遊戲、像素素材、網站排行榜 Function 與本機模擬；已取得本次正式發布核准並標記上架時間，日期以 `public/games.json` 的 `publishedAt` 為準。
 
 ## 來源與更新
 

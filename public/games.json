@@ -129,7 +129,6 @@
     "playUrl": "/games/24871579-c8c8-48e1-a6da-474433f1c16e/index.html",
     "thumbnail": "/games/24871579-c8c8-48e1-a6da-474433f1c16e/cover.webp",
     "creatorId": "230fe9bc-9a9c-4618-9fd1-04998ab4a20c",
-    "releasePending": true,
     "controls": "使用滑鼠選擇詞綴與字根，依畫面提示完成煉金。",
     "objective": "答對題目擊敗魔物並持續爬塔，以樓層優先、分數次之挑戰前五名。",
     "devices": [
@@ -137,6 +136,7 @@
     ],
     "leaderboard": {
       "type": "word-alchemy-v1"
-    }
+    },
+    "publishedAt": "2026-09-20T15:38:10.873Z"
   }
 ]

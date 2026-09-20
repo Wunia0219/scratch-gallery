@@ -12,7 +12,7 @@ export const featuredActivity = {
 export const contentUpdates = {
   students: 'fireworks-featured-2026-09-19',
   events: featuredActivity.isPublished ? 'halloween-challenge-2026-dates' : null,
-  teachers: null,
+  teachers: 'word-alchemy-tower-2026-09-20',
 }
 
 export const contentUpdatesStorageKey = 'scratch-gallery-seen-updates'

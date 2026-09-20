@@ -1,5 +1,6 @@
 <script setup>
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { loadLeaderboard, submitLeaderboard } from '../lib/leaderboardClient.js'
 
 const props = defineProps({
   game: { type: Object, default: null },
@@ -7,7 +8,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 const dialog = ref(null)
+const playerFrame = ref(null)
 let closing = false
+const leaderboardChannel = 'scratch-gallery-leaderboard-v1'
 
 watch(
   () => props.game,
@@ -38,7 +41,35 @@ function cancel(event) {
   close()
 }
 
+function sendLeaderboard(leaderboard) {
+  playerFrame.value?.contentWindow?.postMessage({
+    channel: leaderboardChannel,
+    action: 'result',
+    gameId: props.game?.id,
+    leaderboard,
+  }, '*')
+}
+
+async function handleGameMessage(event) {
+  const data = event.data
+  if (!props.game?.leaderboard || event.source !== playerFrame.value?.contentWindow) return
+  if (!data || data.channel !== leaderboardChannel || data.gameId !== props.game.id) return
+  try {
+    const leaderboard = data.action === 'load'
+      ? await loadLeaderboard(props.game.id)
+      : data.action === 'submit'
+        ? await submitLeaderboard({ gameId: props.game.id, eventId: data.eventId, player: data.player, floor: data.floor, score: data.score })
+        : null
+    if (leaderboard) sendLeaderboard(leaderboard)
+  } catch (error) {
+    console.warn('Leaderboard unavailable', error)
+  }
+}
+
+onMounted(() => window.addEventListener('message', handleGameMessage))
+
 onBeforeUnmount(() => {
+  window.removeEventListener('message', handleGameMessage)
   if (dialog.value?.open) dialog.value.close()
 })
 </script>
@@ -63,6 +94,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="player-shell">
         <iframe
+          ref="playerFrame"
           :src="game.playUrl"
           :title="`${game.title} 遊戲播放器`"
           sandbox="allow-scripts allow-pointer-lock"

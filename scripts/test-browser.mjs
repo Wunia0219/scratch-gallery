@@ -67,6 +67,7 @@ try {
   assert.equal(await page.locator('.nav-drawer-trigger-copy').count(), 0, 'desktop menu trigger should remain icon-only')
   await page.locator('.nav-drawer-trigger').click()
   assert.equal(await page.locator('.nav-drawer-layer').evaluate(element => element.classList.contains('is-open')), true, 'navigation drawer should open')
+  assert.equal(await page.locator('.nav-drawer-nav a[href="/teachers/"] .nav-drawer-update').getByText('有新內容').count(), 1, 'new teacher work should show a navigation update')
   assert.equal(await page.locator('.nav-drawer-close').evaluate(element => element === document.activeElement), true, 'drawer close button should receive focus')
   assert.equal(await page.locator('body').evaluate(element => element.classList.contains('nav-drawer-open')), true, 'page scroll should lock while drawer is open')
   await page.locator('.nav-drawer-nav a[href="#announcements"]').click()
@@ -110,6 +111,10 @@ try {
   assert.equal(await page.locator('.game-card').count(), teacherCount ? initialTeacherCards : 0)
   assert.equal(await page.locator('.filter-group').count(), 1)
   assert.equal(await page.getByText('Class', { exact: true }).count(), 0)
+  await page.goto(`${testOrigin}/`)
+  await page.locator('.nav-drawer-trigger').click()
+  assert.equal(await page.locator('.nav-drawer-nav a[href="/teachers/"] .nav-drawer-update').count(), 0, 'visiting teacher gallery should mark its update as seen')
+  await page.locator('.nav-drawer-close').click()
   for (const game of games) {
     await page.goto(`${testOrigin}/works/${game.id}/`)
     await page.locator('.work-cover .play-count').waitFor({ state: 'visible' })
@@ -123,6 +128,35 @@ try {
     assert.equal(await frame.evaluate(() => { try { localStorage.setItem('isolation-test', '1'); return true } catch { return false } }), false, 'game must not access gallery storage')
     await iframe.locator('#launch').click()
     await frame.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
+    if (game.leaderboard?.type === 'word-alchemy-v1') {
+      await frame.waitForFunction(() => {
+        try { return Number(scaffolding.getVariable('排行榜更新請求')) === 0 && Number(scaffolding.getVariable('排行榜送出請求')) === 0 } catch { return false }
+      })
+      await page.waitForTimeout(250)
+      await frame.evaluate(() => {
+        scaffolding.setVariable('玩家', 'ATEST')
+        scaffolding.setVariable('樓層', 7)
+        scaffolding.setVariable('分數', 4440)
+        scaffolding.setVariable('排行榜送出請求', 1)
+      })
+      await frame.waitForFunction(() => scaffolding.getList('排行玩家')[0] === 'ATEST')
+      await frame.evaluate(() => {
+        scaffolding.setVariable('玩家', 'BTEST')
+        scaffolding.setVariable('樓層', 6)
+        scaffolding.setVariable('分數', 4960)
+        scaffolding.setVariable('排行榜送出請求', 2)
+      })
+      await frame.waitForFunction(() => scaffolding.getList('排行玩家').length === 2)
+      assert.deepEqual(await frame.evaluate(() => [...scaffolding.getList('排行樓層')]), [7, 6], 'higher floor must rank before higher score')
+      await frame.evaluate(() => {
+        scaffolding.setList('排行玩家', [])
+        scaffolding.setList('排行樓層', [])
+        scaffolding.setList('排行分數', [])
+        scaffolding.setVariable('排行榜更新請求', 1)
+      })
+      await frame.waitForFunction(() => scaffolding.getList('排行玩家').length === 2)
+      console.log(`PASS local leaderboard submit + reload: ${game.id}`)
+    }
     await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
     assert.equal(await page.locator('iframe').count(), 0)
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', 'localhost play count should increment')

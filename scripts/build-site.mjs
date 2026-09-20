@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, unlink, rmdir } from 'node:fs/promises'
 import { createServer } from 'vite'
 import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { siteConfig, buildHeaders, runtimeSources } from './site-policy.mjs'
+import { siteConfig, assertReleaseReady, buildHeaders, runtimeSources } from './site-policy.mjs'
 
 export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const { origin, indexable } = siteConfig()
@@ -20,6 +20,7 @@ try {
   const { default: GalleryPage } = await server.ssrLoadModule('/src/GalleryPage.vue')
   const { default: WorkPage } = await server.ssrLoadModule('/src/WorkPage.vue')
   const { catalog } = await server.ssrLoadModule('/src/composables/useGames.js')
+  assertReleaseReady(catalog, indexable)
   const pages = [{ path: '/', title: '東勢長頸鹿美語｜Scratch 遊戲與學生創作成果展', description: '探索東勢長頸鹿美語的 Scratch 學生與老師作品，線上遊玩互動遊戲、欣賞程式創作成果。', component: App },
     { path: '/students/', title: '學生 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿學生完成的 Scratch 遊戲與互動創作，依班級、裝置或關鍵字探索作品。', component: GalleryPage, props: { creatorType: 'student' } },
     { path: '/teachers/', title: '老師 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿老師設計的 Scratch 遊戲、教學示範與互動創作。', component: GalleryPage, props: { creatorType: 'teacher' } },

@@ -11,6 +11,12 @@ export function siteConfig(env = process.env) {
   return { origin: url.origin, indexable }
 }
 
+export function assertReleaseReady(games, indexable) {
+  if (!indexable) return
+  const pending = games.filter(game => game.releasePending)
+  if (pending.length) throw new Error(`正式建置包含尚未標記發布時間的作品：${pending.map(game => game.id).join(', ')}`)
+}
+
 export const galleryCsp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 export function runtimeSources(origin, env = process.env) {
   return [...new Set([origin, env.DEPLOY_URL, env.DEPLOY_PRIME_URL].filter(Boolean).map(value => {

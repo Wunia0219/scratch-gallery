@@ -12,7 +12,7 @@
 - 本機未設定正式網址時，也會產生 noindex 版本；不要把這份本機測試 `dist/` 直接當作正式站上傳。
 - 若手動上傳，先在 PowerShell 設定 `$env:SITE_URL = 'https://你的正式網址'`，再執行 `npm run verify` 與 `npm audit --audit-level=high`，靜態檔只使用產出的 `dist/`；遊玩計數還需要部署 `netlify/functions/`，建議由 Netlify Git 建置一併處理。
 - 上線後執行 `npm run check:live -- https://你的正式網址`，並在 Google Search Console 驗證網域、提交 `/sitemap.xml`、檢查首頁及一個作品網址。搜尋收錄與排名由搜尋引擎決定。
-- 新增作品時提供真實且具體的 `description`，可另外填入 `controls`、`objective`；不要只改標題複製介紹。作者署名沿用現有資料，由站主確認公開授權。
+- 新增作品時提供真實且具體的 `description`，可另外填入 `controls`、`objective`；不要只改標題複製介紹。作者署名沿用現有資料，由站主確認公開授權。匯入後先維持待發布狀態，取得正式發布核准、準備合併到 `main` 時才執行 `release:mark`。
 - 安全機制、每月兩次的完整套件檢查、故障處理及上線限制詳見 [SECURITY.md](SECURITY.md)。
 - 不使用 GitHub Actions 時，在本機執行 `npm run verify:local`：包含建置、安全測試、Chrome 遊戲測試及連線 npm 的弱點掃描，不需綁卡。這是手動檢查，產出的 `dist/` 為 noindex 測試版；正式部署仍由 Netlify 重新建置。
 
@@ -118,7 +118,7 @@ npm run audit:assets
 
 首頁、作品庫與作品介紹頁共用同一個導覽列。若學生作品、活動或老師作品有重要更新，可在 `src/contentUpdates.js` 將對應區塊的版本字串改成新的唯一值；使用者尚未看過時，導覽列會顯示橘色提示，進入該區塊後便會在該瀏覽器中自動消失。沒有更新的區塊維持 `null`。
 
-新增作品時，`import-game` 會自動在 `public/games.json` 寫入 `publishedAt`。作品卡片會從該上架時間起顯示「新上架」15 天，之後由瀏覽器自動隱藏，不需要手動設定到期日；更新既有作品會保留原上架時間，不會重新出現 NEW。
+新增作品時，`import-game` 會先在 `public/games.json` 寫入 `releasePending: true`，本機與 Deploy Preview 都不會開始計算「新上架」時間。取得站主當次正式發布核准、準備合併到 `main` 前，執行 `npm run release:mark -- <作品 UUID>`；此指令才會寫入當下的 `publishedAt`，作品卡片由此時間起顯示「新上架」15 天。正式建置若仍有待發布作品會直接失敗，避免誤上架；更新既有作品則保留原上架時間，不會重新出現 NEW。
 
 活動時程提醒同樣設定在 `src/contentUpdates.js` 的 `featuredActivity`。`isPublished: false` 時不顯示頂部提醒、活動 NEW 或投稿內容，首頁只顯示模糊的「敬請期待」；正式公布前將它改為 `true`。公布後，`remindFrom` 決定何時開始顯示，活動日期文案由設定以台灣時區產生，投稿網址與預覽 ID 也集中在此設定；預覽內容讀取 `public/standalone-games.json`。`startsAt` 後切換為徵稿中，截止前三天切換為即將截止，超過 `endsAt` 自動消失，活動卡改為已截止並隱藏投稿連結。開啟中的頁面每 30 秒及重新可見時更新時程與 NEW 狀態。使用者可關閉各階段提醒；活動進入新階段時會重新顯示一次。
 
@@ -156,7 +156,7 @@ npm run audit:assets
 {
   "id": "123e4567-e89b-42d3-a456-426614174000",
   "creatorId": "另一個作者 UUID",
-  "publishedAt": "2026-09-19T00:00:00.000Z",
+  "releasePending": true,
   "title": "數學探險島",
   "description": "練習基礎運算與問題解決。",
   "category": "數學",
@@ -180,6 +180,7 @@ npm run audit:assets # 檢查媒體與靜態檔案大小
 npm run audit:catalog # 檢查作者與作品 UUID 關聯
 npm run optimize:games # 共用重複遊戲資源並清除未引用檔案
 npm run register:creator -- --name "姓名" --class "班級" # 建立作者 UUID
+npm run release:mark -- <作品 UUID> # 正式發布前寫入 NEW 的 15 天起算時間
 ```
 
 ## 架構與資料流
@@ -203,6 +204,7 @@ flowchart TD
 
 - **資料層**：`public/creators.json` 保存作者 UUID、姓名、身分與班級；`public/games.json` 保存作品 UUID、作者關聯與素材路徑。`src/lib/catalog.js` 驗證資料，`src/composables/useGames.js` 在建置與瀏覽器共用同一份目錄，不在執行時請求 API。
 - **遊玩次數**：玩家實際開啟作品時建立匿名事件 UUID，由 `/.netlify/functions/play-counts` 寫入 Netlify Blobs；不保存姓名、IP 或定位，同一瀏覽器在 30 分鐘內不重複計算同一作品。localhost 使用獨立的瀏覽器測試數字，不讀寫正式資料。公開計數 GET 可在 Netlify 快取 60 秒，其他訪客的數字最多延遲約一分鐘；自己的成功寫入即時更新，較舊的 GET 不會蓋掉剛更新的數字。事件查詢逐頁累計以降低記憶體占用，未更動或清除歷史事件。30 分鐘冷卻為瀏覽器體驗機制，不是伺服器防灌票。
+- **字根煉金塔排行榜**：啟用 `word-alchemy-v1` 的作品由打包時注入的橋接讀取隱藏請求變數，透過受限 iframe 的 `postMessage` 交給外層頁面，再由同源 `word-alchemy-leaderboard` Function 寫入獨立 Blobs。排名先比樓層、再比分數，同名只保留最佳成績；名稱正規化後雜湊成 Blob key。localhost 使用 `localStorage` 模擬共用榜，不會讀寫正式資料。這是無帳號的友善排行榜，只拒絕明顯不合理成績，不宣稱能完全防作弊。
 - **呈現層**：`src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 學生／老師作品庫或 `WorkPage.vue` 作品頁，未使用 Vue Router。首頁不載入作品目錄、卡片或播放器；`/students/` 與 `/teachers/` 依作者 `role` 分流，每次顯示 9 件並逐批載入，班級選項由作者資料自動產生。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。
 - **靜態生成**：`scripts/build-site.mjs` 用 Vue 伺服器渲染 API 在建置時產生 HTML，無 JavaScript 也能讀取介紹；瀏覽器使用 `createApp().mount()` 重新掛載互動介面，目前不是 hydration。作品數增加時，靜態頁數與建置工作量也會增加。
 - **遊戲產線**：`capture-previews.cjs` 擷取候選封面，`import-game.cjs` 匯入作品，`optimize-game-package.cjs` 以內容雜湊共用資源。`public/games/<UUID>/` 保存各作品，`_shared/` 保存共用執行核心及素材。

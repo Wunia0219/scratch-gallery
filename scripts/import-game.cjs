@@ -6,6 +6,7 @@ const JSZip = require('@turbowarp/jszip')
 const { optimizeGamePackage, pruneSharedResources } = require('./optimize-game-package.cjs')
 const { buildEntry, preserveImages, commitImport } = require('./lib/import-transaction.cjs')
 const { UUID_PATTERN, SLUG_PATTERN } = require('../src/lib/identifiers.js')
+const { createLeaderboardBridge } = require('./lib/leaderboard-bridge.cjs')
 
 const projectRoot = path.resolve(__dirname, '..')
 const publicRoot = path.join(projectRoot, 'public')
@@ -31,6 +32,7 @@ function usage() {
   --objective <目標>    遊戲目標
   --thumbnail <路徑>     選用封面；會複製進作品資料夾
   --standalone <英文代號> 獨立預覽，不加入作品目錄（例如活動示範）
+  --leaderboard          啟用字根煉金塔前五名排行榜橋接
   --replace              覆蓋 --id 或 --standalone 指定的既有內容
   --dry-run              只驗證與打包，不寫入網站
   --help                 顯示說明
@@ -48,7 +50,7 @@ function parseArguments(argv) {
       continue
     }
     const name = argument.slice(2)
-    if (name === 'replace' || name === 'dry-run' || name === 'help') {
+    if (name === 'replace' || name === 'dry-run' || name === 'help' || name === 'leaderboard') {
       options[name] = true
       continue
     }
@@ -193,6 +195,7 @@ async function main() {
   packager.options.controls.fullscreen.enabled = true
   packager.options.app.windowTitle = title
   packager.options.app.packageName = `game-${id}`
+  if (options.leaderboard) packager.options.custom.js = createLeaderboardBridge(id)
   console.log('[3/5] 正在打包網站 ZIP')
   const result = await packager.package()
   if (result.type !== 'application/zip') throw new Error(`預期 ZIP，實際得到 ${result.type}`)

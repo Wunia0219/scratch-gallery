@@ -1,6 +1,6 @@
 {
   "name": "scratch-gallery",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A minimal Vue 3 gallery for packaged Scratch games.",
@@ -21,6 +21,7 @@
     "optimize:games": "node scripts/optimize-game-package.cjs",
     "migrate:game-ids": "node scripts/migrate-game-ids.cjs",
     "register:creator": "node scripts/register-creator.cjs",
+    "release:mark": "node scripts/mark-published.cjs",
     "audit:catalog": "node scripts/audit-catalog.cjs"
   },
   "dependencies": {

@@ -3,11 +3,18 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import vm from 'node:vm'
+import { createRequire } from 'node:module'
 import { buildEntry, preserveImages, commitImport } from './lib/import-transaction.cjs'
+import { markGamePublished } from './lib/release-publication.cjs'
 import { studentClasses, validateCatalog } from '../src/lib/catalog.js'
 import { readStoredObject, writeStored } from '../src/lib/storage.js'
 import { featuredActivity, getActivityReminder, getActivityPhase, getWorkUpdate, formatActivityDate } from '../src/contentUpdates.js'
 import { createPlayCountHandler } from '../netlify/lib/play-count-handler.mjs'
+import { createLeaderboardHandler, leaderboardKey, rankLeaderboard, scoreBounds, validateLeaderboardEvent } from '../netlify/lib/leaderboards.mjs'
+
+const require = createRequire(import.meta.url)
+const { createLeaderboardBridge } = require('./lib/leaderboard-bridge.cjs')
 
 const id = '123e4567-e89b-42d3-a456-426614174000'
 const author = { id, name: '作者', role: 'student', className: 'Scratch-116' }
@@ -45,13 +52,96 @@ test('minimal replacement preserves metadata, publication date, cover and layers
 
 test('new and standalone entries retain distinct rules, explicit fields replace old values', () => {
   const entry = buildEntry({ options: { devices: 'desktop,mobile', controls: '空白鍵' }, id, creatorId: id, baseName: '新作', now: '2026-09-20T00:00:00Z' })
-  assert.equal(entry.publishedAt, '2026-09-20T00:00:00Z')
+  assert.equal(entry.releasePending, true)
+  assert.equal(entry.publishedAt, undefined)
   assert.deepEqual(entry.devices, ['desktop', 'mobile'])
   assert.equal(entry.controls, '空白鍵')
   const legacy = { ...original }; delete legacy.publishedAt
   assert.equal(buildEntry({ existing: legacy, options: {}, id, creatorId: id }).publishedAt, undefined)
   assert.equal(buildEntry({ options: {}, id: 'demo', standalone: true, baseName: '示範' }).creatorId, undefined)
   assert.deepEqual(buildEntry({ existing: original, options: { tags: '新標籤' }, id, creatorId: id }).tags, ['新標籤'])
+  assert.deepEqual(buildEntry({ options: { leaderboard: true }, id, creatorId: id, baseName: '排行作品' }).leaderboard, { type: 'word-alchemy-v1' })
+})
+
+test('new work starts its 15-day window only when explicitly marked for release', () => {
+  const games = [{ id, title: '待發布作品', releasePending: true }]
+  const released = markGamePublished(games, id, '2026-09-21T00:00:00Z')
+  assert.equal(released.releasePending, undefined)
+  assert.equal(released.publishedAt, '2026-09-21T00:00:00Z')
+  assert.equal(getWorkUpdate(released, Date.parse('2026-10-05T23:59:59Z'))?.kind, 'new')
+  assert.equal(getWorkUpdate(released, Date.parse('2026-10-06T00:00:00Z')), null)
+  assert.throws(() => markGamePublished(games, id, '2026-09-22T00:00:00Z'), /不是待發布/)
+})
+
+test('leaderboard ranks floor before score and keeps one best result per normalized player', () => {
+  const ranked = rankLeaderboard([
+    { player: '低樓高分', floor: 6, score: 4960, achievedAt: '2026-09-20T00:00:00Z' },
+    { player: '高樓低分', floor: 7, score: 4440, achievedAt: '2026-09-20T00:00:01Z' },
+    { player: '重複玩家', floor: 5, score: 3000, achievedAt: '2026-09-20T00:00:02Z' },
+    { player: '重複玩家', floor: 5, score: 3200, achievedAt: '2026-09-20T00:00:03Z' },
+  ])
+  assert.deepEqual(ranked.map(entry => entry.player), ['高樓低分', '低樓高分', '重複玩家'])
+  assert.equal(ranked[2].score, 3200)
+  assert.deepEqual(scoreBounds(7), { minimum: 4440, maximum: 6780 })
+})
+
+test('leaderboard API validates scores, persists idempotently and returns shared top five', async () => {
+  const values = new Map()
+  const store = {
+    async set(key, value) { values.set(key, value) },
+    async get(key, options) { assert.equal(options.type, 'json'); return values.has(key) ? JSON.parse(values.get(key)) : null },
+    async *list(options) {
+      const blobs = [...values.keys()].filter(key => key.startsWith(options.prefix)).map(key => ({ key }))
+      yield { blobs }
+    },
+  }
+  const handler = createLeaderboardHandler(() => store, [id], () => '2026-09-20T00:00:00Z')
+  const url = 'https://giraffegallery.com/.netlify/functions/word-alchemy-leaderboard'
+  const post = body => handler(new Request(url, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://giraffegallery.com' }, body: JSON.stringify(body) }))
+  const event = { gameId: id, eventId: id, player: 'PlayerA', floor: 7, score: 4440 }
+  assert.equal(validateLeaderboardEvent(event, new Set([id])).score, 4440)
+  assert.equal(validateLeaderboardEvent({ ...event, score: 999999 }, new Set([id])), null)
+  assert.equal((await post(event)).status, 201)
+  assert.equal((await post(event)).status, 201)
+  assert.equal(values.size, 1)
+  const response = await handler(new Request(`${url}?gameId=${id}`))
+  assert.deepEqual(await response.json(), { leaderboard: [{ player: 'PlayerA', floor: 7, score: 4440 }] })
+  assert.doesNotMatch(leaderboardKey(id, 'PlayerA'), /PlayerA/i)
+  assert.equal((await post({ ...event, player: 'https://example.com' })).status, 400)
+  assert.equal((await handler(new Request(`${url}?gameId=unknown`))).status, 404)
+})
+
+test('packaged game bridge loads and submits through parent without direct network access', () => {
+  const values = { '排行榜更新請求': 0, '排行榜送出請求': 0, 玩家: 'Player1', 樓層: 7, 分數: 4440 }
+  const lists = {}
+  const messages = []
+  let tick
+  const parent = { postMessage(message) { messages.push(message) } }
+  let messageHandler
+  const context = {
+    crypto: { randomUUID: () => id },
+    parent,
+    scaffolding: {
+      getVariable: name => values[name],
+      setList(name, value) { lists[name] = value },
+    },
+    setInterval(callback, delay) { assert.equal(delay, 100); tick = callback },
+    addEventListener(type, callback) { assert.equal(type, 'message'); messageHandler = callback },
+  }
+  vm.runInNewContext(createLeaderboardBridge(id), context)
+  tick()
+  assert.equal(messages.length, 0)
+  values['排行榜更新請求'] = 1
+  tick()
+  assert.equal(messages[0].action, 'load')
+  values['排行榜送出請求'] = 1
+  tick()
+  assert.deepEqual({ ...messages[1] }, { channel: 'scratch-gallery-leaderboard-v1', action: 'submit', gameId: id, eventId: id, player: 'Player1', floor: 7, score: 4440 })
+  messageHandler({ source: parent, data: { channel: 'scratch-gallery-leaderboard-v1', action: 'result', gameId: id, leaderboard: [{ player: '甲', floor: 7, score: 4440 }] } })
+  assert.deepEqual([...lists['排行玩家']], ['甲'])
+  assert.deepEqual([...lists['排行樓層']], [7])
+  assert.deepEqual([...lists['排行分數']], [4440])
+  assert.doesNotMatch(createLeaderboardBridge(id), /\bfetch\s*\(/)
 })
 
 for (const failure of ['copy', 'manifest']) {

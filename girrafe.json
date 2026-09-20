@@ -1,0 +1,702 @@
+[
+  {
+    "word": "rerun",
+    "fix": "re",
+    "extra": "run",
+    "description": "run again",
+    "translation": "再跑一次；重新執行"
+  },
+  {
+    "word": "reread",
+    "fix": "re",
+    "extra": "read",
+    "description": "read again",
+    "translation": "再讀一次"
+  },
+  {
+    "word": "refill",
+    "fix": "re",
+    "extra": "fill",
+    "description": "fill again",
+    "translation": "再裝滿；重新填滿"
+  },
+  {
+    "word": "replay",
+    "fix": "re",
+    "extra": "play",
+    "description": "play again",
+    "translation": "再玩一次；重播"
+  },
+  {
+    "word": "reopen",
+    "fix": "re",
+    "extra": "open",
+    "description": "open again",
+    "translation": "再次打開"
+  },
+  {
+    "word": "repaint",
+    "fix": "re",
+    "extra": "paint",
+    "description": "paint again",
+    "translation": "重新上色；再漆一次"
+  },
+  {
+    "word": "rebuild",
+    "fix": "re",
+    "extra": "build",
+    "description": "build again",
+    "translation": "重建；重新建造"
+  },
+  {
+    "word": "unhappy",
+    "fix": "un",
+    "extra": "happy",
+    "description": "not happy",
+    "translation": "不開心；不快樂"
+  },
+  {
+    "word": "unkind",
+    "fix": "un",
+    "extra": "kind",
+    "description": "not kind",
+    "translation": "不友善；不親切"
+  },
+  {
+    "word": "unlock",
+    "fix": "un",
+    "extra": "lock",
+    "description": "opposite of lock",
+    "translation": "解鎖；打開鎖"
+  },
+  {
+    "word": "unpack",
+    "fix": "un",
+    "extra": "pack",
+    "description": "opposite of pack",
+    "translation": "拆開包裝；取出行李"
+  },
+  {
+    "word": "unzip",
+    "fix": "un",
+    "extra": "zip",
+    "description": "opposite of zip",
+    "translation": "拉開拉鍊；解壓縮"
+  },
+  {
+    "word": "unclean",
+    "fix": "un",
+    "extra": "clean",
+    "description": "not clean",
+    "translation": "不乾淨的"
+  },
+  {
+    "word": "unfold",
+    "fix": "un",
+    "extra": "fold",
+    "description": "opposite of fold",
+    "translation": "展開；打開摺疊物"
+  },
+  {
+    "word": "pretest",
+    "fix": "pre",
+    "extra": "test",
+    "description": "test before",
+    "translation": "事前測驗；預先測試"
+  },
+  {
+    "word": "preheat",
+    "fix": "pre",
+    "extra": "heat",
+    "description": "heat before",
+    "translation": "預熱；先加熱"
+  },
+  {
+    "word": "preschool",
+    "fix": "pre",
+    "extra": "school",
+    "description": "before (regular) school",
+    "translation": "學前班；幼兒園"
+  },
+  {
+    "word": "prewash",
+    "fix": "pre",
+    "extra": "wash",
+    "description": "wash before",
+    "translation": "預先清洗；先洗"
+  },
+  {
+    "word": "precut",
+    "fix": "pre",
+    "extra": "cut",
+    "description": "cut before",
+    "translation": "預先切好的；先切"
+  },
+  {
+    "word": "teacher",
+    "fix": "er",
+    "extra": "teach",
+    "description": "a person who teaches",
+    "translation": "老師；教學的人"
+  },
+  {
+    "word": "helper",
+    "fix": "er",
+    "extra": "help",
+    "description": "a person who helps",
+    "translation": "幫手；協助的人"
+  },
+  {
+    "word": "singer",
+    "fix": "er",
+    "extra": "sing",
+    "description": "a person who sings",
+    "translation": "歌手；唱歌的人"
+  },
+  {
+    "word": "player",
+    "fix": "er",
+    "extra": "play",
+    "description": "a person who plays",
+    "translation": "玩家；參與活動的人"
+  },
+  {
+    "word": "farmer",
+    "fix": "er",
+    "extra": "farm",
+    "description": "a person who works on a farm",
+    "translation": "農夫；務農的人"
+  },
+  {
+    "word": "painter",
+    "fix": "er",
+    "extra": "paint",
+    "description": "a person who paints",
+    "translation": "畫家；油漆工"
+  },
+  {
+    "word": "worker",
+    "fix": "er",
+    "extra": "work",
+    "description": "a person who works",
+    "translation": "工作者；工人"
+  },
+  {
+    "word": "cleaner",
+    "fix": "er",
+    "extra": "clean",
+    "description": "a thing or person that cleans",
+    "translation": "清潔工；清潔用品"
+  },
+  {
+    "word": "helpful",
+    "fix": "ful",
+    "extra": "help",
+    "description": "full of help",
+    "translation": "有幫助的；樂於助人的"
+  },
+  {
+    "word": "playful",
+    "fix": "ful",
+    "extra": "play",
+    "description": "full of play",
+    "translation": "愛玩的；活潑好玩的"
+  },
+  {
+    "word": "joyful",
+    "fix": "ful",
+    "extra": "joy",
+    "description": "full of joy",
+    "translation": "開心的；充滿喜悅的"
+  },
+  {
+    "word": "careful",
+    "fix": "ful",
+    "extra": "care",
+    "description": "full of care",
+    "translation": "小心的；謹慎的"
+  },
+  {
+    "word": "cheerful",
+    "fix": "ful",
+    "extra": "cheer",
+    "description": "full of cheer",
+    "translation": "開朗的；愉快的"
+  },
+  {
+    "word": "hopeful",
+    "fix": "ful",
+    "extra": "hope",
+    "description": "full of hope",
+    "translation": "充滿希望的"
+  },
+  {
+    "word": "colorful",
+    "fix": "ful",
+    "extra": "color",
+    "description": "full of color",
+    "translation": "色彩繽紛的"
+  },
+  {
+    "word": "harmless",
+    "fix": "less",
+    "extra": "harm",
+    "description": "without harm",
+    "translation": "無害的；不會造成傷害的"
+  },
+  {
+    "word": "careless",
+    "fix": "less",
+    "extra": "care",
+    "description": "without care",
+    "translation": "粗心的；不小心的"
+  },
+  {
+    "word": "fearless",
+    "fix": "less",
+    "extra": "fear",
+    "description": "without fear",
+    "translation": "無所畏懼的；勇敢的"
+  },
+  {
+    "word": "useless",
+    "fix": "less",
+    "extra": "use",
+    "description": "without use",
+    "translation": "沒用的；派不上用場的"
+  },
+  {
+    "word": "spotless",
+    "fix": "less",
+    "extra": "spot",
+    "description": "without a spot",
+    "translation": "一塵不染的；非常乾淨的"
+  },
+  {
+    "word": "shoeless",
+    "fix": "less",
+    "extra": "shoe",
+    "description": "without shoes",
+    "translation": "沒穿鞋的"
+  },
+  {
+    "word": "thoughtless",
+    "fix": "less",
+    "extra": "thought",
+    "description": "without thought",
+    "translation": "欠缺考慮的；不體貼的"
+  },
+  {
+    "word": "dislike",
+    "fix": "dis",
+    "extra": "like",
+    "description": "opposite of like",
+    "translation": "不喜歡"
+  },
+  {
+    "word": "disagree",
+    "fix": "dis",
+    "extra": "agree",
+    "description": "opposite of agree",
+    "translation": "不同意"
+  },
+  {
+    "word": "disappear",
+    "fix": "dis",
+    "extra": "appear",
+    "description": "opposite of appear",
+    "translation": "消失；不見"
+  },
+  {
+    "word": "disobey",
+    "fix": "dis",
+    "extra": "obey",
+    "description": "opposite of obey",
+    "translation": "不服從；不聽從"
+  },
+  {
+    "word": "disconnect",
+    "fix": "dis",
+    "extra": "connect",
+    "description": "opposite of connect",
+    "translation": "斷開連接；中斷連線"
+  },
+  {
+    "word": "dishonest",
+    "fix": "dis",
+    "extra": "honest",
+    "description": "not honest",
+    "translation": "不誠實的"
+  },
+  {
+    "word": "disallow",
+    "fix": "dis",
+    "extra": "allow",
+    "description": "not allow",
+    "translation": "不允許；禁止"
+  },
+  {
+    "word": "disrespect",
+    "fix": "dis",
+    "extra": "respect",
+    "description": "opposite of respect",
+    "translation": "不尊重"
+  },
+  {
+    "word": "inactive",
+    "fix": "in",
+    "extra": "active",
+    "description": "not active",
+    "translation": "不活躍的；未啟用的"
+  },
+  {
+    "word": "indirect",
+    "fix": "in",
+    "extra": "direct",
+    "description": "not direct",
+    "translation": "間接的；不直接的"
+  },
+  {
+    "word": "impossible",
+    "fix": "im",
+    "extra": "possible",
+    "description": "not possible",
+    "translation": "不可能的"
+  },
+  {
+    "word": "impolite",
+    "fix": "im",
+    "extra": "polite",
+    "description": "not polite",
+    "translation": "不禮貌的"
+  },
+  {
+    "word": "impatient",
+    "fix": "im",
+    "extra": "patient",
+    "description": "not patient",
+    "translation": "沒耐心的；不耐煩的"
+  },
+  {
+    "word": "impure",
+    "fix": "im",
+    "extra": "pure",
+    "description": "not pure",
+    "translation": "不純的；有雜質的"
+  },
+  {
+    "word": "imperfect",
+    "fix": "im",
+    "extra": "perfect",
+    "description": "not perfect",
+    "translation": "不完美的"
+  },
+  {
+    "word": "mishear",
+    "fix": "mis",
+    "extra": "hear",
+    "description": "hear wrongly",
+    "translation": "聽錯"
+  },
+  {
+    "word": "misread",
+    "fix": "mis",
+    "extra": "read",
+    "description": "read wrongly",
+    "translation": "讀錯；誤讀"
+  },
+  {
+    "word": "misplace",
+    "fix": "mis",
+    "extra": "place",
+    "description": "place in the wrong spot",
+    "translation": "放錯地方；一時找不到"
+  },
+  {
+    "word": "misspell",
+    "fix": "mis",
+    "extra": "spell",
+    "description": "spell wrongly",
+    "translation": "拼錯字"
+  },
+  {
+    "word": "mislead",
+    "fix": "mis",
+    "extra": "lead",
+    "description": "lead wrongly",
+    "translation": "誤導；帶錯方向"
+  },
+  {
+    "word": "misunderstand",
+    "fix": "mis",
+    "extra": "understand",
+    "description": "understand wrongly",
+    "translation": "誤會；理解錯誤"
+  },
+  {
+    "word": "misuse",
+    "fix": "mis",
+    "extra": "use",
+    "description": "use wrongly",
+    "translation": "誤用；使用不當"
+  },
+  {
+    "word": "tricycle",
+    "fix": "tri",
+    "extra": "cycle",
+    "description": "three cycles (wheels)",
+    "translation": "三輪車"
+  },
+  {
+    "word": "triangle",
+    "fix": "tri",
+    "extra": "angle",
+    "description": "three angles (corners)",
+    "translation": "三角形"
+  },
+  {
+    "word": "tripod",
+    "fix": "tri",
+    "extra": "pod",
+    "description": "three feet/legs (stand)",
+    "translation": "三腳架"
+  },
+  {
+    "word": "triplets",
+    "fix": "tri",
+    "extra": "plets",
+    "description": "three babies born together",
+    "translation": "三胞胎"
+  },
+  {
+    "word": "midway",
+    "fix": "mid",
+    "extra": "way",
+    "description": "middle of the way",
+    "translation": "中途；半路上"
+  },
+  {
+    "word": "midday",
+    "fix": "mid",
+    "extra": "day",
+    "description": "middle of the day",
+    "translation": "中午；正午"
+  },
+  {
+    "word": "midnight",
+    "fix": "mid",
+    "extra": "night",
+    "description": "middle of the night",
+    "translation": "午夜；半夜十二點"
+  },
+  {
+    "word": "midair",
+    "fix": "mid",
+    "extra": "air",
+    "description": "middle of the air",
+    "translation": "半空中"
+  },
+  {
+    "word": "rewrite",
+    "fix": "re",
+    "extra": "write",
+    "description": "write again",
+    "translation": "重寫；再寫一次"
+  },
+  {
+    "word": "retell",
+    "fix": "re",
+    "extra": "tell",
+    "description": "tell again",
+    "translation": "重述；再說一次"
+  },
+  {
+    "word": "reuse",
+    "fix": "re",
+    "extra": "use",
+    "description": "use again",
+    "translation": "重複使用；再次利用"
+  },
+  {
+    "word": "recycle",
+    "fix": "re",
+    "extra": "cycle",
+    "description": "use again in a new way",
+    "translation": "回收再利用"
+  },
+  {
+    "word": "restart",
+    "fix": "re",
+    "extra": "start",
+    "description": "start again",
+    "translation": "重新開始"
+  },
+  {
+    "word": "unfair",
+    "fix": "un",
+    "extra": "fair",
+    "description": "not fair",
+    "translation": "不公平的"
+  },
+  {
+    "word": "unsafe",
+    "fix": "un",
+    "extra": "safe",
+    "description": "not safe",
+    "translation": "不安全的"
+  },
+  {
+    "word": "untie",
+    "fix": "un",
+    "extra": "tie",
+    "description": "undo a tie or knot",
+    "translation": "解開；鬆開繩結"
+  },
+  {
+    "word": "unwrap",
+    "fix": "un",
+    "extra": "wrap",
+    "description": "remove the wrapping",
+    "translation": "拆開包裝"
+  },
+  {
+    "word": "preview",
+    "fix": "pre",
+    "extra": "view",
+    "description": "view before the full version",
+    "translation": "預覽；事先觀看"
+  },
+  {
+    "word": "preorder",
+    "fix": "pre",
+    "extra": "order",
+    "description": "order before it is available",
+    "translation": "預購；事先訂購"
+  },
+  {
+    "word": "prepay",
+    "fix": "pre",
+    "extra": "pay",
+    "description": "pay before using or receiving",
+    "translation": "預付；事先付款"
+  },
+  {
+    "word": "reader",
+    "fix": "er",
+    "extra": "read",
+    "description": "a person who reads",
+    "translation": "讀者；閱讀的人"
+  },
+  {
+    "word": "speaker",
+    "fix": "er",
+    "extra": "speak",
+    "description": "a person who speaks",
+    "translation": "說話者；演講者"
+  },
+  {
+    "word": "listener",
+    "fix": "er",
+    "extra": "listen",
+    "description": "a person who listens",
+    "translation": "聽眾；聆聽的人"
+  },
+  {
+    "word": "builder",
+    "fix": "er",
+    "extra": "build",
+    "description": "a person who builds",
+    "translation": "建造者；建築工人"
+  },
+  {
+    "word": "gardener",
+    "fix": "er",
+    "extra": "garden",
+    "description": "a person who works in a garden",
+    "translation": "園丁；照顧花園的人"
+  },
+  {
+    "word": "thankful",
+    "fix": "ful",
+    "extra": "thank",
+    "description": "feeling full of thanks",
+    "translation": "感激的；心懷感謝的"
+  },
+  {
+    "word": "peaceful",
+    "fix": "ful",
+    "extra": "peace",
+    "description": "full of peace",
+    "translation": "和平的；寧靜的"
+  },
+  {
+    "word": "useful",
+    "fix": "ful",
+    "extra": "use",
+    "description": "able to help or be used",
+    "translation": "有用的；實用的"
+  },
+  {
+    "word": "homeless",
+    "fix": "less",
+    "extra": "home",
+    "description": "without a home",
+    "translation": "無家可歸的；沒有住處的"
+  },
+  {
+    "word": "hopeless",
+    "fix": "less",
+    "extra": "hope",
+    "description": "without hope",
+    "translation": "沒有希望的；令人絕望的"
+  },
+  {
+    "word": "endless",
+    "fix": "less",
+    "extra": "end",
+    "description": "without an end",
+    "translation": "無止境的；沒完沒了的"
+  },
+  {
+    "word": "disable",
+    "fix": "dis",
+    "extra": "able",
+    "description": "make unable to work",
+    "translation": "停用；使無法運作"
+  },
+  {
+    "word": "distrust",
+    "fix": "dis",
+    "extra": "trust",
+    "description": "not trust",
+    "translation": "不信任；懷疑"
+  },
+  {
+    "word": "invisible",
+    "fix": "in",
+    "extra": "visible",
+    "description": "not able to be seen",
+    "translation": "看不見的；隱形的"
+  },
+  {
+    "word": "incorrect",
+    "fix": "in",
+    "extra": "correct",
+    "description": "not correct",
+    "translation": "不正確的；錯誤的"
+  },
+  {
+    "word": "miscount",
+    "fix": "mis",
+    "extra": "count",
+    "description": "count wrongly",
+    "translation": "數錯；計算錯誤"
+  },
+  {
+    "word": "tricolor",
+    "fix": "tri",
+    "extra": "color",
+    "description": "having three colors",
+    "translation": "三色的；由三種顏色組成的"
+  }
+]

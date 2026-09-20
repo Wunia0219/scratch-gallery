@@ -21,6 +21,7 @@
 - 未取得站主當次明確同意前，不得合併或直接推送至 `main`，也不得執行任何會觸發 Netlify 正式發布的操作。
 - 本機修改、測試、非 `main` 分支與 Deploy Preview 不代表已取得正式發布授權。
 - 每一次新的合併或正式發布都須重新取得明確同意，不沿用先前的發布授權。
+- 新作品匯入後維持 `releasePending: true`；只有取得當次正式發布核准、準備合併到 `main` 前，才執行 `npm run release:mark -- <作品 UUID>`，讓 `publishedAt` 與 NEW 的 15 天從正式上架時開始。
 
 ## 產品與安全界線
 - 版本讀取 `package.json`，同步更新 lockfile；正式版本顯示 `ver X.Y.Z`。維持藍／黃／橘視覺、寬鬆響應式排版、既有功能及官方品牌素材。

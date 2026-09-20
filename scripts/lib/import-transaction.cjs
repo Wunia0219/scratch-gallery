@@ -13,13 +13,14 @@ function buildEntry({ existing, options, id, creatorId, baseName, standalone, th
   }
   if (!standalone) {
     entry.creatorId = creatorId
-    if (!existing) entry.publishedAt = now
+    if (!existing) entry.releasePending = true
     for (const key of ['description', 'category', 'age', 'controls', 'objective']) {
       if (options[key] !== undefined) entry[key] = options[key]
     }
     for (const key of ['tags', 'devices']) {
       if (options[key] !== undefined) entry[key] = options[key].split(',').map(value => value.trim()).filter(Boolean)
     }
+    if (options.leaderboard) entry.leaderboard = { type: 'word-alchemy-v1' }
   }
   return entry
 }

@@ -1,6 +1,8 @@
 <script setup>
 import { defineAsyncComponent, onMounted, ref } from 'vue'
 import GameCard from './components/GameCard.vue'
+import SiteHeader from './components/SiteHeader.vue'
+import SiteFooter from './components/SiteFooter.vue'
 import { catalog } from './composables/useGames.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 const props = defineProps({ game: { type: Object, required: true } })
@@ -13,10 +15,7 @@ function play(game) { selectedGame.value = game; void recordPlay(game.id) }
 </script>
 <template>
   <a class="skip-link" href="#main-content">跳到主要內容</a>
-  <header class="site-header">
-    <a class="brand" href="/"><img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />東勢長頸鹿 Scratch 創作館</a>
-    <nav aria-label="主要導覽"><a href="/students/">學生作品</a><a href="/teachers/">老師作品</a></nav>
-  </header>
+  <SiteHeader :active="game.creatorType === 'teacher' ? 'teachers' : 'students'" />
   <main id="main-content">
     <section class="work-intro">
       <p><a href="/">首頁</a> / <a :href="game.creatorType === 'teacher' ? '/teachers/' : '/students/'">{{ game.creatorType === 'teacher' ? '老師作品' : '學生作品' }}</a> / {{ game.title }}</p>
@@ -37,6 +36,6 @@ function play(game) { selectedGame.value = game; void recordPlay(game.id) }
       <div class="game-grid"><GameCard v-for="item in related" :key="item.id" :game="item" :play-count="playCountsLoaded ? (playCounts[item.id] ?? 0) : null" @play="play" /></div>
     </section>
   </main>
-  <footer><p>東勢長頸鹿美語 · Scratch 創作成果展</p><p>本網站並非 Scratch 官方網站。</p></footer>
+  <SiteFooter work-page />
   <GamePlayerDialog v-if="selectedGame" :game="selectedGame" @close="selectedGame = null" />
 </template>

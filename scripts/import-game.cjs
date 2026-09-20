@@ -4,11 +4,15 @@ const crypto = require('node:crypto')
 const Packager = require('@turbowarp/packager')
 const JSZip = require('@turbowarp/jszip')
 const { optimizeGamePackage, pruneSharedResources } = require('./optimize-game-package.cjs')
+const { buildEntry, preserveImages, commitImport } = require('./lib/import-transaction.cjs')
+const { UUID_PATTERN, SLUG_PATTERN } = require('../src/lib/identifiers.js')
+const { createLeaderboardBridge } = require('./lib/leaderboard-bridge.cjs')
 
 const projectRoot = path.resolve(__dirname, '..')
 const publicRoot = path.join(projectRoot, 'public')
 const gamesRoot = path.join(publicRoot, 'games')
 const manifestPath = path.join(publicRoot, 'games.json')
+const standaloneManifestPath = path.join(publicRoot, 'standalone-games.json')
 const creatorsPath = path.join(publicRoot, 'creators.json')
 const packagesRoot = path.join(projectRoot, '.packages')
 
@@ -23,8 +27,13 @@ function usage() {
   --category <分類>      預設「未分類」
   --age <年齡>           預設「全年齡」
   --tags <標籤>          逗號分隔，例如「數學,闖關」
+  --devices <裝置>      desktop,mobile（逗號分隔）
+  --controls <操作>     操作說明
+  --objective <目標>    遊戲目標
   --thumbnail <路徑>     選用封面；會複製進作品資料夾
-  --replace              覆蓋 --id 指定的既有作品
+  --standalone <英文代號> 獨立預覽，不加入作品目錄（例如活動示範）
+  --leaderboard          啟用字根煉金塔前五名排行榜橋接
+  --replace              覆蓋 --id 或 --standalone 指定的既有內容
   --dry-run              只驗證與打包，不寫入網站
   --help                 顯示說明
 `)
@@ -33,7 +42,7 @@ function usage() {
 function parseArguments(argv) {
   const options = { replace: false }
   const positional = []
-  const valueOptions = new Set(['title', 'id', 'creator-id', 'description', 'category', 'age', 'tags', 'thumbnail'])
+  const valueOptions = new Set(['title', 'id', 'creator-id', 'description', 'category', 'age', 'tags', 'thumbnail', 'standalone', 'devices', 'controls', 'objective'])
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index]
     if (!argument.startsWith('--')) {
@@ -41,7 +50,7 @@ function parseArguments(argv) {
       continue
     }
     const name = argument.slice(2)
-    if (name === 'replace' || name === 'dry-run' || name === 'help') {
+    if (name === 'replace' || name === 'dry-run' || name === 'help' || name === 'leaderboard') {
       options[name] = true
       continue
     }
@@ -57,7 +66,7 @@ function parseArguments(argv) {
 }
 
 function validateId(id) {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+  if (!UUID_PATTERN.test(id)) {
     throw new Error('--id 必須是有效的 UUID v4')
   }
 }
@@ -107,6 +116,18 @@ async function readManifest() {
   return manifest
 }
 
+async function readStandaloneManifest() {
+  const manifest = JSON.parse(await fs.readFile(standaloneManifestPath, 'utf8'))
+  if (!Array.isArray(manifest)) throw new Error('public/standalone-games.json 必須是 JSON 陣列')
+  return manifest
+}
+
+function validateStandaloneSlug(slug) {
+  if (!SLUG_PATTERN.test(slug)) {
+    throw new Error('--standalone 必須是小寫英數與連字號組成的英文代號')
+  }
+}
+
 async function readCreators() {
   const creators = JSON.parse(await fs.readFile(creatorsPath, 'utf8'))
   if (!Array.isArray(creators)) throw new Error('public/creators.json 必須是 JSON 陣列')
@@ -126,26 +147,35 @@ async function main() {
   if (!(await fs.stat(inputPath)).isFile()) throw new Error('輸入路徑不是檔案')
 
   const baseName = path.basename(inputPath, path.extname(inputPath))
-  const title = options.title || baseName
-  if (options.replace && !options.id) throw new Error('--replace 必須搭配既有作品的 --id，避免誤覆蓋其他作品')
-  const id = options.id || crypto.randomUUID()
-  validateId(id)
+  const standaloneSlug = options.standalone || ''
+  if (standaloneSlug) {
+    validateStandaloneSlug(standaloneSlug)
+    if (options.id || options['creator-id']) throw new Error('--standalone 不可搭配 --id 或 --creator-id')
+  } else if (options.replace && !options.id) {
+    throw new Error('--replace 必須搭配既有作品的 --id，避免誤覆蓋其他作品')
+  }
+  const id = standaloneSlug || options.id || crypto.randomUUID()
+  if (!standaloneSlug) validateId(id)
 
   const gameDirectory = path.join(gamesRoot, id)
   const packagePath = path.join(packagesRoot, `${id}.zip`)
   let previewCandidatesDirectory = ''
-  const manifest = await readManifest()
+  const manifest = standaloneSlug ? await readStandaloneManifest() : await readManifest()
   const existingIndex = manifest.findIndex((game) => game.id === id)
   const existingEntry = existingIndex === -1 ? null : manifest[existingIndex]
-  const creatorId = options['creator-id'] || existingEntry?.creatorId
-  if (!creatorId) throw new Error('新作品必須使用 --creator-id 指定已註冊作者的 UUID')
-  validateId(creatorId)
-  const creators = await readCreators()
-  const creator = creators.find((item) => item.id === creatorId)
-  if (!creator) throw new Error(`找不到作者 UUID：${creatorId}；請先執行 npm run register:creator`)
+  const title = options.title ?? existingEntry?.title ?? baseName
+  const creatorId = standaloneSlug ? '' : (options['creator-id'] || existingEntry?.creatorId)
+  if (!standaloneSlug) {
+    if (!creatorId) throw new Error('新作品必須使用 --creator-id 指定已註冊作者的 UUID')
+    validateId(creatorId)
+    const creators = await readCreators()
+    const creator = creators.find((item) => item.id === creatorId)
+    if (!creator) throw new Error(`找不到作者 UUID：${creatorId}；請先執行 npm run register:creator`)
+  }
   const hasDirectory = await exists(gameDirectory)
   if ((existingIndex !== -1 || hasDirectory) && !options.replace) {
-    throw new Error(`作品「${id}」已存在；若確定要覆蓋，請加上 --id ${id} --replace`)
+    const targetOption = standaloneSlug ? `--standalone ${id}` : `--id ${id}`
+    throw new Error(`作品「${id}」已存在；若確定要覆蓋，請加上 ${targetOption} --replace`)
   }
 
   console.log(`[1/5] 讀取 ${inputPath}`)
@@ -165,6 +195,7 @@ async function main() {
   packager.options.controls.fullscreen.enabled = true
   packager.options.app.windowTitle = title
   packager.options.app.packageName = `game-${id}`
+  if (options.leaderboard) packager.options.custom.js = createLeaderboardBridge(id)
   console.log('[3/5] 正在打包網站 ZIP')
   const result = await packager.package()
   if (result.type !== 'application/zip') throw new Error(`預期 ZIP，實際得到 ${result.type}`)
@@ -177,14 +208,15 @@ async function main() {
   }
 
   await fs.mkdir(packagesRoot, { recursive: true })
-  await fs.writeFile(packagePath, result.data)
 
   console.log('[4/5] 正在安全解壓到 public/games')
-  const stagingDirectory = path.join(gamesRoot, `.${id}-${Date.now()}.tmp`)
-  await fs.mkdir(stagingDirectory, { recursive: false })
+  const stagingDirectory = await fs.mkdtemp(path.join(packagesRoot, 'import-staging-'))
   let thumbnailExtension = ''
   try {
     await extractZip(result.data, stagingDirectory)
+    console.log('正在共用 TurboWarp 執行核心與重複素材')
+    await optimizeGamePackage(stagingDirectory)
+    await preserveImages(existingEntry, id, publicRoot, stagingDirectory, Boolean(options.thumbnail))
     if (options.thumbnail) {
       const thumbnailPath = path.resolve(options.thumbnail)
       thumbnailExtension = path.extname(thumbnailPath).toLowerCase()
@@ -202,37 +234,18 @@ async function main() {
         previewCandidatesDirectory = thumbnailDirectory
       }
     }
-    console.log('正在共用 TurboWarp 執行核心與重複素材')
-    await optimizeGamePackage(stagingDirectory)
-    if (hasDirectory) await fs.rm(gameDirectory, { recursive: true, force: true })
-    try {
-      await fs.rename(stagingDirectory, gameDirectory)
-    } catch (error) {
-      // 某些 Windows 環境會阻擋資料夾 rename；改用複製後清除暫存資料夾。
-      if (error.code !== 'EPERM') throw error
-      await fs.cp(stagingDirectory, gameDirectory, { recursive: true, errorOnExist: true })
-      await fs.rm(stagingDirectory, { recursive: true, force: true })
-    }
-  } catch (error) {
+    const entry = buildEntry({ existing: existingEntry, options, id, creatorId, baseName, standalone: Boolean(standaloneSlug), thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : undefined })
+    if (existingIndex === -1) manifest.push(entry)
+    else manifest[existingIndex] = entry
+    const { validateCatalog } = require('../src/lib/catalog.js')
+    if (!standaloneSlug) validateCatalog(manifest, await readCreators())
+    console.log('[5/5] 正在保留備份並更新作品與目錄')
+    await commitImport({ gamesRoot, gameDirectory, staging: stagingDirectory, manifestPath: standaloneSlug ? standaloneManifestPath : manifestPath, manifest, backupRoot: packagesRoot })
+  } finally {
     await fs.rm(stagingDirectory, { recursive: true, force: true })
-    throw error
   }
-
-  console.log('[5/5] 正在更新 public/games.json')
-  const entry = {
-    id,
-    creatorId,
-    title,
-    description: options.description || '尚未提供作品說明。',
-    category: options.category || '未分類',
-    age: options.age || '全年齡',
-    tags: options.tags ? options.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
-    playUrl: `/games/${id}/index.html`,
-    thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : '',
-  }
-  if (existingIndex === -1) manifest.push(entry)
-  else manifest[existingIndex] = entry
-  await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+  // Only replace the optional archive after the site transaction has committed.
+  await fs.writeFile(packagePath, result.data)
   await pruneSharedResources()
   if (previewCandidatesDirectory) {
     await fs.rm(previewCandidatesDirectory, { recursive: true, force: true })
@@ -240,11 +253,22 @@ async function main() {
   }
 
   console.log(`\n完成：${title}`)
-  console.log(`網站路徑：${entry.playUrl}`)
+  console.log(`網站路徑：/games/${id}/index.html`)
   console.log(`保留 ZIP：${packagePath}`)
 }
 
-main().catch((error) => {
+async function runLocked() {
+  await fs.mkdir(packagesRoot, { recursive: true })
+  const lockPath = path.join(packagesRoot, 'import.lock')
+  let lock
+  try { lock = await fs.open(lockPath, 'wx') } catch (error) {
+    if (error.code === 'EEXIST') throw new Error('另一個匯入正在執行；若先前程序已中斷，確認備份後再移除 .packages/import.lock')
+    throw error
+  }
+  try { await main() } finally { await lock.close(); await fs.unlink(lockPath) }
+}
+
+runLocked().catch((error) => {
   console.error(`\n匯入失敗：${error.message}`)
   process.exitCode = 1
 })

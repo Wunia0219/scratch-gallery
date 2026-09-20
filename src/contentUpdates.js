@@ -1,0 +1,53 @@
+export const featuredActivity = {
+  id: 'halloween-challenge-2026',
+  isPublished: false,
+  remindFrom: '2026-09-19T00:00:00+08:00',
+  startsAt: '2026-09-28T00:00:00+08:00',
+  endsAt: '2026-10-23T23:59:59+08:00',
+  href: '/#announcements',
+  submissionUrl: 'https://forms.gle/bFmxHkUJjHcd5uw37',
+  previewId: 'halloween-activity-intro',
+}
+
+export const contentUpdates = {
+  students: 'fireworks-featured-2026-09-19',
+  events: featuredActivity.isPublished ? 'halloween-challenge-2026-dates' : null,
+  teachers: 'word-alchemy-tower-2026-09-20',
+}
+
+export const contentUpdatesStorageKey = 'scratch-gallery-seen-updates'
+export const activityReminderStorageKey = 'scratch-gallery-dismissed-reminders'
+export const newWorkWindowDays = 15
+
+export function formatActivityDate(value, language = 'zh-Hant', full = false) {
+  return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'zh-TW', {
+    timeZone: 'Asia/Taipei', month: full ? 'long' : 'numeric', day: 'numeric', ...(full ? { year: 'numeric' } : {}),
+  }).format(new Date(value))
+}
+
+export function getActivityPhase(now = Date.now(), activity = featuredActivity) {
+  if (!activity.isPublished) return 'unpublished'
+  if (now > Date.parse(activity.endsAt)) return 'closed'
+  if (now < Date.parse(activity.startsAt)) return 'upcoming'
+  return Date.parse(activity.endsAt) - now <= 3 * 86400000 ? 'closing' : 'open'
+}
+
+export function getActivityReminder(now = Date.now(), activity = featuredActivity) {
+  const phase = getActivityPhase(now, activity)
+  if (phase === 'unpublished' || phase === 'closed' || now < Date.parse(activity.remindFrom)) return null
+  const deadline = phase === 'upcoming' ? activity.startsAt : activity.endsAt
+  return {
+    ...activity,
+    phase,
+    version: `${activity.id}:${phase}`,
+    days: Math.max(1, Math.ceil((Date.parse(deadline) - now) / 86400000)),
+  }
+}
+
+export function getWorkUpdate(work, now = Date.now()) {
+  const publishedAt = Date.parse(work?.publishedAt)
+  if (!Number.isFinite(publishedAt) || now < publishedAt) return null
+
+  const expiresAt = publishedAt + newWorkWindowDays * 24 * 60 * 60 * 1000
+  return now < expiresAt ? { kind: 'new', publishedAt, expiresAt } : null
+}

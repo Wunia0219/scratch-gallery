@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { validateCatalog, isLocalAsset } from '../src/lib/catalog.js'
-import { siteConfig, galleryCsp, gameCsp, buildHeaders, runtimeSources } from './site-policy.mjs'
+import { siteConfig, assertReleaseReady, galleryCsp, gameCsp, buildHeaders, runtimeSources } from './site-policy.mjs'
 import { countPlayEvents, isProductionPlayRequest, isValidPlayEvent, playEventKey } from '../netlify/lib/play-events.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
@@ -13,15 +13,28 @@ test('catalog accepts real games and rejects executable URLs, traversal and dupl
   }
   for (const value of ['/games/../secret', '/games/%2e%2e/secret', '//evil.example/x', 'data:image/svg+xml,x', '/games/x?y', '/games/x\\y']) assert.equal(isLocalAsset(value), false)
   assert.throws(() => validateCatalog([games[0], games[0]], creators))
+  assert.throws(() => validateCatalog([{ ...games[0], publishedAt: 'not-a-date' }], creators))
+  assert.throws(() => validateCatalog([{ ...games[0], releasePending: false }], creators))
+  assert.throws(() => validateCatalog([{ ...games[0], releasePending: true, publishedAt: '2026-09-20T00:00:00Z' }], creators))
   assert.throws(() => validateCatalog([{ ...games[0], thumbnailLayers: [{ src: 'https://evil.example/x' }] }], creators))
+  assert.throws(() => validateCatalog([{ ...games[0], leaderboard: { type: 'unknown' } }], creators))
+  assert.doesNotThrow(() => validateCatalog([{ ...games[0], leaderboard: { type: 'word-alchemy-v1' } }], creators))
 })
 test('production URL and preview indexing fail safely', () => {
   assert.equal(siteConfig({}).indexable, false)
+  assert.equal(siteConfig({ BROWSER_TEST_PORT: '4174' }).origin, 'http://127.0.0.1:4174')
+  assert.throws(() => siteConfig({ BROWSER_TEST_PORT: 'invalid' }))
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'production' }).indexable, true)
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'deploy-preview' }).indexable, false)
   assert.equal(siteConfig({ SITE_URL: 'https://gallery.example', CONTEXT: 'branch-deploy' }).indexable, false)
   for (const SITE_URL of ['http://gallery.example', 'https://a.example/sub/', 'https://u:p@a.example', 'https://a.example/?q=1']) assert.throws(() => siteConfig({ SITE_URL }))
   assert.throws(() => siteConfig({ CONTEXT: 'production' }))
+})
+test('only an indexable production build requires release timestamps', () => {
+  const pending = [{ id: '123e4567-e89b-42d3-a456-426614174000', releasePending: true }]
+  assert.doesNotThrow(() => assertReleaseReady(pending, false))
+  assert.throws(() => assertReleaseReady(pending, true), /尚未標記發布時間/)
+  assert.doesNotThrow(() => assertReleaseReady([{ ...pending[0], releasePending: undefined, publishedAt: '2026-09-20T00:00:00.000Z' }], true))
 })
 test('gallery stays strict; runtime sandbox never gains same-origin, navigation or popups', async () => {
   assert.doesNotMatch(galleryCsp, /unsafe-inline|unsafe-eval/)

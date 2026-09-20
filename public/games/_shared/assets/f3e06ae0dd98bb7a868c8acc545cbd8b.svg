@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="210" viewBox="0 0 420 210">
+
+      <rect x="8" y="8" width="404" height="194" rx="24" fill="#FFF9DB" stroke="#FFD83D" stroke-width="7"></rect>
+      <circle cx="30" cy="30" r="7" fill="#FFD83D"></circle><circle cx="390" cy="30" r="7" fill="#FFD83D"></circle>
+      <text x="210" y="55" text-anchor="middle" fill="#4F2121" font-family="Microsoft JhengHei, Noto Sans TC, sans-serif" font-size="28" font-weight="700">用你的創意，點亮萬聖節！</text><text x="210" y="93" text-anchor="middle" fill="#4F2121" font-family="Microsoft JhengHei, Noto Sans TC, sans-serif" font-size="20" font-weight="600">歡迎東勢長頸鹿美語的同學參加</text><text x="210" y="124" text-anchor="middle" fill="#4F2121" font-family="Microsoft JhengHei, Noto Sans TC, sans-serif" font-size="20" font-weight="600">萬聖節魔法 Scratch 創作挑戰</text>
+      <text x="210" y="190" text-anchor="middle" fill="#6B526B" font-family="Microsoft JhengHei, sans-serif" font-size="14">點點看南瓜和糖果，還藏著小驚喜喔！</text>
+    
+</svg>

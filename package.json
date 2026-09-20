@@ -1,6 +1,6 @@
 {
   "name": "scratch-gallery",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A minimal Vue 3 gallery for packaged Scratch games.",
@@ -8,9 +8,10 @@
     "dev": "vite",
     "build": "vite build && node scripts/build-site.mjs",
     "test:security": "node --test scripts/security.test.mjs",
+    "test:maintenance": "node --test scripts/maintenance.test.mjs",
     "test:browser": "node scripts/test-browser.mjs",
     "check:live": "node scripts/check-live.mjs",
-    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run build && node scripts/check-output.mjs",
+    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run test:maintenance && npm run build && node scripts/check-output.mjs",
     "verify:local": "node scripts/verify-local.mjs",
     "preview": "vite preview",
     "check": "vue-tsc --noEmit",
@@ -20,6 +21,7 @@
     "optimize:games": "node scripts/optimize-game-package.cjs",
     "migrate:game-ids": "node scripts/migrate-game-ids.cjs",
     "register:creator": "node scripts/register-creator.cjs",
+    "release:mark": "node scripts/mark-published.cjs",
     "audit:catalog": "node scripts/audit-catalog.cjs"
   },
   "dependencies": {

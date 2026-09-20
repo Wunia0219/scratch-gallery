@@ -8,6 +8,12 @@
 - `games.json` 以永久 creatorId 關聯 `creators.json`，作者 role 衍生 creatorType。catalog.js 驗證、useGames.js 提供資料；standalone-games.json 為獨立示範。
 - build-site.mjs 預先渲染，瀏覽器重新掛載 Vue；site-policy.mjs 集中 SEO／CSP。Netlify 發佈 dist/ 與 Functions，不手改產出或加入 SPA catch-all。
 
+## Netlify 維護入口與建議時機
+
+- 常用帳號／網站入口、用量判讀與工具使用時機見 [Netlify 維護指南](docs/netlify-maintenance.md)；歷史數字見 [用量紀錄](docs/netlify-usage-log.md)。每月用量入口為 [Credit usage](https://app.netlify.com/teams/wunia0219/billing/general#credit-usage-breakdown)。
+- 討論成本、頻繁發布、大型素材或活動流量前，主動建議查當期 credits、帳期及剩餘額度；部署失敗查部署詳情，計數／排行榜異常查 Functions，網域異常查網域設定。依指南選擇 Netlify 外掛／技能，不必每次任務查全部項目。
+- 即時用量、方案、部署與權限須重新查證；無法讀取帳務頁時明說限制，不把歷史截圖當目前餘額。只讀查詢不代表正式發布、付費升級或設定變更授權。
+
 ## 驗證
 
 - 安裝依 lockfile 使用 `npm ci`。程式、作品、建置變更跑 `npm run verify`；純文件檢查內容與 `git diff --check`。

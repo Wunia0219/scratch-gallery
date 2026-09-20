@@ -33,30 +33,14 @@ export function getActivityPhase(now = Date.now(), activity = featuredActivity) 
 }
 
 export function getActivityReminder(now = Date.now(), activity = featuredActivity) {
-  if (!activity.isPublished) return null
-
-  const remindFrom = Date.parse(activity.remindFrom)
-  const startsAt = Date.parse(activity.startsAt)
-  const endsAt = Date.parse(activity.endsAt)
-  if (now < remindFrom || now > endsAt) return null
-
-  const day = 24 * 60 * 60 * 1000
-  if (now < startsAt) {
-    return {
-      ...activity,
-      phase: 'upcoming',
-      version: `${activity.id}:upcoming`,
-      days: Math.max(1, Math.ceil((startsAt - now) / day)),
-    }
-  }
-
-  const days = Math.max(1, Math.ceil((endsAt - now) / day))
-  const phase = days <= 3 ? 'closing' : 'open'
+  const phase = getActivityPhase(now, activity)
+  if (phase === 'unpublished' || phase === 'closed' || now < Date.parse(activity.remindFrom)) return null
+  const deadline = phase === 'upcoming' ? activity.startsAt : activity.endsAt
   return {
     ...activity,
     phase,
     version: `${activity.id}:${phase}`,
-    days,
+    days: Math.max(1, Math.ceil((Date.parse(deadline) - now) / 86400000)),
   }
 }
 

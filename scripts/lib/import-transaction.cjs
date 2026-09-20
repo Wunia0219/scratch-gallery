@@ -2,7 +2,7 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 const { randomUUID } = require('node:crypto')
 
-function buildEntry({ existing, options, id, creatorId, baseName, standalone, thumbnail, now = new Date().toISOString() }) {
+function buildEntry({ existing, options, id, creatorId, baseName, standalone, thumbnail }) {
   const entry = {
     ...(standalone ? {} : { description: '尚未提供作品說明。', category: '未分類', age: '全年齡', tags: [] }),
     ...existing,

@@ -51,7 +51,7 @@ test('minimal replacement preserves metadata, publication date, cover and layers
 })
 
 test('new and standalone entries retain distinct rules, explicit fields replace old values', () => {
-  const entry = buildEntry({ options: { devices: 'desktop,mobile', controls: '空白鍵' }, id, creatorId: id, baseName: '新作', now: '2026-09-20T00:00:00Z' })
+  const entry = buildEntry({ options: { devices: 'desktop,mobile', controls: '空白鍵' }, id, creatorId: id, baseName: '新作' })
   assert.equal(entry.releasePending, true)
   assert.equal(entry.publishedAt, undefined)
   assert.deepEqual(entry.devices, ['desktop', 'mobile'])
@@ -109,6 +109,33 @@ test('leaderboard API validates scores, persists idempotently and returns shared
   assert.doesNotMatch(leaderboardKey(id, 'PlayerA'), /PlayerA/i)
   assert.equal((await post({ ...event, player: 'https://example.com' })).status, 400)
   assert.equal((await handler(new Request(`${url}?gameId=unknown`))).status, 404)
+})
+
+test('local leaderboard uses server ranking and tolerates malformed saved game data', async () => {
+  const keys = ['window', 'localStorage']
+  const descriptors = keys.map(key => Object.getOwnPropertyDescriptor(globalThis, key))
+  let saved = JSON.stringify({ [id]: { broken: true } })
+  try {
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hostname: 'localhost' } } })
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+      getItem: () => saved,
+      setItem: (_key, value) => { saved = value },
+    } })
+    const { loadLeaderboard, submitLeaderboard } = await import('../src/lib/leaderboardClient.js')
+    assert.deepEqual(await loadLeaderboard(id), [])
+    const entry = { gameId: id, eventId: id, player: 'Tom', floor: 7, score: 4440 }
+    await submitLeaderboard(entry)
+    await submitLeaderboard({ ...entry, player: 'TOM', score: 4500 })
+    const local = await submitLeaderboard({ ...entry, player: 'tom' })
+    assert.deepEqual(local, [{ player: 'TOM', floor: 7, score: 4500 }])
+    assert.deepEqual(local, rankLeaderboard(JSON.parse(saved)[id]))
+    assert.deepEqual(await loadLeaderboard(id), local)
+  } finally {
+    keys.forEach((key, index) => {
+      if (descriptors[index]) Object.defineProperty(globalThis, key, descriptors[index])
+      else delete globalThis[key]
+    })
+  }
 })
 
 test('packaged game bridge loads and submits through parent without direct network access', () => {
@@ -210,6 +237,10 @@ test('activity and NEW boundaries use configured dates, independent of publicati
   const start = Date.parse(activity.startsAt), end = Date.parse(activity.endsAt)
   assert.equal(getActivityPhase(start - 1, activity), 'upcoming')
   assert.equal(getActivityPhase(start, activity), 'open')
+  for (const now of [start - 1, start, end - 3 * 86400000 - 1, end - 3 * 86400000, end]) {
+    assert.equal(getActivityReminder(now, activity).phase, getActivityPhase(now, activity))
+  }
+  assert.equal(getActivityReminder(Date.parse(activity.remindFrom) - 1, activity), null)
   assert.equal(getActivityReminder(end - 86400000, activity).phase, 'closing')
   assert.equal(getActivityPhase(end + 1, activity), 'closed')
   assert.equal(getActivityReminder(end + 1, activity), null)

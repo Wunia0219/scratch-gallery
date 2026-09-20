@@ -1,222 +1,93 @@
 # Scratch 學習館
 
-使用 Vue 3 + Vite 製作的簡約教育遊戲展示網站，可在站內播放 TurboWarp Packager 匯出的 Scratch 遊戲。
+Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 發佈靜態頁面，遊玩計數與煉金塔排行榜各使用獨立 Function／Blobs；沒有登入、私人作品或公開上傳功能。
 
-## Netlify 上架與搜尋收錄
-
-專案已提供 `netlify.toml`，Netlify 應以此專案根目錄建置、發佈 `dist/`。每次建置會產生首頁、`/students/`、`/teachers/` 與 `/works/<作品 UUID>/` 靜態介紹頁，內含可直接讀取的作品內容、獨立標題、說明及分享標籤；點封面仍直接遊玩，點作品名稱可開啟介紹頁。
-
-正式網址固定為 `https://giraffegallery.com`，由 `netlify.toml` 的 `SITE_URL` 提供；Netlify 的舊子網域會永久轉址到正式網域。若日後更換網域，必須同步更新 `SITE_URL`、舊網域轉址與線上檢查。只支援根網域部署，不支援子目錄。
-
-- 正式建置會輸出 canonical、`sitemap.xml` 與 `robots.txt`；預覽與分支部署加上 noindex，避免測試內容收錄。
-- 本機未設定正式網址時，也會產生 noindex 版本；不要把這份本機測試 `dist/` 直接當作正式站上傳。
-- 若手動上傳，先在 PowerShell 設定 `$env:SITE_URL = 'https://你的正式網址'`，再執行 `npm run verify` 與 `npm audit --audit-level=high`，靜態檔只使用產出的 `dist/`；遊玩計數還需要部署 `netlify/functions/`，建議由 Netlify Git 建置一併處理。
-- 上線後執行 `npm run check:live -- https://你的正式網址`，並在 Google Search Console 驗證網域、提交 `/sitemap.xml`、檢查首頁及一個作品網址。搜尋收錄與排名由搜尋引擎決定。
-- 新增作品時提供真實且具體的 `description`，可另外填入 `controls`、`objective`；不要只改標題複製介紹。作者署名沿用現有資料，由站主確認公開授權。匯入後先維持待發布狀態，取得正式發布核准、準備合併到 `main` 時才執行 `release:mark`。
-- 安全機制、每月兩次的完整套件檢查、故障處理及上線限制詳見 [SECURITY.md](SECURITY.md)。
-- 不使用 GitHub Actions 時，在本機執行 `npm run verify:local`：包含建置、安全測試、Chrome 遊戲測試及連線 npm 的弱點掃描，不需綁卡。這是手動檢查，產出的 `dist/` 為 noindex 測試版；正式部署仍由 Netlify 重新建置。
-
-參考：[Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)、[Netlify 自訂標頭](https://docs.netlify.com/manage/routing/headers/)、[MDN iframe sandbox](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe)。
-
-## 本機啟動
+## 本機與驗證
 
 ```powershell
-cd C:\Users\nini9\Work\scratch-gallery
 npm ci
-npm run dev
+npm run dev                 # http://127.0.0.1:3000
+npm run verify              # 目錄、資源、型別、安全、維護回歸、建置及輸出
+npm run verify:local        # verify + Chrome 遊戲測試 + 連網 npm 弱點掃描
 ```
 
-開啟 <http://127.0.0.1:3000>。
+Chrome 可用 `CHROME_PATH` 指定。`verify:local` 產生 noindex 測試版 `dist/`，不可直接上傳正式站；詳細檢查與故障處理見 [SECURITY.md](SECURITY.md)。純文件修改執行 `git diff --check`。
 
-## 自動產線：SB3 → 精彩預覽圖 → TurboWarp ZIP → 網站
+## 架構與入口
 
-先讓遊戲自動執行，擷取數個不同時間點的預覽候選圖：
+- `src/main.js` 依網址動態載入 `App.vue`、`GalleryPage.vue` 或 `WorkPage.vue`；無 Router，首頁不載入作品目錄。`/students/`、`/teachers/` 每批顯示 9 件。
+- `public/creators.json` 保存作者 UUID、姓名、role、班級；`public/games.json` 以 `creatorId` 關聯。`src/lib/catalog.js` 驗證，`useGames.js` 提供畫面資料。
+- `public/standalone-games.json` 保存活動示範，不列入師生作品庫。
+- `src/components/` 管理導覽、卡片、媒體及遊戲對話框；`src/media.js` 管理媒體，`src/i18n.js` 管理雙語，`styles.css` 管理共用樣式。
+- `scripts/build-site.mjs` 預先渲染首頁、兩個作品庫、`/works/<UUID>/`，並產生 SEO、安全標頭及真正的 404；政策集中在 `scripts/site-policy.mjs`。瀏覽器重新掛載 Vue，並非 hydration。
+- `netlify/functions/` 提供計數與排行榜。計數記錄匿名事件 UUID，同瀏覽器 30 分鐘冷卻；GET 可在 Netlify 快取 60 秒，自己的成功寫入即時更新。localhost 使用測試資料。排行榜規格見[煉金塔維護筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
 
-```powershell
-npm run capture-previews -- "C:\Games\math.sb3" --slug math-adventure
-```
+## 匯入與更新作品
 
-候選圖會以壓縮 WebP（480×360）放在 `.packages/previews/math-adventure/`，這一步不會修改網站。請逐張檢視並選擇最能代表遊戲的一張：主角與玩法清楚、動作或特效精彩，而且不是載入、轉場、空白或文字被遮住的畫面。若預設時間點沒有理想畫面，可以指定毫秒時間重新擷取：
-
-```powershell
-npm run capture-previews -- "C:\Games\math.sb3" `
-  --slug math-adventure `
-  --times "800,1600,3000,5000,8000,12000"
-```
-
-確認候選圖後，在匯入時透過 `--thumbnail` 使用選中的畫面：
-
-第一次加入學生時，先建立永久作者 UUID：
+只匯入可信任且已取得公開授權的作品。作者及作品 UUID 永久保留。
 
 ```powershell
 npm run register:creator -- --name "學生名字" --class "Scratch-115"
+npm run capture-previews -- "C:\Games\math.sb3" --slug math-adventure
 ```
 
-同名學生不會自動合併；每次註冊都會得到不同 UUID，避免不同班級或同班同名學生混淆。取得作者 UUID 後，再提供 SB3 路徑與作品資料：
+作者身分由 `role` 設定，沒有 `--teacher` 參數。同名作者不自動合併。預覽候選放在 `.packages/previews/math-adventure/`，目視選擇清楚、有代表性的 480×360 WebP；可用 `--times "800,1600,3000,5000,8000,12000"` 重擷取。
 
 ```powershell
 npm run import-game -- "C:\Games\math.sb3" `
   --title "數學探險島" `
   --creator-id "123e4567-e89b-42d3-a456-426614174000" `
   --description "練習基礎運算與問題解決。" `
-  --category "數學" `
-  --age "8–12 歲" `
-  --tags "運算,闖關" `
+  --category "數學" --age "8–12 歲" --tags "運算,闖關" `
   --thumbnail ".packages\previews\math-adventure\04-7000ms.webp"
 ```
 
-產線會自動配發永久作品 UUID、驗證作者 UUID、打包與共用資源，並更新 `public/games.json`。作者姓名、身分與班級集中保存在 `public/creators.json`，作品只透過 `creatorId` 連結作者。
-
-更新既有作品時，從 `public/games.json` 找到原作品 UUID，明確指定 `--id` 與 `--replace`：
+新作品自動取得 UUID，並標記 `releasePending: true`。同作者的新作品沿用作者 UUID，省略作品 `--id`。更新既有作品必須指定原 UUID：
 
 ```powershell
-npm run import-game -- "C:\Games\math-v2.sb3" `
-  --id "123e4567-e89b-42d3-a456-426614174000" `
-  --replace `
-  --title "數學探險島"
+npm run import-game -- "C:\Games\math-v2.sb3" --id "原作品 UUID" --replace
 ```
 
-更新時只覆寫明確提供的欄位，未指定的說明、標籤、裝置、操作說明、目標、封面及封面圖層會保留；原標題與上架時間也會沿用。可用 `--devices "desktop,mobile"`、`--controls "操作說明"`、`--objective "遊戲目標"` 更新資料。匯入會先在 `.packages/` 備份舊遊戲與目錄，再更新網站；失敗會回復，回復失敗則保留備份並回報位置。若程序被強制關閉，先檢查備份與網站資料，再移除 `.packages/import.lock` 後重試。此為單一維護者流程，請勿同時手改 JSON 或執行資源清理。
+更新只覆寫明確提供的欄位，保留原標題、上架時間、封面與圖層。可用 `--devices "desktop,mobile"`、`--controls`、`--objective` 更新資料；全部參數見 `npm run import-game -- --help`。活動示範使用 `--standalone <英文代號>`，更新再加 `--replace`。
 
-同一位學生的新作品沿用作者 UUID，但不要沿用舊作品 UUID；省略 `--id` 即會自動建立新作品。
+匯入先在 `.packages/` 暫存與備份，失敗會回復；回復失敗時保留備份。若程序中斷，先核對備份與目錄，再移除 `.packages/import.lock`。匯入期間不要同時手改 JSON 或清理共用素材。
 
-查看全部參數：
+優先使用 SB3 產線。若手動匯入 TurboWarp ZIP，先解壓到 `public/games/<UUID>/`，確認有 `index.html`，再依 `games.json` 現有欄位填入作者、描述、入口、封面及 `releasePending: true`，最後執行共用資源整理與完整驗證。
+
+## 素材與清理
+
+- 網站封面／展示圖優先 WebP、AVIF，建議每張 ≤1.5 MB；依顯示尺寸輸出。
+- Scratch 內部造型／背景保留 PNG、SVG 等原生格式，不直接改成 WebP 或改副檔名。官方 [SB3 格式定義](https://github.com/scratchfoundation/scratch-parser/blob/master/lib/sb3_definitions.json) 的造型格式不含 WebP。
+- 遊戲共用素材每檔上限 2.5 MB；影片建議 MP4／WebM ≤12 MB，網站音訊 MP3／M4A／OGG ≤2 MB，其他單檔 ≤15 MB。Scratch 內部音效由打包流程維護。
+- 封面為遊玩入口，名稱連到作品介紹；遊戲按需載入，關閉釋放 iframe。非首屏圖片延遲載入，影片離開畫面／背景時暫停。
+- `public/games/_shared/` 依內容雜湊共用執行核心與素材，不可整個刪除。
 
 ```powershell
-npm run import-game -- --help
+npm run optimize:games      # 共用重複素材、清除未引用資源
+npm run audit:assets        # 大小與重複內容預算
 ```
 
-匯入封面時建議優先使用 WebP 或 AVIF。若封面超過 1.5 MB，匯入工具會顯示優化提醒。
+驗證後可刪除 `.packages/` 裡的匯出 ZIP、未選封面、檢查截圖及 Python 快取。此目錄也包含生成腳本與原始母片，不能整個清空；SB3、題庫、生成腳本與必要素材來源應保留。`dist/` 可重建，`public/` 都會公開，不放私人來源。
 
-## 圖片、影片與檔案效能規範
-
-- 圖片：優先使用 AVIF/WebP，單張建議不超過 1.5 MB，並依實際顯示尺寸輸出。
-- 影片：優先使用 MP4（H.264）或 WebM，單支建議不超過 12 MB；較長影片應降低解析度或位元率。
-- 音訊：優先使用 MP3、M4A 或 OGG，單檔建議不超過 2 MB；WAV 僅適合很短的音效。
-- 共用 Scratch 素材 `public/games/_shared/assets/`：每檔獨立預算 2.5 MB；原生 Scratch 素材由打包流程維護，不手動轉檔。
-- 其他單檔：建議不超過 15 MB，避免在首屏直接載入。
-- 驗證完成後刪除多餘截圖、影片、重複素材及暫存資料夾；正式專案只保留實際使用且已壓縮的檔案。
-
-首頁使用 12 秒、480×854 的無聲小版影片與 WebP poster，點開才載入原始完整影音；reduced-motion 預設顯示靜態 poster，可手動播放。開啟完整影片時暫停背景預覽。
-
-需要重新產生預覽時，以原始 `src/assets/IMG_3294.MP4` 為來源，使用本機 FFmpeg（不是網站執行依賴），並目視確認畫質：
+首頁使用 12 秒、480×854 無聲預覽及 WebP poster，點開才載入完整版；reduced-motion 預設靜態。需要重建時使用本機 FFmpeg，並目視確認畫質：
 
 ```powershell
 ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -t 12 -an -vf "scale=480:-2,fps=24" -c:v libx264 -preset slow -crf 29 -pix_fmt yuv420p -movflags +faststart src/assets/showcase-preview.mp4
 ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -frames:v 1 -vf "scale=480:-2" -quality 82 src/assets/showcase-poster.webp
 ```
 
-網站會自動延遲載入非首屏圖片、按需載入放大影片、離開畫面時暫停影片，並在關閉播放器時釋放媒體資源。正式打包會替程式引用的媒體產生版本雜湊檔名，便於瀏覽器長期快取。
+## 活動、更新提示與發布
 
-每次新增資源後執行：
+`src/contentUpdates.js` 是活動時程、投稿網址、預覽 ID 及導覽列更新版本的唯一設定入口。`isPublished: false` 時首頁顯示「敬請期待」；時程與 NEW 狀態每 30 秒及重新可見時更新。活動細節見[萬聖節筆記](docs/HALLOWEEN-ACTIVITY-NOTES.md)。導覽列版本改為新的唯一值會顯示橘色提示，造訪後清除；沒有更新維持 `null`。
 
-```powershell
-npm run audit:assets
-```
-
-### 導覽列更新提示
-
-首頁、作品庫與作品介紹頁共用同一個導覽列。若學生作品、活動或老師作品有重要更新，可在 `src/contentUpdates.js` 將對應區塊的版本字串改成新的唯一值；使用者尚未看過時，導覽列會顯示橘色提示，進入該區塊後便會在該瀏覽器中自動消失。沒有更新的區塊維持 `null`。
-
-新增作品時，`import-game` 會先在 `public/games.json` 寫入 `releasePending: true`，本機與 Deploy Preview 都不會開始計算「新上架」時間。取得站主當次正式發布核准、準備合併到 `main` 前，執行 `npm run release:mark -- <作品 UUID>`；此指令才會寫入當下的 `publishedAt`，作品卡片由此時間起顯示「新上架」15 天。正式建置若仍有待發布作品會直接失敗，避免誤上架；更新既有作品則保留原上架時間，不會重新出現 NEW。
-
-活動時程提醒同樣設定在 `src/contentUpdates.js` 的 `featuredActivity`。`isPublished: false` 時不顯示頂部提醒、活動 NEW 或投稿內容，首頁只顯示模糊的「敬請期待」；正式公布前將它改為 `true`。公布後，`remindFrom` 決定何時開始顯示，活動日期文案由設定以台灣時區產生，投稿網址與預覽 ID 也集中在此設定；預覽內容讀取 `public/standalone-games.json`。`startsAt` 後切換為徵稿中，截止前三天切換為即將截止，超過 `endsAt` 自動消失，活動卡改為已截止並隱藏投稿連結。開啟中的頁面每 30 秒及重新可見時更新時程與 NEW 狀態。使用者可關閉各階段提醒；活動進入新階段時會重新顯示一次。
-
-導覽列在所有頁面共用相同入口與狀態，並由左側抽屜滑出。桌面版以 370–440px 寬度顯示完整說明，手機版約佔視窗 88% 並縮短次要文字；兩者共用同一套連結與更新文案。抽屜支援背景遮罩、Esc 關閉、焦點循環與 reduced-motion，修改時需保留這些互動。
-
-### 遊戲資源共用與清理
-
-匯入工具會自動把重複的 TurboWarp 執行核心與 Scratch 素材移到
-`public/games/_shared/`。各遊戲只保留自己的 `index.html`、`project.json`、
-封面與必要資料，因此相同背景、音效或執行核心不會隨作品數量重複保存。
-
-若手動加入、刪除或替換遊戲，執行：
+**每次正式發布皆須站主當次明確同意。** 本機、非 main 分支與 Deploy Preview 不代表授權；取得核准且準備合併前才執行：
 
 ```powershell
-npm run optimize:games
-npm run audit:assets
+npm run release:mark -- <待發布作品 UUID>
 ```
 
-第一個指令會依內容雜湊合併相同資源，並移除不再被任何遊戲引用的共用檔案；
-第二個指令會檢查單檔大小與重複內容預算。不要直接刪除
-`public/games/_shared/`，其中的檔案可能同時被多個作品使用。
+此時才寫入 `publishedAt`，NEW 從該時間起計 15 天；更新既有作品不重算。正式建置若仍有待發布作品會失敗。
 
-此指令會列出最大的十個資源，並在檔案超過上述建議上限時讓檢查失敗。
+Netlify 依 `netlify.toml` 建置並發佈 `dist/` 與 Functions。正式網址為 `https://giraffegallery.com`，由 `SITE_URL`／Netlify `URL` 決定；舊 Netlify 子網域轉址至正式網域，只支援根網域部署。正式頁有 canonical、分享標籤、sitemap；預覽 noindex，無 SPA catch-all。網域／標頭變更後執行 `npm run check:live -- https://giraffegallery.com`。可在 Search Console 提交 sitemap；不保證收錄與排名。
 
-## 手動加入打包後的 Scratch ZIP
-
-建議從 TurboWarp Packager 選擇 ZIP 輸出。ZIP 內必須有可獨立執行的 `index.html`。
-
-1. 為作品建立 UUID 資料夾，例如 `public/games/123e4567-e89b-42d3-a456-426614174000/`。
-2. 將 ZIP 完整解壓到該資料夾。
-3. 確認路徑為 `public/games/123e4567-e89b-42d3-a456-426614174000/index.html`。
-4. 在 `public/games.json` 新增或修改作品：
-
-```json
-{
-  "id": "123e4567-e89b-42d3-a456-426614174000",
-  "creatorId": "另一個作者 UUID",
-  "releasePending": true,
-  "title": "數學探險島",
-  "description": "練習基礎運算與問題解決。",
-  "category": "數學",
-  "age": "8–12 歲",
-  "tags": ["運算", "闖關"],
-  "playUrl": "/games/123e4567-e89b-42d3-a456-426614174000/index.html",
-  "thumbnail": "/games/123e4567-e89b-42d3-a456-426614174000/cover.webp"
-}
-```
-
-`thumbnail` 可以留空。ZIP 不能直接由瀏覽器執行，必須先解壓縮。
-
-## 指令
-
-```powershell
-npm run dev      # 開發伺服器
-npm run build    # 產生正式部署檔 dist/
-npm run preview  # 預覽正式部署檔
-npm run check    # Vue 型別檢查
-npm run audit:assets # 檢查媒體與靜態檔案大小
-npm run audit:catalog # 檢查作者與作品 UUID 關聯
-npm run optimize:games # 共用重複遊戲資源並清除未引用檔案
-npm run register:creator -- --name "姓名" --class "班級" # 建立作者 UUID
-npm run release:mark -- <作品 UUID> # 正式發布前寫入 NEW 的 15 天起算時間
-```
-
-## 架構與資料流
-
-本站採用 **靜態頁面生成 + Vue 互動 + 隔離遊戲播放器**，部署到 Netlify；沒有常駐應用伺服器、傳統資料庫或登入系統。作品資料隨程式建置，更新內容需要重新部署；遊玩次數另由輕量 Netlify Function 寫入 Netlify Blobs，不需因數字更新而重新部署。
-
-```mermaid
-flowchart TD
-  A[可信任 SB3 與作者 UUID] --> B[預覽擷取與 import-game]
-  B --> C[games.json／creators.json／遊戲資源]
-  C --> D[catalog.js 驗證與關聯作者]
-  D --> E[App.vue 首頁／GalleryPage.vue 作品庫／WorkPage.vue 作品頁]
-  E --> F[Vite + build-site.mjs]
-  F --> G[dist：HTML、JS、素材、SEO、安全標頭]
-  G --> H[Netlify 靜態託管]
-  H --> I[瀏覽器：Vue 篩選與對話框]
-  I --> J[sandbox iframe 按需執行遊戲]
-```
-
-### 模組責任
-
-- **資料層**：`public/creators.json` 保存作者 UUID、姓名、身分與班級；`public/games.json` 保存作品 UUID、作者關聯與素材路徑。`src/lib/catalog.js` 驗證資料，`src/composables/useGames.js` 在建置與瀏覽器共用同一份目錄，不在執行時請求 API。
-- **遊玩次數**：玩家實際開啟作品時建立匿名事件 UUID，由 `/.netlify/functions/play-counts` 寫入 Netlify Blobs；不保存姓名、IP 或定位，同一瀏覽器在 30 分鐘內不重複計算同一作品。localhost 使用獨立的瀏覽器測試數字，不讀寫正式資料。公開計數 GET 可在 Netlify 快取 60 秒，其他訪客的數字最多延遲約一分鐘；自己的成功寫入即時更新，較舊的 GET 不會蓋掉剛更新的數字。事件查詢逐頁累計以降低記憶體占用，未更動或清除歷史事件。30 分鐘冷卻為瀏覽器體驗機制，不是伺服器防灌票。
-- **字根煉金塔排行榜**：啟用 `word-alchemy-v1` 的作品由打包時注入的橋接讀取隱藏請求變數，透過受限 iframe 的 `postMessage` 交給外層頁面，再由同源 `word-alchemy-leaderboard` Function 寫入獨立 Blobs。排名先比樓層、再比分數，同名只保留最佳成績；名稱正規化後雜湊成 Blob key。localhost 使用 `localStorage` 模擬共用榜，不會讀寫正式資料。這是無帳號的友善排行榜，只拒絕明顯不合理成績，不宣稱能完全防作弊。
-- **呈現層**：`src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 學生／老師作品庫或 `WorkPage.vue` 作品頁，未使用 Vue Router。首頁不載入作品目錄、卡片或播放器；`/students/` 與 `/teachers/` 依作者 `role` 分流，每次顯示 9 件並逐批載入，班級選項由作者資料自動產生。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。
-- **靜態生成**：`scripts/build-site.mjs` 用 Vue 伺服器渲染 API 在建置時產生 HTML，無 JavaScript 也能讀取介紹；瀏覽器使用 `createApp().mount()` 重新掛載互動介面，目前不是 hydration。作品數增加時，靜態頁數與建置工作量也會增加。
-- **遊戲產線**：`capture-previews.cjs` 擷取候選封面，`import-game.cjs` 匯入作品，`optimize-game-package.cjs` 以內容雜湊共用資源。`public/games/<UUID>/` 保存各作品，`_shared/` 保存共用執行核心及素材。
-- **SEO 與防護**：`scripts/site-policy.mjs` 集中網址、收錄與 CSP 政策；建置產出 metadata、robots、sitemap、`_headers` 與真正的 404。介紹頁與遊戲使用不同安全政策，播放器透過 sandbox 隔離；細節見 [SECURITY.md](SECURITY.md)。
-- **驗證與部署**：`npm run verify` 檢查資料、資源、型別、安全及產出。GitHub Actions 另跑 npm 弱點掃描與 Chromium 遊戲測試；Netlify 依 `netlify.toml` 執行 verify 與弱點掃描後發佈 `dist/`。Actions 與 Netlify 各自執行，Netlify 建置沒有等待 GitHub 瀏覽器測試的步驟。
-
-### 維護判斷
-
-此架構適合目前以展示及遊玩為主的網站：維護範圍集中在靜態內容、套件、遊戲隔離與平台帳號。JSON 目錄和已發佈素材皆公開；若新增帳號、私人作品或訪客上傳，需要另設後端與權限機制。
-
-首頁、作品庫與作品頁共用一個輕量入口，但依網址動態載入各自元件；完整目錄只進入作品庫與作品頁的程式區塊。作品數增加時，首頁程式與卡片數量不會跟著成長，作品庫則以每批 9 件控制 DOM 與封面請求。初始化規則放在 [AGENTS.md](AGENTS.md)，操作教學留在本文件，安全維護細節留在 [SECURITY.md](SECURITY.md)。
-
-只放入你信任的打包檔，因為打包後的 HTML 與 JavaScript 會在網站內執行。
-
-Scratch 是 Scratch Foundation 的專案。本網站並非 Scratch 官方網站。
+維護規則見 [AGENTS.md](AGENTS.md)，安全與 CI 見 [SECURITY.md](SECURITY.md)，歷史用量見 [Netlify 紀錄](docs/netlify-usage-log.md)。Scratch 是 Scratch Foundation 的專案，本站並非 Scratch 官方網站。

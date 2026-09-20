@@ -1,13 +1,12 @@
 import { UUID_PATTERN } from '../../src/lib/identifiers.js'
 import { isProductionPlayRequest } from './play-events.mjs'
 import { createHash } from 'node:crypto'
-import { normalizePlayerName, scoreBounds, validateLeaderboardScore } from '../../src/lib/leaderboardRules.js'
+import { compareScores, rankLeaderboard, normalizePlayerName, scoreBounds, validateLeaderboardScore } from '../../src/lib/leaderboardRules.js'
 
-export { normalizePlayerName, scoreBounds }
+export { compareScores, rankLeaderboard, normalizePlayerName, scoreBounds }
 
 export const LEADERBOARD_STORE = 'scratch-gallery-leaderboard-events'
 export const LEADERBOARD_TYPE = 'word-alchemy-v1'
-export const LEADERBOARD_LIMIT = 5
 
 const headers = { 'cache-control': 'no-store', 'content-type': 'application/json; charset=utf-8', 'x-content-type-options': 'nosniff' }
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers })
@@ -24,22 +23,6 @@ export function validateLeaderboardEvent(value, knownGames) {
   if (!UUID_PATTERN.test(value.gameId || '') || !UUID_PATTERN.test(value.eventId || '')) return null
   const result = validateLeaderboardScore(value)
   return result && { gameId: value.gameId, eventId: value.eventId, ...result }
-}
-
-export function rankLeaderboard(events, limit = LEADERBOARD_LIMIT) {
-  const bestByPlayer = new Map()
-  for (const event of events) {
-    if (!event || typeof event.player !== 'string') continue
-    const key = event.player.normalize('NFKC').toLocaleLowerCase('zh-Hant')
-    const previous = bestByPlayer.get(key)
-    if (!previous || compareScores(event, previous) < 0) bestByPlayer.set(key, event)
-  }
-  return [...bestByPlayer.values()].sort(compareScores).slice(0, limit)
-    .map(({ player, floor, score }) => ({ player, floor, score }))
-}
-
-export function compareScores(a, b) {
-  return b.floor - a.floor || b.score - a.score || String(a.achievedAt).localeCompare(String(b.achievedAt))
 }
 
 async function readBody(request, maximum = 1024) {

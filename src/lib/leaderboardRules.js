@@ -1,3 +1,19 @@
+export function compareScores(a, b) {
+  return b.floor - a.floor || b.score - a.score || String(a.achievedAt).localeCompare(String(b.achievedAt))
+}
+
+export function rankLeaderboard(events, limit = 5) {
+  const best = new Map()
+  for (const event of Array.isArray(events) ? events : []) {
+    if (!event || typeof event.player !== 'string') continue
+    const key = event.player.normalize('NFKC').toLocaleLowerCase('zh-Hant')
+    const previous = best.get(key)
+    if (!previous || compareScores(event, previous) < 0) best.set(key, event)
+  }
+  return [...best.values()].sort(compareScores).slice(0, limit)
+    .map(({ player, floor, score }) => ({ player, floor, score }))
+}
+
 export function normalizePlayerName(value) {
   if (typeof value !== 'string') return ''
   const name = value.normalize('NFKC').trim().replace(/\s+/gu, ' ')

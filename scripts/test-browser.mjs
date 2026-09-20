@@ -6,6 +6,7 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
 import { featuredActivity } from '../src/contentUpdates.js'
+import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
 import { studentClasses } from '../src/lib/catalog.js'
 const root = path.resolve('dist')
 const rules = (await readFile('dist/_headers', 'utf8')).trim().split(/\n\s*\n/).map(block => {
@@ -128,35 +129,6 @@ try {
     assert.equal(await frame.evaluate(() => { try { localStorage.setItem('isolation-test', '1'); return true } catch { return false } }), false, 'game must not access gallery storage')
     await iframe.locator('#launch').click()
     await frame.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
-    if (game.leaderboard?.type === 'word-alchemy-v1') {
-      await frame.waitForFunction(() => {
-        try { return Number(scaffolding.getVariable('排行榜更新請求')) === 0 && Number(scaffolding.getVariable('排行榜送出請求')) === 0 } catch { return false }
-      })
-      await page.waitForTimeout(250)
-      await frame.evaluate(() => {
-        scaffolding.setVariable('玩家', 'ATEST')
-        scaffolding.setVariable('樓層', 7)
-        scaffolding.setVariable('分數', 4440)
-        scaffolding.setVariable('排行榜送出請求', 1)
-      })
-      await frame.waitForFunction(() => scaffolding.getList('排行玩家')[0] === 'ATEST')
-      await frame.evaluate(() => {
-        scaffolding.setVariable('玩家', 'BTEST')
-        scaffolding.setVariable('樓層', 6)
-        scaffolding.setVariable('分數', 4960)
-        scaffolding.setVariable('排行榜送出請求', 2)
-      })
-      await frame.waitForFunction(() => scaffolding.getList('排行玩家').length === 2)
-      assert.deepEqual(await frame.evaluate(() => [...scaffolding.getList('排行樓層')]), [7, 6], 'higher floor must rank before higher score')
-      await frame.evaluate(() => {
-        scaffolding.setList('排行玩家', [])
-        scaffolding.setList('排行樓層', [])
-        scaffolding.setList('排行分數', [])
-        scaffolding.setVariable('排行榜更新請求', 1)
-      })
-      await frame.waitForFunction(() => scaffolding.getList('排行玩家').length === 2)
-      console.log(`PASS local leaderboard submit + reload: ${game.id}`)
-    }
     await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
     assert.equal(await page.locator('iframe').count(), 0)
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', 'localhost play count should increment')
@@ -167,6 +139,7 @@ try {
     }
     console.log(`PASS sandbox + gameplay + close: ${game.id}`)
   }
+  await testLeaderboardBrowser(browser, testOrigin, games.find(game => game.leaderboard)?.id)
   const reduced = await browser.newContext({ reducedMotion: 'reduce' })
   await reduced.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage denied') } }) })
   const reducedPage = await reduced.newPage()

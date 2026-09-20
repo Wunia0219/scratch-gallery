@@ -6,12 +6,13 @@
 
 - 作品 UUID：`24871579-c8c8-48e1-a6da-474433f1c16e`。
 - `字根煉金塔.sb3`：可獨立開啟的原版，保留遊戲內排行榜。
-- `字根煉金塔-排行榜橋接.sb3`：網站匯入版，增加排行榜更新／送出請求變數及積木；兩份不是重複檔。
+- `字根煉金塔-排行榜修正版.sb3`：目前網站匯入來源；清空內建測試榜，標題為「排行榜」，結算先擷取成績並送出，再播放結束對話。
+- `字根煉金塔-排行榜橋接.sb3`：先前網站版本，保留供回復，不再用於新匯入。
 - `girrafe.json`：100 題詞綴配方與繁體中文翻譯的來源；目前不在網站執行時讀取。修改題庫後須同步遊戲並重新匯入。
 - `.packages/word-alchemy-tower/`：本機生成腳本、母片、音訊與編輯素材，未納入 Git；勿與暫存 ZIP 一起整批刪除。
 
 ```powershell
-npm run import-game -- "字根煉金塔-排行榜橋接.sb3" --id 24871579-c8c8-48e1-a6da-474433f1c16e --replace --leaderboard
+npm run import-game -- "字根煉金塔-排行榜修正版.sb3" --id 24871579-c8c8-48e1-a6da-474433f1c16e --replace --leaderboard
 npm run verify:local
 ```
 
@@ -29,6 +30,8 @@ npm run verify:local
 
 - `src/lib/leaderboardRules.js` 共用名稱、成績驗證及排序；1–8 個英數字名稱，NFKC 正規化後不分大小寫。同名保留最佳，樓層優先、分數次之，同分保留較早紀錄，回傳前五名。
 - `scripts/lib/leaderboard-bridge.cjs` 注入 `scratch-gallery-leaderboard-v1` 通道，讀取隱藏請求變數並回寫排行列表。
+- 結算使用獨立的送出玩家／樓層／分數快照，請求計數跨綠旗保留；接收資料時清理舊字元分身並刷新目前開啟的榜單。父頁依序處理請求，顯示儲存狀態並可用原成績重試。等到「成績已儲存」再離開；keepalive 不保證離線或強制關閉時送達。
+- `scripts/test-leaderboard-browser.mjs` 以攔截網路的正式來源測試：執行 SB3 結算積木、延遲 API 回應、核對可見字元造型、重整、反覆開榜與失敗後綠旗重試；只寫入測試記憶體，不能污染正式排行。
 - `GamePlayerDialog.vue` 驗證目前 iframe 的 `event.source`、通道及作品 ID，再透過 `leaderboardClient.js` 呼叫同源 API；維持 sandbox，不加 `allow-same-origin`。
 - `word-alchemy-leaderboard` Function 使用獨立 Blobs，以作品 UUID／正規化名稱 SHA-256 為 key，儲存成績及時間；只允許正式站同源寫入，目前 GET／POST 均為 no-store。
 - localhost 使用 localStorage，不碰正式榜；直接開啟原版 SB3 的榜單則只在當次遊戲期間保留。

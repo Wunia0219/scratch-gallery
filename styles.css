@@ -282,8 +282,7 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .learning-grid article h3 { margin-bottom: 10px; }
 .learning-grid article p { margin: 0; color: var(--muted); }
 
-.library { padding-block: 96px; border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent); }
-.announcement-board, .learning-story, .library, .anita-library, .collection-gateways, .about { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.announcement-board, .learning-story, .collection-gateways, .about { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
 .result-count { flex: none; margin: 0; color: var(--muted); font-weight: 600; }
 .library-tools { display: grid; grid-template-columns: minmax(260px, 360px) 1fr; align-items: start; gap: 28px; margin-bottom: 32px; padding: 18px; border: 1px solid color-mix(in srgb, var(--line) 82%, transparent); border-radius: var(--radius-md); background: rgba(251,252,251,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.92), var(--shadow-sm); }
@@ -363,19 +362,9 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .empty-state h3 { margin: 16px 0 8px; }
 .empty-state p { margin: 0; color: var(--muted); }
 .empty-state code { font-size: .9em; }
-.data-error { padding: 18px 20px; border: 1px solid #b42318; border-radius: var(--radius-sm); background: #fff4f2; color: #8a1c13; }
 
-#games, #anita-games, #learning { scroll-margin-top: 88px; }
-.anita-library { position: relative; padding-block: 96px; border-top: 1px solid var(--line); }
-.anita-library::before { position: absolute; inset: 36px 0; z-index: -1; content: ""; border-radius: var(--radius-lg); background: linear-gradient(120deg, rgba(232,247,255,.8), rgba(255,247,178,.48)); }
+#learning { scroll-margin-top: 88px; }
 .section-note { max-width: 420px; margin: 0; color: var(--muted); }
-.anita-grid .game-card { border-color: #afd8ef; box-shadow: 0 12px 34px rgba(42,105,163,.08); }
-.anita-grid .student-credit { color: #bb4d28; }
-.anita-empty { background: rgba(255,255,255,.75); border-color: #9bcce7; }
-.teacher-teaser-card { border-style: dashed; }
-.teacher-teaser-card:hover { box-shadow: 0 12px 34px rgba(42,105,163,.08); transform: none; }
-.teaser-cover { color: var(--brand); background: linear-gradient(135deg, #eef9ff, #fff7b2); }
-.teaser-cover svg { width: 68px; height: 68px; }
 .about { display: grid; grid-template-columns: .8fr 1.2fr; gap: 64px; padding-block: 96px; border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent); }
 .about-points { display: grid; gap: 0; }
 .about-points article { display: grid; grid-template-columns: 46px 1fr; column-gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--line); }
@@ -408,7 +397,6 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .hero { grid-template-columns: 1fr; gap: 16px; padding-block: 64px; }
   .hero-scroll-cue { top: auto; bottom: 16px; }
   .hero-art { min-height: 360px; }
-  .library-tools { align-items: stretch; flex-direction: column; }
   .library-tools { grid-template-columns: 1fr; }
   .search-field { width: 100%; }
   .filter-groups { width: 100%; justify-self: stretch; }
@@ -463,7 +451,7 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .video-frame-accent-bottom { bottom: 7px; left: 38px; width: 86px; }
   .hero-brand-stamp { right: 0; bottom: 2px; min-width: 0; padding: 7px 11px 7px 7px; }
   .hero-brand-stamp img { width: 46px; height: 46px; }
-  .announcement-board, .learning-story, .library, .anita-library, .collection-gateways, .about { padding-block: 72px; }
+  .announcement-board, .learning-story, .collection-gateways, .about { padding-block: 72px; }
   .announcement-copy { padding: 28px 22px 32px; }
   .announcement-private-copy { min-height: 340px; padding: 36px 26px; }
   .announcement-private-art { min-height: 300px; padding: 36px 20px; }
@@ -473,7 +461,6 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .announcement-actions { align-items: stretch; flex-direction: column; }
   .announcement-button { width: 100%; }
   .announcement-art { min-height: 320px; }
-  .halloween-pumpkin { width: min(72%, 260px); }
   .learning-grid { grid-template-columns: 1fr; }
   .learning-grid article { min-height: 0; }
   .filter-group { grid-template-columns: 1fr; gap: 7px; }

@@ -1,36 +1,20 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { activityReminderStorageKey, getActivityReminder } from '../contentUpdates.js'
+import { computed, ref } from 'vue'
+import { activityReminderStorageKey, featuredActivity, formatActivityDate, getActivityReminder } from '../contentUpdates.js'
 import { useLanguage } from '../i18n.js'
-
-const { t } = useLanguage()
-const reminder = getActivityReminder()
-const dismissed = ref(false)
-
-function loadDismissedState() {
-  if (!reminder) return
-  try {
-    const saved = JSON.parse(localStorage.getItem(activityReminderStorageKey) || '{}')
-    dismissed.value = saved?.[reminder.version] === true
-  } catch {
-    dismissed.value = false
-  }
-}
-
+import { useNow } from '../composables/useNow.js'
+import { readStoredObject, writeStored } from '../lib/storage.js'
+const { t, language } = useLanguage()
+const now = useNow()
+const reminder = computed(() => getActivityReminder(now.value))
+const dismissedVersions = ref(readStoredObject(activityReminderStorageKey))
+const dismissed = computed(() => reminder.value && dismissedVersions.value[reminder.value.version] === true)
+const dates = computed(() => ({ start: formatActivityDate(featuredActivity.startsAt, language.value), end: formatActivityDate(featuredActivity.endsAt, language.value) }))
 function dismissReminder() {
-  if (!reminder) return
-  dismissed.value = true
-  try {
-    const saved = JSON.parse(localStorage.getItem(activityReminderStorageKey) || '{}')
-    const next = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}
-    next[reminder.version] = true
-    localStorage.setItem(activityReminderStorageKey, JSON.stringify(next))
-  } catch {
-    // Dismissal still applies for this page view when storage is unavailable.
-  }
+  if (!reminder.value) return
+  dismissedVersions.value = { ...readStoredObject(activityReminderStorageKey), ...dismissedVersions.value, [reminder.value.version]: true }
+  writeStored(activityReminderStorageKey, JSON.stringify(dismissedVersions.value))
 }
-
-onMounted(loadDismissedState)
 </script>
 
 <template>
@@ -45,7 +29,7 @@ onMounted(loadDismissedState)
     </span>
     <span class="activity-reminder-copy">
       <strong>{{ t(`activityReminder${reminder.phase[0].toUpperCase()}${reminder.phase.slice(1)}`) }}</strong>
-      <small>{{ t('activityReminderDates') }}<template v-if="reminder.phase === 'closing'"> · {{ t('activityReminderDays', { count: reminder.days }) }}</template></small>
+      <small>{{ t('activityReminderDates', dates) }}<template v-if="reminder.phase === 'closing'"> · {{ t('activityReminderDays', { count: reminder.days }) }}</template></small>
     </span>
     <a :href="reminder.href">{{ t('viewActivity') }}<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></a>
     <button class="activity-reminder-close" type="button" :aria-label="t('dismissActivityReminder')" @click="dismissReminder">

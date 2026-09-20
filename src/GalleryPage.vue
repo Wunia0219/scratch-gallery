@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import GameCard from './components/GameCard.vue'
 import SiteHeader from './components/SiteHeader.vue'
+import SiteFooter from './components/SiteFooter.vue'
 import { useGames } from './composables/useGames.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 import { useLanguage } from './i18n.js'
@@ -101,6 +102,6 @@ function play(game) {
     </section>
   </main>
 
-  <footer><p><strong>東勢長頸鹿美語</strong> · {{ t('footer') }}</p><p>Knowledge gives us power. Character guides how we use it.</p></footer>
+  <SiteFooter />
   <GamePlayerDialog v-if="selectedGame" :game="selectedGame" @close="selectedGame = null" />
 </template>

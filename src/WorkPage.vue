@@ -2,6 +2,7 @@
 import { defineAsyncComponent, onMounted, ref } from 'vue'
 import GameCard from './components/GameCard.vue'
 import SiteHeader from './components/SiteHeader.vue'
+import SiteFooter from './components/SiteFooter.vue'
 import { catalog } from './composables/useGames.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 const props = defineProps({ game: { type: Object, required: true } })
@@ -35,6 +36,6 @@ function play(game) { selectedGame.value = game; void recordPlay(game.id) }
       <div class="game-grid"><GameCard v-for="item in related" :key="item.id" :game="item" :play-count="playCountsLoaded ? (playCounts[item.id] ?? 0) : null" @play="play" /></div>
     </section>
   </main>
-  <footer><p>東勢長頸鹿美語 · Scratch 創作成果展</p><p>本網站並非 Scratch 官方網站。</p></footer>
+  <SiteFooter work-page />
   <GamePlayerDialog v-if="selectedGame" :game="selectedGame" @close="selectedGame = null" />
 </template>

@@ -1,4 +1,5 @@
 import { readonly, ref } from 'vue'
+import { readStoredObject as readObject, writeStored } from '../lib/storage.js'
 
 const API_PATH = '/.netlify/functions/play-counts'
 const COOLDOWN_MS = 30 * 60 * 1000
@@ -8,14 +9,15 @@ const counts = ref({})
 const loaded = ref(false)
 let loadingPromise
 const pendingGames = new Set()
+const sessionCooldowns = {}
 
-function readObject(key) {
-  try {
-    const value = JSON.parse(localStorage.getItem(key) || '{}')
-    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
-  } catch {
-    return {}
+function mergeCounts(incoming) {
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return
+  const next = { ...counts.value }
+  for (const [id, count] of Object.entries(incoming)) {
+    if (Number.isSafeInteger(count) && count >= 0) next[id] = Math.max(next[id] || 0, count)
   }
+  counts.value = next
 }
 
 function isLocalDevelopment() {
@@ -23,13 +25,14 @@ function isLocalDevelopment() {
 }
 
 function saveCooldown(gameId, time) {
+  sessionCooldowns[gameId] = time
   const cooldowns = readObject(COOLDOWNS_KEY)
   cooldowns[gameId] = time
-  localStorage.setItem(COOLDOWNS_KEY, JSON.stringify(cooldowns))
+  writeStored(COOLDOWNS_KEY, JSON.stringify(cooldowns))
 }
 
 function isCoolingDown(gameId, time) {
-  const lastPlay = Number(readObject(COOLDOWNS_KEY)[gameId] || 0)
+  const lastPlay = Math.max(sessionCooldowns[gameId] || 0, Number(readObject(COOLDOWNS_KEY)[gameId] || 0))
   return time - lastPlay < COOLDOWN_MS
 }
 
@@ -38,7 +41,7 @@ async function load() {
   if (loadingPromise) return loadingPromise
   loadingPromise = (async () => {
     if (isLocalDevelopment()) {
-      counts.value = readObject(COUNTS_KEY)
+      mergeCounts(readObject(COUNTS_KEY))
       loaded.value = true
       return
     }
@@ -46,7 +49,8 @@ async function load() {
       const response = await fetch(API_PATH, { headers: { accept: 'application/json' } })
       if (!response.ok) throw new Error(`Play count request failed: ${response.status}`)
       const data = await response.json()
-      if (data?.counts && typeof data.counts === 'object') counts.value = data.counts
+      if (!data?.counts || typeof data.counts !== 'object' || Array.isArray(data.counts)) throw new Error('Invalid play counts')
+      mergeCounts(data.counts)
       loaded.value = true
     } catch {
       // Counts are optional; a storage outage must never block the gallery or player.
@@ -64,7 +68,7 @@ async function record(gameId) {
     if (isLocalDevelopment()) {
       const nextCounts = { ...counts.value, [gameId]: Number(counts.value[gameId] || 0) + 1 }
       counts.value = nextCounts
-      localStorage.setItem(COUNTS_KEY, JSON.stringify(nextCounts))
+      writeStored(COUNTS_KEY, JSON.stringify(nextCounts))
       saveCooldown(gameId, now)
       loaded.value = true
       return true
@@ -78,9 +82,8 @@ async function record(gameId) {
     if (!response.ok) return false
     const data = await response.json()
     if (!Number.isSafeInteger(data.count) || data.count < 0) return false
-    counts.value = { ...counts.value, [gameId]: data.count }
+    mergeCounts({ [gameId]: data.count })
     saveCooldown(gameId, now)
-    loaded.value = true
     return true
   } catch {
     return false

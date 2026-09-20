@@ -10,6 +10,7 @@
 - `/games/*` 是可公開讀取的素材，使用無 credentials 的 `Access-Control-Allow-Origin: *`，讓 opaque-origin 遊戲取得自己的 JSON、圖像和音效。這不是私人資料存放區。
 - 停用相機、麥克風、定位、付款與 USB；加上 nosniff、no-referrer、HSTS。需先在 Netlify 確認 HTTPS 憑證與強制 HTTPS 正常。
 - 作品與素材 URL 採本機路徑白名單，建置時拒絕不合法路徑、外站網址與重複 ID。
+- 遊玩計數的公開 GET 成功結果設定 60 秒 Netlify 快取；寫入與錯誤回應維持 no-store。查詢逐頁累計，不改動歷史資料；實際 CDN 命中需部署後確認。
 - 遊玩計數 API 只接受目錄內既有作品 UUID 與合法匿名事件 UUID；正式寫入限定正式站同源請求，預覽部署與 localhost 不會寫入正式計數。
 - 部署輸出檢查會拒絕常見秘密檔名、私鑰、ZIP、SB3、source map。這是基本防呆，並非能識別所有秘密內容的掃描器。
 
@@ -25,7 +26,7 @@
 
 `npm run verify` 會執行資料關聯、資源預算、型別、防護回歸測試、靜態產生及輸出檢查。Netlify 建置另執行 `npm audit --audit-level=high`；高風險漏洞或掃描服務失敗均會阻止新版本部署，既有上線版本不會自動被移除。
 
-`.github/workflows/quick-check.yml` 在 main 更新及手動觸發時執行，包含資料與資源稽核、型別檢查、安全回歸、正式建置與 SEO 輸出。`.github/workflows/security.yml` 則在每月 1 日與 15 日 02:17 UTC（台灣約 10:17）及手動觸發時，額外執行 npm 弱點掃描與全部遊戲的 Chromium 瀏覽器測試。完整檢查排程需此設定合併至預設分支，且 GitHub Actions 帳號可正常使用；排程可能延遲，失敗通知依 GitHub 帳號設定。
+`.github/workflows/quick-check.yml` 在 PR、main 更新及手動觸發時執行，包含資料與資源稽核、型別檢查、安全回歸、正式建置與 SEO 輸出。`.github/workflows/security.yml` 則在每月 1 日與 15 日 02:17 UTC（台灣約 10:17）及手動觸發時，額外執行 npm 弱點掃描與全部遊戲的 Chromium 瀏覽器測試。完整檢查排程需此設定合併至預設分支，且 GitHub Actions 帳號可正常使用；排程可能延遲，失敗通知依 GitHub 帳號設定。
 
 `.github/dependabot.yml` 每週檢查 npm 與 GitHub Actions 更新。npm 的 minor／patch 更新合併成一組，Actions 更新另成一組，減少每個套件各自建立分支；其他 npm major 更新仍獨立審查。更新不會自動合併。TypeScript 7 已重現與目前 vue-tsc 不相容，暫時排除 7.x 更新通知，使用已通過完整 CI 的 6.0.3；升級 Vue 型別檢查工具鏈時，必須重新評估並移除該排除規則。既有版本仍受 npm 弱點掃描檢查。
 
@@ -38,7 +39,7 @@ npm run verify:local
 npm run check:live -- https://你的正式網址
 ```
 
-`test:browser` 需要 Chrome（Windows 預設標準安裝路徑，可用 `CHROME_PATH` 指定），先用未設定 `SITE_URL` 的本機 `npm run build` 產生測試版本。它在 127.0.0.1:4173 模擬產出的 Netlify 標頭，驗證遊戲啟動、父頁面與 localStorage 隔離、關閉釋放、無 JavaScript 的介紹內容及手機寬度。它不等於線上 Netlify 驗證。
+`test:browser` 需要 Chrome（Windows 預設標準安裝路徑，可用 `CHROME_PATH` 指定），先用未設定 `SITE_URL` 的本機 `npm run build` 產生測試版本。若 4173 被占用，可設定 `BROWSER_TEST_PORT`，但建置與測試必須使用相同值，以維持遊戲 CSP 的來源一致。它預設在 127.0.0.1:4173 模擬產出的 Netlify 標頭，驗證遊戲啟動、父頁面與 localStorage 隔離、關閉釋放、無 JavaScript 的介紹內容及手機寬度。它不等於線上 Netlify 驗證。
 
 `check:live` 是唯讀抽查正式站的安全標頭、canonical、sitemap 與 404；第一次部署、網域更換或標頭修改後都應執行。仍需人工確認遊戲聲音、全螢幕、手機操作與分享預覽。
 

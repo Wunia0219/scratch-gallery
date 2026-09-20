@@ -10,7 +10,7 @@
 
 - 正式建置會輸出 canonical、`sitemap.xml` 與 `robots.txt`；預覽與分支部署加上 noindex，避免測試內容收錄。
 - 本機未設定正式網址時，也會產生 noindex 版本；不要把這份本機測試 `dist/` 直接當作正式站上傳。
-- 若手動上傳，先在 PowerShell 設定 `$env:SITE_URL = 'https://你的正式網址'`，再執行 `npm run verify` 與 `npm audit --audit-level=high`，只上傳產出的 `dist/`。
+- 若手動上傳，先在 PowerShell 設定 `$env:SITE_URL = 'https://你的正式網址'`，再執行 `npm run verify` 與 `npm audit --audit-level=high`，靜態檔只使用產出的 `dist/`；遊玩計數還需要部署 `netlify/functions/`，建議由 Netlify Git 建置一併處理。
 - 上線後執行 `npm run check:live -- https://你的正式網址`，並在 Google Search Console 驗證網域、提交 `/sitemap.xml`、檢查首頁及一個作品網址。搜尋收錄與排名由搜尋引擎決定。
 - 新增作品時提供真實且具體的 `description`，可另外填入 `controls`、`objective`；不要只改標題複製介紹。作者署名沿用現有資料，由站主確認公開授權。
 - 安全機制、每月兩次的完整套件檢查、故障處理及上線限制詳見 [SECURITY.md](SECURITY.md)。
@@ -76,6 +76,8 @@ npm run import-game -- "C:\Games\math-v2.sb3" `
   --title "數學探險島"
 ```
 
+更新時只覆寫明確提供的欄位，未指定的說明、標籤、裝置、操作說明、目標、封面及封面圖層會保留；原標題與上架時間也會沿用。可用 `--devices "desktop,mobile"`、`--controls "操作說明"`、`--objective "遊戲目標"` 更新資料。匯入會先在 `.packages/` 備份舊遊戲與目錄，再更新網站；失敗會回復，回復失敗則保留備份並回報位置。若程序被強制關閉，先檢查備份與網站資料，再移除 `.packages/import.lock` 後重試。此為單一維護者流程，請勿同時手改 JSON 或執行資源清理。
+
 同一位學生的新作品沿用作者 UUID，但不要沿用舊作品 UUID；省略 `--id` 即會自動建立新作品。
 
 查看全部參數：
@@ -91,8 +93,18 @@ npm run import-game -- --help
 - 圖片：優先使用 AVIF/WebP，單張建議不超過 1.5 MB，並依實際顯示尺寸輸出。
 - 影片：優先使用 MP4（H.264）或 WebM，單支建議不超過 12 MB；較長影片應降低解析度或位元率。
 - 音訊：優先使用 MP3、M4A 或 OGG，單檔建議不超過 2 MB；WAV 僅適合很短的音效。
+- 共用 Scratch 素材 `public/games/_shared/assets/`：每檔獨立預算 2.5 MB；原生 Scratch 素材由打包流程維護，不手動轉檔。
 - 其他單檔：建議不超過 15 MB，避免在首屏直接載入。
 - 驗證完成後刪除多餘截圖、影片、重複素材及暫存資料夾；正式專案只保留實際使用且已壓縮的檔案。
+
+首頁使用 12 秒、480×854 的無聲小版影片與 WebP poster，點開才載入原始完整影音；reduced-motion 預設顯示靜態 poster，可手動播放。開啟完整影片時暫停背景預覽。
+
+需要重新產生預覽時，以原始 `src/assets/IMG_3294.MP4` 為來源，使用本機 FFmpeg（不是網站執行依賴），並目視確認畫質：
+
+```powershell
+ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -t 12 -an -vf "scale=480:-2,fps=24" -c:v libx264 -preset slow -crf 29 -pix_fmt yuv420p -movflags +faststart src/assets/showcase-preview.mp4
+ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -frames:v 1 -vf "scale=480:-2" -quality 82 src/assets/showcase-poster.webp
+```
 
 網站會自動延遲載入非首屏圖片、按需載入放大影片、離開畫面時暫停影片，並在關閉播放器時釋放媒體資源。正式打包會替程式引用的媒體產生版本雜湊檔名，便於瀏覽器長期快取。
 
@@ -108,7 +120,7 @@ npm run audit:assets
 
 新增作品時，`import-game` 會自動在 `public/games.json` 寫入 `publishedAt`。作品卡片會從該上架時間起顯示「新上架」15 天，之後由瀏覽器自動隱藏，不需要手動設定到期日；更新既有作品會保留原上架時間，不會重新出現 NEW。
 
-活動時程提醒同樣設定在 `src/contentUpdates.js` 的 `featuredActivity`。`isPublished: false` 時不顯示頂部提醒、活動 NEW 或投稿內容，首頁只顯示模糊的「敬請期待」；正式公布前將它改為 `true`。公布後，`remindFrom` 決定何時開始顯示，`startsAt` 後切換為徵稿中，截止前三天切換為即將截止，超過 `endsAt` 自動消失。使用者可關閉各階段提醒；活動進入新階段時會重新顯示一次。
+活動時程提醒同樣設定在 `src/contentUpdates.js` 的 `featuredActivity`。`isPublished: false` 時不顯示頂部提醒、活動 NEW 或投稿內容，首頁只顯示模糊的「敬請期待」；正式公布前將它改為 `true`。公布後，`remindFrom` 決定何時開始顯示，活動日期文案由設定以台灣時區產生，投稿網址與預覽 ID 也集中在此設定；預覽內容讀取 `public/standalone-games.json`。`startsAt` 後切換為徵稿中，截止前三天切換為即將截止，超過 `endsAt` 自動消失，活動卡改為已截止並隱藏投稿連結。開啟中的頁面每 30 秒及重新可見時更新時程與 NEW 狀態。使用者可關閉各階段提醒；活動進入新階段時會重新顯示一次。
 
 導覽列在所有頁面共用相同入口與狀態，並由左側抽屜滑出。桌面版以 370–440px 寬度顯示完整說明，手機版約佔視窗 88% 並縮短次要文字；兩者共用同一套連結與更新文案。抽屜支援背景遮罩、Esc 關閉、焦點循環與 reduced-motion，修改時需保留這些互動。
 
@@ -190,7 +202,7 @@ flowchart TD
 ### 模組責任
 
 - **資料層**：`public/creators.json` 保存作者 UUID、姓名、身分與班級；`public/games.json` 保存作品 UUID、作者關聯與素材路徑。`src/lib/catalog.js` 驗證資料，`src/composables/useGames.js` 在建置與瀏覽器共用同一份目錄，不在執行時請求 API。
-- **遊玩次數**：玩家實際開啟作品時建立匿名事件 UUID，由 `/.netlify/functions/play-counts` 寫入 Netlify Blobs；不保存姓名、IP 或定位，同一瀏覽器在 30 分鐘內不重複計算同一作品。localhost 使用獨立的瀏覽器測試數字，不讀寫正式資料。
+- **遊玩次數**：玩家實際開啟作品時建立匿名事件 UUID，由 `/.netlify/functions/play-counts` 寫入 Netlify Blobs；不保存姓名、IP 或定位，同一瀏覽器在 30 分鐘內不重複計算同一作品。localhost 使用獨立的瀏覽器測試數字，不讀寫正式資料。公開計數 GET 可在 Netlify 快取 60 秒，其他訪客的數字最多延遲約一分鐘；自己的成功寫入即時更新，較舊的 GET 不會蓋掉剛更新的數字。事件查詢逐頁累計以降低記憶體占用，未更動或清除歷史事件。30 分鐘冷卻為瀏覽器體驗機制，不是伺服器防灌票。
 - **呈現層**：`src/main.js` 依網址動態載入 `App.vue` 首頁、`GalleryPage.vue` 學生／老師作品庫或 `WorkPage.vue` 作品頁，未使用 Vue Router。首頁不載入作品目錄、卡片或播放器；`/students/` 與 `/teachers/` 依作者 `role` 分流，每次顯示 9 件並逐批載入，班級選項由作者資料自動產生。`src/components/` 管理卡片、影片與播放器，`styles.css` 統一樣式。
 - **靜態生成**：`scripts/build-site.mjs` 用 Vue 伺服器渲染 API 在建置時產生 HTML，無 JavaScript 也能讀取介紹；瀏覽器使用 `createApp().mount()` 重新掛載互動介面，目前不是 hydration。作品數增加時，靜態頁數與建置工作量也會增加。
 - **遊戲產線**：`capture-previews.cjs` 擷取候選封面，`import-game.cjs` 匯入作品，`optimize-game-package.cjs` 以內容雜湊共用資源。`public/games/<UUID>/` 保存各作品，`_shared/` 保存共用執行核心及素材。

@@ -1,6 +1,7 @@
 export const PLAY_EVENT_STORE = 'scratch-gallery-play-events'
 export const PRODUCTION_ORIGIN = 'https://giraffegallery.com'
-export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+import { UUID_PATTERN } from '../../src/lib/identifiers.js'
+export { UUID_PATTERN }
 
 export function isValidPlayEvent(value) {
   return Boolean(value)

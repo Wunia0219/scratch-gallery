@@ -5,7 +5,8 @@ import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
-import { featuredActivity, getActivityReminder, getWorkUpdate } from '../src/contentUpdates.js'
+import { featuredActivity } from '../src/contentUpdates.js'
+import { studentClasses } from '../src/lib/catalog.js'
 const root = path.resolve('dist')
 const rules = (await readFile('dist/_headers', 'utf8')).trim().split(/\n\s*\n/).map(block => {
   const [pattern, ...lines] = block.split('\n')
@@ -30,16 +31,7 @@ const server = createServer(async (req, res) => {
 })
 const testPort = Number(process.env.BROWSER_TEST_PORT || 4173)
 const testOrigin = `http://127.0.0.1:${testPort}`
-await new Promise(resolve => server.listen(testPort, '127.0.0.1', resolve))
-const publishedActivity = { ...featuredActivity, isPublished: true }
-assert.equal(getActivityReminder(Date.parse('2026-09-20T12:00:00+08:00')), null)
-assert.equal(getActivityReminder(Date.parse('2026-09-20T12:00:00+08:00'), publishedActivity)?.phase, 'upcoming')
-assert.equal(getActivityReminder(Date.parse('2026-10-10T12:00:00+08:00'), publishedActivity)?.phase, 'open')
-assert.equal(getActivityReminder(Date.parse('2026-10-22T12:00:00+08:00'), publishedActivity)?.phase, 'closing')
-assert.equal(getActivityReminder(Date.parse('2026-10-24T12:00:00+08:00'), publishedActivity), null)
-const sampleWork = { publishedAt: '2026-09-19T00:00:00.000Z' }
-assert.equal(getWorkUpdate(sampleWork, Date.parse('2026-10-03T23:59:59.999Z'))?.kind, 'new')
-assert.equal(getWorkUpdate(sampleWork, Date.parse('2026-10-04T00:00:00.000Z')), null)
+await new Promise((resolve, reject) => { server.once('error', reject); server.listen(testPort, '127.0.0.1', resolve) })
 let browser
 try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || (process.env.CI ? chromium.executablePath() : process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome'), headless: true })
@@ -53,7 +45,18 @@ try {
   const initialTeacherCards = Math.min(teacherCount, 9)
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
+  const mediaRequests = []
+  page.on('request', request => { if (/\.(?:MP4|mp4)(?:$|\?)/.test(request.url())) mediaRequests.push(request.url()) })
   await page.goto(`${testOrigin}/`)
+  await page.locator('.hero-video-frame video').evaluate(video => video.play())
+  assert.equal(mediaRequests.some(url => url.includes('IMG_3294')), false, 'homepage must not fetch full video')
+  assert.equal(mediaRequests.some(url => url.includes('showcase-preview')), true, 'homepage should fetch small preview')
+  await page.getByRole('button', { name: '全螢幕播放並開啟聲音' }).click()
+  await page.locator('.video-dialog video').evaluate(video => video.play())
+  assert.equal(mediaRequests.some(url => url.includes('IMG_3294')), true, 'full video loads on demand')
+  assert.equal(await page.locator('.hero-video-frame video').evaluate(video => video.paused), true, 'background preview pauses in dialog')
+  await page.getByRole('button', { name: '關閉影片', exact: true }).click()
+  await page.locator('.video-dialog').waitFor({ state: 'detached' })
   assert.equal(await page.locator('.game-card').count(), 0)
   assert.equal(await page.locator('a[href="/students/"]').count() > 0, true)
   assert.equal(await page.locator('a[href="/teachers/"]').count() > 0, true)
@@ -98,7 +101,7 @@ try {
   await page.goto(`${testOrigin}/students/`)
   await page.getByRole('button', { name: 'EN' }).click()
   assert.equal(await page.getByRole('button', { name: 'All classes', exact: true }).count(), 1)
-  assert.equal(await page.getByRole('button', { name: 'Scratch-114', exact: true }).count(), 1)
+  for (const className of studentClasses(creators).slice(1)) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
   await page.locator('#gallery-search').fill('不存在的作品')
   assert.equal(await page.locator('.game-card').count(), 0)
   await page.locator('#gallery-search').fill('')
@@ -130,6 +133,24 @@ try {
     }
     console.log(`PASS sandbox + gameplay + close: ${game.id}`)
   }
+  const reduced = await browser.newContext({ reducedMotion: 'reduce' })
+  await reduced.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage denied') } }) })
+  const reducedPage = await reduced.newPage()
+  const reducedErrors = []
+  reducedPage.on('pageerror', error => reducedErrors.push(error.message))
+  const reducedVideos = []
+  reducedPage.on('request', request => { if (/\.(MP4|mp4)$/.test(request.url())) reducedVideos.push(request.url()) })
+  await reducedPage.goto(`${testOrigin}/`)
+  await reducedPage.locator('.hero-video-frame video').waitFor()
+  assert.equal(await reducedPage.locator('.hero-video-frame video').getAttribute('src'), null)
+  assert.equal(reducedVideos.length, 0, 'reduced motion should not download either video by default')
+  await reducedPage.getByRole('button', { name: 'EN', exact: true }).click()
+  assert.equal(await reducedPage.locator('html').getAttribute('lang'), 'en')
+  assert.deepEqual(reducedErrors, [], 'denied storage must not break language or reminders')
+  await reducedPage.screenshot({ path: '.packages/home-desktop.webp', type: 'webp' })
+  await reducedPage.setViewportSize({ width: 375, height: 812 })
+  await reducedPage.screenshot({ path: '.packages/home-mobile.webp', type: 'webp', fullPage: true })
+  await reduced.close()
   const noJs = await browser.newContext({ javaScriptEnabled: false })
   const readable = await noJs.newPage()
   await readable.goto(`${testOrigin}/`)

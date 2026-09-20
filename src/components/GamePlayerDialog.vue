@@ -7,18 +7,25 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 const dialog = ref(null)
+let closing = false
 
 watch(
   () => props.game,
   async (game) => {
     await nextTick()
-    if (game && dialog.value && !dialog.value.open) dialog.value.showModal()
+    if (game && dialog.value && !dialog.value.open) { closing = false; dialog.value.showModal() }
   },
   { immediate: true },
 )
 
 function close() {
   if (dialog.value?.open) dialog.value.close()
+  notifyClose()
+}
+
+function notifyClose() {
+  if (closing) return
+  closing = true
   emit('close')
 }
 
@@ -42,7 +49,7 @@ onBeforeUnmount(() => {
     :aria-labelledby="game ? 'dialog-title' : undefined"
     @click="closeFromBackdrop"
     @cancel="cancel"
-    @close="emit('close')"
+    @close="notifyClose"
   >
     <template v-if="game">
       <div class="dialog-bar">

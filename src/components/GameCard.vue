@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useNow } from '../composables/useNow.js'
 import { getWorkUpdate } from '../contentUpdates.js'
 import { useLanguage } from '../i18n'
 
@@ -17,9 +18,9 @@ const deviceLabels = {
   mobile: 'mobile',
 }
 const categoryLabels = { '冒險': 'Adventure', '創意': 'Creativity' }
-const workUpdate = computed(() => getWorkUpdate(props.game))
-const updateLabel = computed(() => workUpdate.value?.kind === 'updated' ? t('updatedWork') : t('newWork'))
-const updateKicker = computed(() => workUpdate.value?.kind === 'updated' ? 'UPDATE' : 'NEW')
+const now = useNow()
+const workUpdate = computed(() => getWorkUpdate(props.game, now.value))
+const updateLabel = computed(() => t('newWork'))
 const categoryLabel = computed(() => isEnglish.value ? (categoryLabels[props.game.category] || props.game.category || 'Scratch game') : (props.game.category || 'Scratch 作品'))
 const formattedPlayCount = computed(() => Number.isSafeInteger(props.playCount) && props.playCount >= 0
   ? new Intl.NumberFormat(isEnglish.value ? 'en' : 'zh-Hant').format(props.playCount)
@@ -78,7 +79,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         <span class="work-update-emblem">
           <svg viewBox="0 0 24 24"><path d="m12 3 1.25 4.25L17.5 8.5l-4.25 1.25L12 14l-1.25-4.25L6.5 8.5l4.25-1.25L12 3Z" /><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" /></svg>
         </span>
-        <span class="work-update-copy"><small>{{ updateKicker }}</small><strong>{{ updateLabel }}</strong></span>
+        <span class="work-update-copy"><small>NEW</small><strong>{{ updateLabel }}</strong></span>
       </span>
       <span v-if="game.playUrl" class="cover-play" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /></svg>

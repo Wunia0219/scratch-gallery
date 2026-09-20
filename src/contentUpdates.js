@@ -5,6 +5,8 @@ export const featuredActivity = {
   startsAt: '2026-09-28T00:00:00+08:00',
   endsAt: '2026-10-23T23:59:59+08:00',
   href: '/#announcements',
+  submissionUrl: 'https://forms.gle/bFmxHkUJjHcd5uw37',
+  previewId: 'halloween-activity-intro',
 }
 
 export const contentUpdates = {
@@ -16,6 +18,19 @@ export const contentUpdates = {
 export const contentUpdatesStorageKey = 'scratch-gallery-seen-updates'
 export const activityReminderStorageKey = 'scratch-gallery-dismissed-reminders'
 export const newWorkWindowDays = 15
+
+export function formatActivityDate(value, language = 'zh-Hant', full = false) {
+  return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'zh-TW', {
+    timeZone: 'Asia/Taipei', month: full ? 'long' : 'numeric', day: 'numeric', ...(full ? { year: 'numeric' } : {}),
+  }).format(new Date(value))
+}
+
+export function getActivityPhase(now = Date.now(), activity = featuredActivity) {
+  if (!activity.isPublished) return 'unpublished'
+  if (now > Date.parse(activity.endsAt)) return 'closed'
+  if (now < Date.parse(activity.startsAt)) return 'upcoming'
+  return Date.parse(activity.endsAt) - now <= 3 * 86400000 ? 'closing' : 'open'
+}
 
 export function getActivityReminder(now = Date.now(), activity = featuredActivity) {
   if (!activity.isPublished) return null

@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { contentUpdates, contentUpdatesStorageKey } from '../contentUpdates.js'
 import { useLanguage } from '../i18n.js'
+import { readStoredObject, writeStored } from '../lib/storage.js'
 import ActivityReminder from './ActivityReminder.vue'
 
 const props = defineProps({
@@ -26,12 +27,7 @@ const navItems = computed(() => [
 ])
 
 function loadSeenUpdates() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(contentUpdatesStorageKey) || '{}')
-    seenUpdates.value = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}
-  } catch {
-    seenUpdates.value = {}
-  }
+  seenUpdates.value = readStoredObject(contentUpdatesStorageKey)
   updatesReady.value = true
 }
 
@@ -46,11 +42,7 @@ function markSeen(section) {
   const version = contentUpdates[section]
   if (!version) return
   seenUpdates.value = { ...seenUpdates.value, [section]: version }
-  try {
-    localStorage.setItem(contentUpdatesStorageKey, JSON.stringify(seenUpdates.value))
-  } catch {
-    // The indicator still updates for this visit when storage is unavailable.
-  }
+  writeStored(contentUpdatesStorageKey, JSON.stringify(seenUpdates.value))
 }
 
 function syncLocation() {

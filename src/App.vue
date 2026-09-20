@@ -1,22 +1,20 @@
 <script setup>
-import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
-import { showcaseVideoUrl } from './media'
-import packageInfo from '../package.json'
+import { defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { showcasePreviewUrl, showcasePosterUrl } from './media'
 import { useLanguage } from './i18n'
 import SiteHeader from './components/SiteHeader.vue'
+import SiteFooter from './components/SiteFooter.vue'
 
 const HeroVideo = defineAsyncComponent(() => import('./components/HeroVideo.vue'))
 const AnnouncementBoard = defineAsyncComponent(() => import('./components/AnnouncementBoard.vue'))
 const { t } = useLanguage()
 const videoOpen = ref(false)
 const heroVideo = ref(null)
-const heroVideoPaused = ref(false)
+const heroVideoPaused = ref(true)
+const previewEnabled = ref(false)
 const heroVideoInView = ref(true)
-const siteVersion = packageInfo.version
-const siteVersionLabel = siteVersion.endsWith('-beta')
-  ? `Beta ${siteVersion.slice(0, -'-beta'.length)}`
-  : `ver ${siteVersion}`
 let heroVideoObserver
+let motionPreference
 let hashTargetObserver
 const hashTargetTimers = []
 
@@ -35,12 +33,24 @@ function focusHashTarget(hash = window.location.hash) {
 
 function syncHeroVideo() {
   if (!heroVideo.value) return
-  const shouldPlay = heroVideoInView.value && !heroVideoPaused.value && !document.hidden
-  if (shouldPlay) heroVideo.value.play().catch(() => {})
+  const shouldPlay = previewEnabled.value && heroVideoInView.value && !heroVideoPaused.value && !document.hidden && !videoOpen.value
+  if (shouldPlay) heroVideo.value.play().catch(() => { heroVideoPaused.value = true })
   else heroVideo.value.pause()
 }
 
+async function syncMotionPreference() {
+  heroVideoPaused.value = motionPreference.matches
+  if (!motionPreference.matches) previewEnabled.value = true
+  await nextTick()
+  syncHeroVideo()
+}
+
+watch(videoOpen, syncHeroVideo)
+
 onMounted(() => {
+  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionPreference.addEventListener('change', syncMotionPreference)
+  void syncMotionPreference()
   if ('IntersectionObserver' in window && heroVideo.value) {
     heroVideoObserver = new IntersectionObserver(([entry]) => {
       heroVideoInView.value = entry.isIntersecting
@@ -71,13 +81,16 @@ onBeforeUnmount(() => {
   hashTargetObserver?.disconnect()
   hashTargetTimers.forEach(timer => window.clearTimeout(timer))
   document.removeEventListener('visibilitychange', syncHeroVideo)
+  motionPreference?.removeEventListener('change', syncMotionPreference)
 })
 
-function toggleHeroVideo(event) {
+async function toggleHeroVideo(event) {
   event.stopPropagation()
   if (!heroVideo.value) return
   if (heroVideo.value.paused) {
+    previewEnabled.value = true
     heroVideoPaused.value = false
+    await nextTick()
     syncHeroVideo()
   } else {
     heroVideo.value.pause()
@@ -119,8 +132,7 @@ function toggleHeroVideo(event) {
       <div class="hero-art">
         <div class="video-frame-shadow" aria-hidden="true"></div>
         <div class="art-card art-card-main hero-video-frame">
-          <video ref="heroVideo" autoplay muted loop playsinline preload="metadata" tabindex="-1" aria-hidden="true">
-            <source :src="showcaseVideoUrl" type="video/mp4" />
+          <video ref="heroVideo" :src="previewEnabled ? showcasePreviewUrl : undefined" :poster="showcasePosterUrl" muted loop playsinline preload="none" tabindex="-1" aria-hidden="true">
           </video>
           <div class="hero-video-actions">
             <button class="hero-video-control" type="button" :title="heroVideoPaused ? '播放影片' : '暫停影片'" :aria-label="heroVideoPaused ? '播放預覽影片' : '暫停預覽影片'" @click="toggleHeroVideo">
@@ -188,7 +200,7 @@ function toggleHeroVideo(event) {
     </section>
   </main>
 
-  <footer><p><strong>東勢長頸鹿美語</strong> · {{ t('footer') }} <span class="footer-version">{{ siteVersionLabel }}</span></p><p>Knowledge gives us power. Character guides how we use it.</p></footer>
+  <SiteFooter />
 
   <HeroVideo v-if="videoOpen" @close="videoOpen = false" />
 </template>

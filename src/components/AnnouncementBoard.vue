@@ -1,19 +1,21 @@
 <script setup>
-import { defineAsyncComponent, ref } from 'vue'
-import { featuredActivity } from '../contentUpdates.js'
+import { computed, defineAsyncComponent, ref } from 'vue'
+import { featuredActivity, formatActivityDate, getActivityPhase } from '../contentUpdates.js'
 import { useLanguage } from '../i18n'
+import { useNow } from '../composables/useNow.js'
+import previews from '../../public/standalone-games.json'
 
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
-const { t } = useLanguage()
-const submissionUrl = 'https://forms.gle/bFmxHkUJjHcd5uw37'
+const { t, language } = useLanguage()
+const now = useNow()
+const phase = computed(() => getActivityPhase(now.value))
+const dates = computed(() => ({ start: formatActivityDate(featuredActivity.startsAt, language.value, true), end: formatActivityDate(featuredActivity.endsAt, language.value, true) }))
+const status = computed(() => phase.value === 'upcoming' ? t('halloweenStatus', { date: formatActivityDate(featuredActivity.startsAt, language.value) }) : phase.value === 'closed' ? t('activityClosed') : t(phase.value === 'closing' ? 'activityReminderClosing' : 'activityReminderOpen'))
+const submissionUrl = featuredActivity.submissionUrl
 const previewOpen = ref(false)
 const activityPublished = featuredActivity.isPublished
-const halloweenPreview = {
-  id: 'halloween-activity-intro',
-  title: '萬聖節魔法 Scratch 創作挑戰',
-  playUrl: '/games/halloween-activity-intro/index.html',
-  thumbnail: '/games/halloween-activity-intro/cover.webp',
-}
+const halloweenPreview = previews.find(preview => preview.id === featuredActivity.previewId)
+if (!halloweenPreview) throw new Error('活動預覽未登錄')
 
 </script>
 
@@ -31,7 +33,7 @@ const halloweenPreview = {
       <template v-if="activityPublished">
       <div class="announcement-copy">
         <div class="announcement-meta">
-          <span class="announcement-status"><span aria-hidden="true"></span>{{ t('halloweenStatus') }}</span>
+          <span class="announcement-status"><span aria-hidden="true"></span>{{ status }}</span>
           <span class="announcement-label">{{ t('halloweenLabel') }}</span>
         </div>
         <p class="announcement-kicker">SCRATCH HALLOWEEN CHALLENGE</p>
@@ -41,7 +43,7 @@ const halloweenPreview = {
         <ul class="announcement-details" :aria-label="t('halloweenDetailsLabel')">
           <li>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v15H5zM8 3v4M16 3v4M5 9h14"/><path d="m9 14 2 2 4-4"/></svg>
-            <span><strong>{{ t('halloweenDatesTitle') }}</strong>{{ t('halloweenDates') }}</span>
+            <span><strong>{{ t('halloweenDatesTitle') }}</strong>{{ t('halloweenDates', dates) }}</span>
           </li>
           <li>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="m8 14 2.6-2.8 2.2 2.1 2.2-2.5L18 14M9 9h.01"/></svg>
@@ -53,7 +55,7 @@ const halloweenPreview = {
           </li>
         </ul>
 
-        <div class="announcement-actions">
+        <div v-if="phase !== 'closed'" class="announcement-actions">
           <a class="button announcement-button" :href="submissionUrl" target="_blank" rel="noreferrer">
             {{ t('halloweenSubmit') }}
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9" /></svg>

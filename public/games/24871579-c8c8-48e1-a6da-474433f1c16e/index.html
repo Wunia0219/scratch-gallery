@@ -376,7 +376,7 @@
     const names = {
       refresh: '排行榜更新請求',
       submit: '排行榜送出請求',
-      player: '玩家', floor: '樓層', score: '分數',
+      player: '送出玩家', floor: '送出樓層', score: '送出分數',
       players: '排行玩家', floors: '排行樓層', scores: '排行分數'
     };
     let lastRefresh;
@@ -388,11 +388,23 @@
       scaffolding.setList(names.players, safe.map(entry => String(entry.player)));
       scaffolding.setList(names.floors, safe.map(entry => Number(entry.floor)));
       scaffolding.setList(names.scores, safe.map(entry => Number(entry.score)));
+      const runtime = scaffolding.vm.runtime;
+      const panel = runtime.getSpriteTargetByName('排行榜面板');
+      const glyph = runtime.getSpriteTargetByName('排行榜字元');
+      if (panel?.visible && glyph) {
+        runtime.stopForTarget(glyph);
+        for (const clone of glyph.sprite.clones.slice(1)) {
+          runtime.stopForTarget(clone);
+          runtime.disposeTarget(clone);
+        }
+        runtime.startHats('event_whenbroadcastreceived', { BROADCAST_OPTION: '顯示排行榜' }, glyph);
+      }
     };
     addEventListener('message', event => {
       const data = event.data;
-      if (event.source !== parent || !data || data.channel !== channel || data.gameId !== gameId || data.action !== 'result') return;
-      apply(data.leaderboard);
+      if (event.source !== parent || !data || data.channel !== channel || data.gameId !== gameId) return;
+      if (data.action === 'result') apply(data.leaderboard);
+      if (data.action === 'status' && typeof data.message === 'string') scaffolding.setVariable('狀態', data.message);
     });
     setInterval(() => {
       try {

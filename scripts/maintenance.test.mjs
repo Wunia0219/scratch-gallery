@@ -139,7 +139,7 @@ test('local leaderboard uses server ranking and tolerates malformed saved game d
 })
 
 test('packaged game bridge loads and submits through parent without direct network access', () => {
-  const values = { '排行榜更新請求': 0, '排行榜送出請求': 0, 玩家: 'Player1', 樓層: 7, 分數: 4440 }
+  const values = { '排行榜更新請求': 0, '排行榜送出請求': 0, 送出玩家: 'Player1', 送出樓層: 7, 送出分數: 4440, 玩家: 'NewGame', 樓層: 1, 分數: 0 }
   const lists = {}
   const messages = []
   let tick
@@ -150,7 +150,9 @@ test('packaged game bridge loads and submits through parent without direct netwo
     parent,
     scaffolding: {
       getVariable: name => values[name],
+      setVariable(name, value) { values[name] = value },
       setList(name, value) { lists[name] = value },
+      vm: { runtime: { getSpriteTargetByName: () => null } },
     },
     setInterval(callback, delay) { assert.equal(delay, 100); tick = callback },
     addEventListener(type, callback) { assert.equal(type, 'message'); messageHandler = callback },
@@ -168,6 +170,8 @@ test('packaged game bridge loads and submits through parent without direct netwo
   assert.deepEqual([...lists['排行玩家']], ['甲'])
   assert.deepEqual([...lists['排行樓層']], [7])
   assert.deepEqual([...lists['排行分數']], [4440])
+  messageHandler({ source: parent, data: { channel: 'scratch-gallery-leaderboard-v1', gameId: id, action: 'status', message: '成績已儲存。' } })
+  assert.equal(values['狀態'], '成績已儲存。')
   assert.doesNotMatch(createLeaderboardBridge(id), /\bfetch\s*\(/)
 })
 

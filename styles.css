@@ -381,11 +381,16 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
 .dialog-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; }
 .dialog-bar .eyebrow { margin-bottom: 3px; }
 .dialog-bar h2 { font-size: 1.35rem; }
+.dialog-actions { display: flex; flex: none; gap: 8px; }
 .icon-button { display: grid; flex: none; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); color: var(--text); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), var(--shadow-sm); cursor: pointer; transition: background var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast); }
 .icon-button:hover { border-color: var(--line-strong); background: var(--surface-soft); box-shadow: 0 8px 16px rgba(31,55,76,.1); transform: translateY(-1px); }
 .icon-button:active { box-shadow: inset 0 2px 4px rgba(31,55,76,.1); transform: translateY(1px); }
 .player-shell { aspect-ratio: 4/3; background: #111; }
 .player-shell iframe { display: block; width: 100%; height: 100%; border: 0; }
+.game-dialog.player-expanded, .game-dialog:fullscreen { display: flex; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; flex-direction: column; border-radius: 0; }
+.game-dialog.player-expanded .dialog-bar, .game-dialog:fullscreen .dialog-bar { padding-top: max(12px, env(safe-area-inset-top)); padding-right: max(12px, env(safe-area-inset-right)); padding-left: max(12px, env(safe-area-inset-left)); }
+.game-dialog.player-expanded .player-shell, .game-dialog:fullscreen .player-shell { min-height: 0; flex: 1; aspect-ratio: auto; }
+.game-dialog.player-expanded .dialog-note, .game-dialog:fullscreen .dialog-note { padding-right: max(14px, env(safe-area-inset-right)); padding-bottom: max(14px, env(safe-area-inset-bottom)); padding-left: max(14px, env(safe-area-inset-left)); }
 .dialog-note { margin: 0; padding: 14px 22px 18px; color: var(--muted); font-size: .9rem; }
 .video-dialog { width: min(calc(100% - 32px), 1180px); }
 .video-player-shell { display: grid; max-height: calc(100dvh - 170px); place-items: center; overflow: hidden; background: #071626; }

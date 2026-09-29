@@ -138,5 +138,165 @@
       "type": "word-alchemy-v1"
     },
     "publishedAt": "2026-09-20T15:38:10.873Z"
+  },
+  {
+    "description": "點擊畫面或按空白鍵讓角色跳躍，在沙漠場景中收集「赫」與「蒼」。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "0ed2d8a9-a813-46aa-abeb-58f99499d112",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/0ed2d8a9-a813-46aa-abeb-58f99499d112/index.html",
+    "thumbnail": "/games/0ed2d8a9-a813-46aa-abeb-58f99499d112/cover.webp",
+    "creatorId": "a1e1341c-e575-45b1-9d74-11f05102b674",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面讓角色跳躍。",
+    "objective": "在移動的沙漠場景中跳躍，收集「赫」與「蒼」。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:04.893Z"
+  },
+  {
+    "description": "以小狗為主角，在沙漠中跳躍、閃避障礙。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "9c8bad8b-605b-40c9-8b1b-acfe68612714",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/9c8bad8b-605b-40c9-8b1b-acfe68612714/index.html",
+    "thumbnail": "/games/9c8bad8b-605b-40c9-8b1b-acfe68612714/cover.webp",
+    "creatorId": "62b2d050-33b3-4160-9144-4954e423df34",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "閃避迎面而來的障礙。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.011Z"
+  },
+  {
+    "description": "以長頸鹿探索沙漠，跳過障礙並加入飛行元素。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "ab0ed025-f638-4095-9949-30ec0b8d667e",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/ab0ed025-f638-4095-9949-30ec0b8d667e/index.html",
+    "thumbnail": "/games/ab0ed025-f638-4095-9949-30ec0b8d667e/cover.webp",
+    "creatorId": "bb5cfc93-bdfc-40a0-9a03-760196eb1f26",
+    "controls": "電腦按空白鍵、手機點觸畫面跳躍；取得飛行能力後，電腦按 W 鍵或手機長按畫面上升。",
+    "objective": "跳過障礙，在沙漠中持續前進。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.127Z"
+  },
+  {
+    "description": "以恐龍為主角，在灰階沙漠中跳躍閃避仙人掌。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "63320e2c-3595-4b8b-aa55-6b6616d625f1",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/63320e2c-3595-4b8b-aa55-6b6616d625f1/index.html",
+    "thumbnail": "/games/63320e2c-3595-4b8b-aa55-6b6616d625f1/cover.webp",
+    "creatorId": "6609410b-ba7b-4fb2-b547-2ba58f3c1502",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "跳過仙人掌，避免遊戲結束。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.240Z"
+  },
+  {
+    "description": "以獨角獸為主角，在沙漠中跳躍並利用護盾。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "6198e1f8-89b7-4bd3-af1c-17efce920e7a",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/6198e1f8-89b7-4bd3-af1c-17efce920e7a/index.html",
+    "thumbnail": "/games/6198e1f8-89b7-4bd3-af1c-17efce920e7a/cover.webp",
+    "creatorId": "75fabb95-044a-45aa-b4ac-0ea4db316a9d",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "跳過障礙，在沙漠中持續前進。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.349Z"
+  },
+  {
+    "description": "以可愛角色為主角，在沙漠中跳過仙人掌。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "b4a15b1c-07b8-4049-9e9c-1a708481b6f8",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/b4a15b1c-07b8-4049-9e9c-1a708481b6f8/index.html",
+    "thumbnail": "/games/b4a15b1c-07b8-4049-9e9c-1a708481b6f8/cover.webp",
+    "creatorId": "3ce55363-3928-4867-8dcf-5f94fca55411",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "跳過仙人掌，避免碰到障礙。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.471Z"
+  },
+  {
+    "description": "結合長頸鹿、星星與護盾的沙漠跳躍作品。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "9e79298d-0ff6-4ee3-922a-ccca635a41dc",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/9e79298d-0ff6-4ee3-922a-ccca635a41dc/index.html",
+    "thumbnail": "/games/9e79298d-0ff6-4ee3-922a-ccca635a41dc/cover.webp",
+    "creatorId": "b15baecc-2d0b-4538-9f2c-05d93c8648c1",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "在沙漠中跳躍並收集星星。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.580Z"
+  },
+  {
+    "description": "加入星星與護盾的沙漠閃避作品。",
+    "category": "創意",
+    "age": "全年齡",
+    "tags": [
+      "創意"
+    ],
+    "id": "d4c16c28-a44e-4b1a-809e-76fc6dbcc2d9",
+    "title": "逃離沙漠（創意模板）",
+    "playUrl": "/games/d4c16c28-a44e-4b1a-809e-76fc6dbcc2d9/index.html",
+    "thumbnail": "/games/d4c16c28-a44e-4b1a-809e-76fc6dbcc2d9/cover.webp",
+    "creatorId": "9bcd4f62-cc30-47f2-9a28-b5bf80487f3d",
+    "controls": "電腦按空白鍵或點擊遊戲畫面；手機點觸畫面跳躍。",
+    "objective": "閃避仙人掌，收集星星。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ],
+    "publishedAt": "2026-09-29T08:02:05.693Z"
   }
 ]

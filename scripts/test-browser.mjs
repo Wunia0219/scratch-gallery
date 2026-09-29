@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
-import { featuredActivity } from '../src/contentUpdates.js'
+import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
 import { studentClasses } from '../src/lib/catalog.js'
 const root = path.resolve('dist')
@@ -44,6 +44,8 @@ try {
   const teacherCount = games.filter(game => creatorRoles.get(game.creatorId) === 'teacher').length
   const initialStudentCards = Math.min(studentCount, 9)
   const initialTeacherCards = Math.min(teacherCount, 9)
+  const newestStudentGame = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher')
+    .sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))[0]
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
   const mediaRequests = []
@@ -62,8 +64,9 @@ try {
   assert.equal(await page.locator('a[href="/students/"]').count() > 0, true)
   assert.equal(await page.locator('a[href="/teachers/"]').count() > 0, true)
   assert.equal(await page.locator('.hero-actions a[href="#announcements"]').count(), 1, 'homepage should include an event shortcut')
-  assert.equal(await page.locator('.activity-reminder').count(), 0, 'unpublished activity reminder should stay hidden')
-  assert.equal(await page.locator('.nav-drawer-nav a[href="#announcements"] .nav-drawer-update').count(), 0, 'unpublished activity should not show an update badge')
+  const activityPhase = getActivityPhase()
+  assert.equal(await page.locator('.activity-reminder').count(), Number(activityPhase !== 'unpublished' && activityPhase !== 'closed'), 'activity reminder should match the current activity phase')
+  assert.equal(await page.locator('.nav-drawer-nav a[href="#announcements"] .nav-drawer-update').count(), Number(featuredActivity.isPublished), 'published activity should show a navigation update')
   assert.equal(await page.locator('.header-start > .nav-drawer-trigger + .brand').count(), 1, 'icon menu button should sit to the left of the brand')
   assert.equal(await page.locator('.nav-drawer-trigger-copy').count(), 0, 'desktop menu trigger should remain icon-only')
   await page.locator('.nav-drawer-trigger').click()
@@ -78,8 +81,14 @@ try {
     const top = element.getBoundingClientRect().top
     return top >= 0 && top < 160
   }), true, 'event navigation should scroll to the announcement section')
-  assert.equal(await page.getByText('敬請期待', { exact: true }).isVisible(), true)
-  assert.equal(await page.getByRole('button', { name: '播放萬聖節活動說明' }).count(), 0, 'unpublished activity preview should not be interactive')
+  if (featuredActivity.isPublished) {
+    assert.equal(await page.getByRole('heading', { name: '萬聖節魔法 Scratch 創作挑戰' }).isVisible(), true)
+    assert.deepEqual(await page.locator('.announcement-prizes-list strong').allTextContents(), ['500 元獎學金', '300 元獎學金', '200 元獎學金'])
+    assert.equal(await page.getByRole('button', { name: '播放萬聖節活動說明' }).count(), 1)
+  } else {
+    assert.equal(await page.getByText('敬請期待', { exact: true }).isVisible(), true)
+    assert.equal(await page.getByRole('button', { name: '播放萬聖節活動說明' }).count(), 0)
+  }
   await page.locator('.nav-drawer-trigger').click()
   await page.locator('.nav-drawer-nav a[href="#learning"]').click()
   await page.waitForTimeout(500)
@@ -91,12 +100,13 @@ try {
   await page.goto(`${testOrigin}/students/`)
   assert.equal(await page.locator('.nav-drawer-nav a[aria-current="page"][href="/students/"]').count(), 1)
   assert.equal(await page.locator('.game-card').count(), initialStudentCards)
+  assert.equal(await page.locator('.game-card .game-cover-image').first().getAttribute('src'), newestStudentGame.thumbnail, 'newest student work should appear first')
   await page.locator('.nav-drawer-trigger').click()
   await Promise.all([
     page.waitForURL(`${testOrigin}/#announcements`),
     page.locator('.nav-drawer-nav a[href="/#announcements"]').click(),
   ])
-  await page.getByText('敬請期待', { exact: true }).waitFor({ state: 'visible' })
+  await page.getByRole('heading', { name: featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待' }).waitFor({ state: 'visible' })
   await page.waitForTimeout(700)
   const crossPageAnnouncementTop = await page.locator('#announcements').evaluate(element => element.getBoundingClientRect().top)
   assert.equal(crossPageAnnouncementTop >= 0 && crossPageAnnouncementTop < 160, true, `cross-page event navigation should land on the announcement section (top: ${crossPageAnnouncementTop})`)

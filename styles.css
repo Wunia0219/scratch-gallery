@@ -235,6 +235,11 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .announcement-kicker { margin: 0 0 11px; color: #75469b; font-size: .73rem; font-weight: 850; letter-spacing: .15em; }
 .announcement-copy h3 { max-width: 650px; margin-bottom: 18px; color: #2e2550; font-size: clamp(2rem, 4vw, 3.6rem); }
 .announcement-summary { max-width: 680px; margin: 0; color: #5f5674; font-size: clamp(1rem, 1.8vw, 1.16rem); }
+.announcement-prizes { margin-top: 28px; padding: 20px; border: 1px solid #e8d39c; border-radius: 18px; background: linear-gradient(135deg, #fff9e6, #fffdf7); }
+.announcement-prizes h4 { margin: 0 0 13px; color: #5d4018; font-size: 1rem; }
+.announcement-prizes-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.announcement-prizes-list li { display: flex; min-width: 0; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid #f0e1b9; border-radius: 12px; background: rgba(255,255,255,.8); color: #755527; font-size: .85rem; }
+.announcement-prizes-list strong { color: #493017; font-size: 1rem; }
 .announcement-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 30px 0; padding: 0; list-style: none; }
 .announcement-details li { display: flex; gap: 12px; min-width: 0; padding: 16px; border: 1px solid #dfd8e9; border-radius: 16px; background: rgba(250,249,251,.86); color: #675d78; box-shadow: inset 0 1px 0 rgba(255,255,255,.9); font-size: .88rem; }
 .announcement-details li:first-child { grid-column: 1 / -1; }
@@ -462,6 +467,8 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .announcement-private-art { min-height: 300px; padding: 36px 20px; }
   .announcement-coming-soon { width: min(calc(100% - 32px), 420px); min-height: 248px; padding: 28px 22px; border-radius: 22px; }
   .announcement-card-coming-soon .announcement-coming-soon { top: 25%; }
+  .announcement-prizes-list { grid-template-columns: 1fr; }
+  .announcement-prizes-list li { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .announcement-details { grid-template-columns: 1fr; }
   .announcement-actions { align-items: stretch; flex-direction: column; }
   .announcement-button { width: 100%; }

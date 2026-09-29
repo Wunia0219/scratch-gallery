@@ -40,6 +40,15 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
         <h3>{{ t('halloweenTitle') }}</h3>
         <p class="announcement-summary">{{ t('halloweenSummary') }}</p>
 
+        <section class="announcement-prizes" aria-labelledby="announcement-prizes-title">
+          <h4 id="announcement-prizes-title">{{ t('halloweenPrizesTitle') }}</h4>
+          <ol class="announcement-prizes-list">
+            <li><span>{{ t('halloweenPrizeFirst') }}</span><strong>{{ t('halloweenPrizeFirstAmount') }}</strong></li>
+            <li><span>{{ t('halloweenPrizeSecond') }}</span><strong>{{ t('halloweenPrizeSecondAmount') }}</strong></li>
+            <li><span>{{ t('halloweenPrizeThird') }}</span><strong>{{ t('halloweenPrizeThirdAmount') }}</strong></li>
+          </ol>
+        </section>
+
         <ul class="announcement-details" :aria-label="t('halloweenDetailsLabel')">
           <li>
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v15H5zM8 3v4M16 3v4M5 9h14"/><path d="m9 14 2 2 4-4"/></svg>

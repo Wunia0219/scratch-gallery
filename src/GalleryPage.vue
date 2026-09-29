@@ -28,7 +28,7 @@ const filteredGames = computed(() => {
     const searchable = [game.title, game.description, game.category, game.className, game.student, ...(game.tags || [])]
       .join(' ').toLocaleLowerCase('zh-Hant')
     return classMatches && deviceMatches && (!needle || searchable.includes(needle))
-  })
+  }).sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))
 })
 const visibleGames = computed(() => filteredGames.value.slice(0, visibleLimit.value))
 const remaining = computed(() => Math.max(0, filteredGames.value.length - visibleGames.value.length))

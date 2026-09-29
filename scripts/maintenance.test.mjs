@@ -241,7 +241,7 @@ test('activity and NEW boundaries use configured dates, independent of publicati
   const start = Date.parse(activity.startsAt), end = Date.parse(activity.endsAt)
   assert.equal(getActivityPhase(start - 1, activity), 'upcoming')
   assert.equal(getActivityPhase(start, activity), 'open')
-  for (const now of [start - 1, start, end - 3 * 86400000 - 1, end - 3 * 86400000, end]) {
+  for (const now of [start, end - 3 * 86400000 - 1, end - 3 * 86400000, end]) {
     assert.equal(getActivityReminder(now, activity).phase, getActivityPhase(now, activity))
   }
   assert.equal(getActivityReminder(Date.parse(activity.remindFrom) - 1, activity), null)
@@ -250,7 +250,7 @@ test('activity and NEW boundaries use configured dates, independent of publicati
   assert.equal(getActivityReminder(end + 1, activity), null)
   assert.equal(getActivityReminder(start, { ...activity, isPublished: false }), null)
   assert.equal(getWorkUpdate({ publishedAt: new Date(start).toISOString() }, start + 15 * 86400000), null)
-  assert.equal(formatActivityDate('2026-09-27T16:00:00Z'), '9/28')
+  assert.equal(formatActivityDate('2026-09-28T16:00:00Z'), '9/29')
 })
 
 test('count API streams pages, caches only public GET, preserves idempotent concurrent writes', async () => {

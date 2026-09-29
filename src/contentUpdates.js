@@ -1,8 +1,8 @@
 export const featuredActivity = {
   id: 'halloween-challenge-2026',
-  isPublished: false,
-  remindFrom: '2026-09-19T00:00:00+08:00',
-  startsAt: '2026-09-28T00:00:00+08:00',
+  isPublished: true,
+  remindFrom: '2026-09-29T00:00:00+08:00',
+  startsAt: '2026-09-29T00:00:00+08:00',
   endsAt: '2026-10-23T23:59:59+08:00',
   href: '/#announcements',
   submissionUrl: 'https://forms.gle/bFmxHkUJjHcd5uw37',
@@ -10,8 +10,8 @@ export const featuredActivity = {
 }
 
 export const contentUpdates = {
-  students: 'fireworks-featured-2026-09-19',
-  events: featuredActivity.isPublished ? 'halloween-challenge-2026-dates' : null,
+  students: 'scratch-114-2026-09-29',
+  events: featuredActivity.isPublished ? 'halloween-challenge-2026-09-29' : null,
   teachers: 'word-alchemy-tower-2026-09-20',
 }
 

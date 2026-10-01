@@ -183,7 +183,7 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .hero-scroll-cue:active { background: var(--surface-soft); }
 @keyframes hero-scroll-bounce {
   0%, 100% { transform: rotate(-45deg) translate(0, -2px); }
-  50% { transform: rotate(-45deg) translate(4px, 2px); }
+  50% { transform: rotate(-45deg) translate(0, 2px); }
 }
 .hero-art { position: relative; min-height: 460px; isolation: isolate; }
 .hero-art::before { position: absolute; inset: 0 8px 0 22px; z-index: -3; content: ""; border-radius: 48% 52% 45% 55% / 55% 42% 58% 45%; background: linear-gradient(135deg, rgba(232,247,255,.95), rgba(255,237,87,.3)); transform: rotate(-3deg); }

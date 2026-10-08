@@ -31,6 +31,7 @@ test('production URL and preview indexing fail safely', () => {
   assert.throws(() => siteConfig({ CONTEXT: 'production' }))
 })
 test('only an indexable production build requires release timestamps', () => {
+  assert.doesNotThrow(() => assertReleaseReady([{ releasePending: true }], true, true), 'Firebase separates asset deployment from metadata publication')
   const pending = [{ id: '123e4567-e89b-42d3-a456-426614174000', releasePending: true }]
   assert.doesNotThrow(() => assertReleaseReady(pending, false))
   assert.throws(() => assertReleaseReady(pending, true), /尚未標記發布時間/)

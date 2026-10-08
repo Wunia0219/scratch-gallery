@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { siteConfig } from './site-policy.mjs'
+import { loadEnv } from 'vite'
+Object.assign(process.env, loadEnv('production', process.cwd(), ''))
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const { origin, indexable } = siteConfig()
+const firebaseCatalog = process.env.CATALOG_DATA_MODE === 'firebase'
 if (indexable) assert.equal(origin, 'https://giraffegallery.com', 'production origin must use the verified custom domain')
 const sitemap = await readFile('dist/sitemap.xml', 'utf8')
 const titles = new Set()
-const pageRoutes = ['/', '/students/', '/teachers/', ...games.map(g => `/works/${g.id}/`)]
+const pageRoutes = firebaseCatalog ? ['/'] : ['/', '/students/', '/teachers/', ...games.filter(game => !game.releasePending).map(g => `/works/${g.id}/`)]
 for (const route of pageRoutes) {
   const html = await readFile(`dist${route}index.html`, 'utf8')
   assert.equal((html.match(/<h1\b/g) || []).length, 1, `${route} missing or duplicate h1`)
@@ -20,7 +23,14 @@ for (const route of pageRoutes) {
   titles.add(title)
   if (route !== '/' && indexable) assert.ok(sitemap.includes(`<loc>${origin}${route}</loc>`), 'page missing from sitemap')
 }
-assert.equal((sitemap.match(/<loc>/g) || []).length, indexable ? games.length + 3 : 0)
+assert.equal((sitemap.match(/<loc>/g) || []).length, indexable && !firebaseCatalog ? games.filter(game => !game.releasePending).length + 3 : 0)
+if (firebaseCatalog) {
+  const files = await readdir('dist')
+  assert.equal(files.includes('works'), false, 'Firebase build must not publish stale static work pages')
+  assert.equal(files.includes('games.json'), false, 'draft source catalog must not be public')
+  assert.equal(files.includes('creators.json'), false)
+  assert.ok((await readFile('.netlify/server/catalog-template.json', 'utf8')).includes('id=\\"app\\"'))
+}
 assert.doesNotMatch(sitemap, /\/games\//)
 const admin = await readFile('dist/admin/index.html', 'utf8')
 assert.match(admin, /name="robots" content="noindex, nofollow"/)

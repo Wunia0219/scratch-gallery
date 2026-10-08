@@ -9,6 +9,8 @@ import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
 import { studentClasses } from '../src/lib/catalog.js'
+import worksHandler from '../netlify/functions/works.mjs'
+process.env.CATALOG_DATA_MODE = 'legacy'
 const root = path.resolve('dist')
 const rules = (await readFile('dist/_headers', 'utf8')).trim().split(/\n\s*\n/).map(block => {
   const [pattern, ...lines] = block.split('\n')
@@ -21,6 +23,10 @@ const server = createServer(async (req, res) => {
   try {
     if (req.url === '/api/admin/config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"configured":false}'); return }
     if (req.url === '/api/site-config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(publicStateFixture)); return }
+    if (req.url.startsWith('/api/works')) {
+      const response = await worksHandler(new Request(new URL(req.url, 'http://127.0.0.1')))
+      res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(await response.text()); return
+    }
     const urlPath = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname)
     let file = path.resolve(root, '.' + urlPath)
     if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(403).end(); return }
@@ -128,6 +134,7 @@ try {
   assert.equal(await page.getByRole('button', { name: 'All classes', exact: true }).count(), 1)
   for (const className of studentClasses(creators).slice(1)) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
   await page.locator('#gallery-search').fill('不存在的作品')
+  await page.locator('.empty-state').waitFor({ state: 'visible' })
   assert.equal(await page.locator('.game-card').count(), 0)
   await page.locator('#gallery-search').fill('')
   await page.goto(`${testOrigin}/teachers/`)

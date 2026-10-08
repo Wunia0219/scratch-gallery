@@ -1,45 +1,39 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import GameCard from './components/GameCard.vue'
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import { useGames } from './composables/useGames.js'
+import { useSiteState } from './composables/useSiteState.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 import { useLanguage } from './i18n.js'
 
 const props = defineProps({ creatorType: { type: String, required: true } })
 const GamePlayerDialog = defineAsyncComponent(() => import('./components/GamePlayerDialog.vue'))
-const { games, classes } = useGames()
+const { games, classes, total, cursor, revision, loading, error, load } = useGames(props.creatorType)
+const { state } = useSiteState()
 const { t } = useLanguage()
 const query = ref('')
 const selectedClass = ref('全部')
 const selectedDevice = ref('all')
-const visibleLimit = ref(9)
 const selectedGame = ref(null)
 const { counts: playCounts, loaded: playCountsLoaded, load: loadPlayCounts, record: recordPlay } = usePlayCounts()
 
 const isTeacher = computed(() => props.creatorType === 'teacher')
-const collection = computed(() => games.value.filter(game => isTeacher.value ? game.creatorType === 'teacher' : game.creatorType !== 'teacher'))
-const filteredGames = computed(() => {
-  const needle = query.value.trim().toLocaleLowerCase('zh-Hant')
-  return collection.value.filter(game => {
-    const classMatches = selectedClass.value === '全部' || game.className === selectedClass.value
-    const deviceMatches = selectedDevice.value === 'all' || (game.devices || []).includes(selectedDevice.value)
-    const searchable = [game.title, game.description, game.category, game.className, game.student, ...(game.tags || [])]
-      .join(' ').toLocaleLowerCase('zh-Hant')
-    return classMatches && deviceMatches && (!needle || searchable.includes(needle))
-  }).sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))
-})
-const visibleGames = computed(() => filteredGames.value.slice(0, visibleLimit.value))
-const remaining = computed(() => Math.max(0, filteredGames.value.length - visibleGames.value.length))
+const visibleGames = games
+function filters() { return { q: query.value.trim(), className: selectedClass.value === '全部' ? '' : selectedClass.value, device: selectedDevice.value } }
+let debounce
+function refresh() { selectedGame.value = null; return load(filters()) }
 const deviceFilters = [
   { id: 'all', label: 'allDevices' },
   { id: 'desktop', label: 'desktop' },
   { id: 'mobile', label: 'mobile' },
 ]
 
-watch([query, selectedClass, selectedDevice], () => { visibleLimit.value = 9 })
-onMounted(loadPlayCounts)
+watch([query, selectedClass, selectedDevice], () => { clearTimeout(debounce); debounce = setTimeout(refresh, 250) })
+watch(() => state.value.catalogRevision, value => { if (value && value !== revision.value) { void refresh(); void loadPlayCounts() } })
+onMounted(() => { void refresh(); void loadPlayCounts() })
+onBeforeUnmount(() => clearTimeout(debounce))
 
 function play(game) {
   selectedGame.value = game
@@ -56,7 +50,7 @@ function play(game) {
       <p class="eyebrow">{{ isTeacher ? "TEACHER'S LAB" : 'STUDENT SHOWCASE' }}</p>
       <h1>{{ isTeacher ? t('teacherGalleryTitle') : t('studentGalleryTitle') }}</h1>
       <p class="hero-text">{{ isTeacher ? t('teacherGalleryText') : t('studentGalleryText') }}</p>
-      <p class="result-count" aria-live="polite">{{ t('workCount', { count: filteredGames.length }) }}</p>
+      <p class="result-count" aria-live="polite">{{ total !== null ? t('workCount', { count: total }) : `已載入 ${games.length} 件作品` }}</p>
     </section>
 
     <section class="gallery-library" :aria-label="isTeacher ? t('teacherCollectionNav') : t('studentCollectionNav')">
@@ -84,20 +78,22 @@ function play(game) {
         </div>
       </div>
 
-      <div v-if="visibleGames.length" class="game-grid">
+      <p v-if="loading" role="status">正在載入作品…</p>
+      <div v-if="error" class="empty-state" role="alert"><h2>作品暫時無法載入</h2><p>{{ error }}</p><button class="button button-secondary" type="button" @click="refresh">重新載入</button></div>
+      <div v-else-if="visibleGames.length" class="game-grid">
         <GameCard v-for="game in visibleGames" :key="game.id" :game="game" :play-count="playCountsLoaded ? (playCounts[game.id] ?? 0) : null" @play="play" />
       </div>
-      <div v-else class="empty-state">
+      <div v-else-if="!loading" class="empty-state">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6.5h16v11H4z" /><path d="M8 10h8M8 14h5" /></svg>
-        <h2>{{ collection.length ? t('noMatches') : t('collectionEmpty') }}</h2>
-        <p>{{ collection.length ? t('tryAgain') : t('collectionEmptyText') }}</p>
+        <h2>{{ query || selectedClass !== '全部' || selectedDevice !== 'all' ? t('noMatches') : t('collectionEmpty') }}</h2>
+        <p>{{ cursor ? '還有作品尚未搜尋，請繼續載入。' : t('tryAgain') }}</p>
       </div>
-      <div v-if="remaining" class="load-more">
-        <button class="button button-secondary" type="button" @click="visibleLimit += 9">
-          {{ t('showMore', { count: Math.min(9, remaining) }) }}
+      <div v-if="cursor" class="load-more">
+        <button class="button button-secondary" type="button" :disabled="loading" @click="load(filters(), true)">
+          {{ loading ? '載入中…' : t('showMore', { count: 9 }) }}
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
         </button>
-        <p>{{ t('showingCount', { shown: visibleGames.length, total: filteredGames.length }) }}</p>
+        <p>{{ total !== null ? t('showingCount', { shown: visibleGames.length, total }) : `已載入 ${visibleGames.length} 件符合條件的作品` }}</p>
       </div>
     </section>
   </main>

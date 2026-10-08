@@ -3,7 +3,7 @@ import { featuredActivity, contentUpdates, newWorkWindowDays } from '../contentU
 
 export const siteStateKey = Symbol('siteState')
 export const legacySiteState = () => ({ featuredActivity, contentUpdates, newWorkWindowDays, mode: 'legacy', revision: 1 })
-export const emptySiteState = (availability = 'loading') => ({ featuredActivity: null, contentUpdates: { students: contentUpdates.students, teachers: contentUpdates.teachers, events: null }, newWorkWindowDays, mode: 'firebase', revision: 0, availability })
+export const emptySiteState = (availability = 'loading') => ({ featuredActivity: null, contentUpdates: { students: null, teachers: null, events: null }, newWorkWindowDays, mode: 'firebase', revision: 0, availability })
 export function createSiteState(initial = legacySiteState()) {
   const state = ref(initial)
   let timer, pending = false

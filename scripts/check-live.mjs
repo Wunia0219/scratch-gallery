@@ -3,11 +3,19 @@ import { readFile } from 'node:fs/promises'
 const target = process.argv[2]
 if (!target || new URL(target).protocol !== 'https:') throw new Error('用法：npm run check:live -- https://正式網址')
 const origin = new URL(target).origin
-const games = JSON.parse(await readFile('public/games.json', 'utf8'))
+let games
+const catalogResponse = await fetch(`${origin}/api/works?role=student`, { signal: AbortSignal.timeout(15000) })
+if (catalogResponse.ok) games = (await catalogResponse.json()).items
+else if (catalogResponse.status === 404) games = JSON.parse(await readFile('public/games.json', 'utf8')) // compatibility before the one-time backend deployment
+else throw new Error(`正式作品 API 異常：${catalogResponse.status}`)
+if (!games.length) {
+  const teachers = await fetch(`${origin}/api/works?role=teacher`, { signal: AbortSignal.timeout(15000) })
+  if (teachers.ok) games = (await teachers.json()).items
+}
 async function get(path) {
   return fetch(origin + path, { signal: AbortSignal.timeout(15000) })
 }
-for (const path of ['/', `/works/${games[0].id}/`]) {
+for (const path of ['/', '/students/', '/teachers/', ...(games.length ? [`/works/${games[0].id}/`] : [])]) {
   const response = await get(path)
   assert.equal(response.status, 200, path)
   assert.match(response.headers.get('content-security-policy') || '', /frame-ancestors 'none'/)
@@ -18,12 +26,14 @@ for (const path of ['/', `/works/${games[0].id}/`]) {
   assert.ok(html.includes(`rel="canonical" href="${origin}${path}"`))
   assert.ok(!html.includes('content="noindex, nofollow"'))
 }
+if (games.length) {
 const runtime = await get(games[0].playUrl)
 assert.equal(runtime.status, 200)
 assert.match(runtime.headers.get('content-security-policy') || '', /sandbox allow-scripts allow-pointer-lock/)
 assert.doesNotMatch(runtime.headers.get('content-security-policy') || '', /allow-same-origin/)
 assert.match(runtime.headers.get('x-robots-tag') || '', /noindex/)
 assert.equal(runtime.headers.get('access-control-allow-origin'), '*')
+}
 assert.equal((await get('/works/this-page-must-not-exist/')).status, 404)
 assert.ok((await (await get('/robots.txt')).text()).includes(`Sitemap: ${origin}/sitemap.xml`))
 assert.ok((await (await get('/sitemap.xml')).text()).includes(`<loc>${origin}/</loc>`))

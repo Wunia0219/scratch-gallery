@@ -8,6 +8,17 @@
 [functions.home]
   included_files = [".netlify/server/**"]
 
+[functions.catalog-pages]
+  included_files = [".netlify/server/**", ".netlify/catalog/**"]
+[functions.works]
+  included_files = [".netlify/catalog/**"]
+[functions.work-admin]
+  included_files = [".netlify/catalog/**"]
+[functions.play-counts]
+  included_files = [".netlify/catalog/**"]
+[functions.word-alchemy-leaderboard]
+  included_files = [".netlify/catalog/**"]
+
 [[redirects]]
   from = "https://scratch-gallery.netlify.app/*"
   to = "https://giraffegallery.com/:splat"

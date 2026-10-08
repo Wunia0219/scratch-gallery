@@ -21,7 +21,7 @@ export async function readPublicState(store) {
   const activity = settings.featuredActivityId ? await store.get(`activities/${settings.featuredActivityId}`) : null
   return {
     featuredActivity: publicActivity(activity), contentUpdates: { students: settings.contentVersions?.students ?? null, teachers: settings.contentVersions?.teachers ?? null, events: activity?.status === 'published' ? settings.contentVersions?.events ?? null : null },
-    newWorkWindowDays: 15, revision: settings.revision ?? 1, mode: 'firebase', serverTime: new Date().toISOString(),
+    newWorkWindowDays: 15, revision: settings.revision ?? 1, catalogRevision: settings.catalogRevision ?? 0, mode: 'firebase', serverTime: new Date().toISOString(),
   }
 }
 export async function listPublicActivities(store) {

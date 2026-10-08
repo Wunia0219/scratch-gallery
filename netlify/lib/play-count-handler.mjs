@@ -3,14 +3,15 @@ import { PLAY_EVENT_STORE, isProductionPlayRequest, isValidPlayEvent, playEventK
 const headers = { 'cache-control': 'no-store', 'content-type': 'application/json; charset=utf-8', 'x-content-type-options': 'nosniff' }
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { ...headers, ...extra } })
 
-export function createPlayCountHandler(getStore, gameIds) {
-  const knownIds = new Set(gameIds)
+export function createPlayCountHandler(getStore, gameIds, eligibility) {
   return async request => {
     if (!['GET', 'POST'].includes(request.method)) return new Response(null, { status: 405, headers: { ...headers, allow: 'GET, POST' } })
     try {
       if (request.method === 'GET') {
+        const ids = typeof gameIds === 'function' ? await gameIds() : gameIds
+        const knownIds = new Set(ids)
         const store = getStore({ name: PLAY_EVENT_STORE, consistency: 'strong' })
-        const counts = Object.fromEntries(gameIds.map(id => [id, 0]))
+        const counts = Object.fromEntries(ids.map(id => [id, 0]))
         // Consume pages incrementally rather than collecting every event in RAM.
         for await (const { blobs } of store.list({ paginate: true })) {
           for (const { key } of blobs) {
@@ -22,6 +23,7 @@ export function createPlayCountHandler(getStore, gameIds) {
         return json({ counts }, 200, {
           'cache-control': 'public, max-age=0, must-revalidate',
           'netlify-cdn-cache-control': 'public, durable, max-age=60',
+          'netlify-cache-tag': 'catalog',
         })
       }
       if (!isProductionPlayRequest(request.url, request.headers.get('origin'))) return json({ error: 'Production writes only' }, 403)
@@ -43,7 +45,7 @@ export function createPlayCountHandler(getStore, gameIds) {
       }
       let event
       try { event = JSON.parse(body) } catch { return json({ error: 'Invalid JSON' }, 400) }
-      if (!isValidPlayEvent(event) || !knownIds.has(event.gameId)) return json({ error: 'Invalid play event' }, 400)
+      if (!isValidPlayEvent(event) || !(eligibility ? await eligibility(event.gameId) : gameIds.includes(event.gameId))) return json({ error: 'Invalid play event' }, 400)
       const store = getStore({ name: PLAY_EVENT_STORE, consistency: 'strong' })
       await store.set(playEventKey(event.gameId, event.eventId), new Date().toISOString())
       let count = 0

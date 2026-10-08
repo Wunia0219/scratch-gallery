@@ -1,6 +1,6 @@
 # Scratch 學習館
 
-Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 提供頁面，遊玩計數與煉金塔排行榜使用獨立 Function／Blobs。第一階段新增 Firebase 站主登入與活動後台；作品仍在本機打包，沒有公開上傳功能。
+Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 提供頁面，遊玩計數與煉金塔排行榜使用獨立 Function／Blobs。Firebase 提供站主登入、活動與作品管理；遊戲仍在本機打包，沒有公開上傳功能。正式切換狀態見 [Firebase 設定](docs/FIREBASE-ADMIN-SETUP.md)。
 
 ## 本機與驗證
 
@@ -16,14 +16,16 @@ Chrome 可用 `CHROME_PATH` 指定。`verify:local` 產生 noindex 測試版 `di
 ## 架構與入口
 
 - `src/main.js` 依網址動態載入首頁、作品庫、作品頁或 `/admin/`；無 Router，首頁不載入作品目錄。`/students/`、`/teachers/` 每批顯示 9 件。
-- `public/creators.json` 保存作者 UUID、姓名、role、班級；`public/games.json` 以 `creatorId` 關聯。`src/lib/catalog.js` 驗證，`useGames.js` 提供畫面資料。
+- `public/creators.json` 保存作者 UUID、姓名、role、班級；`public/games.json` 以 `creatorId` 關聯，作為本機打包／遷移來源。Firebase 模式由公開 API 提供作品，`useGames.js` 管理分頁；作者 role 衍生師生身分。
 - `public/standalone-games.json` 保存活動示範，不列入師生作品庫。
 - `src/components/` 管理導覽、卡片、媒體及遊戲對話框；`src/media.js` 管理媒體，`src/i18n.js` 管理雙語，`styles.css` 管理共用樣式。
-- `scripts/build-site.mjs` 預先渲染首頁、兩個作品庫、`/works/<UUID>/`，並產生 SEO、安全標頭及真正的 404；政策集中在 `scripts/site-policy.mjs`。瀏覽器重新掛載 Vue，並非 hydration。
+- `scripts/build-site.mjs` 建立首頁／作品頁的伺服器模板與後台 HTML。Firebase 模式由 Function 渲染作品庫、`/works/<UUID>/` 與 sitemap，避免下架後留下舊 HTML；legacy 模式保留靜態驗證。SEO／CSP 集中在 `scripts/site-policy.mjs`。瀏覽器重新掛載 Vue，並非 hydration。
 - `netlify/functions/` 提供計數與排行榜。計數記錄匿名事件 UUID，同瀏覽器 30 分鐘冷卻；GET 可在 Netlify 快取 60 秒，自己的成功寫入即時更新。localhost 使用測試資料。排行榜規格見[煉金塔維護筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
 - 活動另由 `home.mjs` 產生首頁 HTML、`site-config.mjs` 提供公開設定、`activity-admin.mjs` 驗證站主並管理草稿／發布／關閉。Firestore 僅由伺服器存取。首次連接與正式切換見 [Firebase 活動後台設定](docs/FIREBASE-ADMIN-SETUP.md)；預設 `legacy` 模式保留現有公開活動，完成驗證後才切換。
 
 ## 匯入與更新作品
+
+作品由 `works.mjs` 提供每批 9 件與個別介紹、`work-admin.mjs` 管理草稿／上下架／還原、`catalog-pages.mjs` 提供伺服器 HTML。資源登錄、兩段上架及限制見 [第二階段操作指南](docs/FIREBASE-WORKS-SETUP.md)。
 
 只匯入可信任且已取得公開授權的作品。作者及作品 UUID 永久保留。
 
@@ -79,15 +81,17 @@ ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -frames:v 1 -vf "scale=480:-2" -quality 
 
 ## 活動、更新提示與發布
 
-`src/contentUpdates.js` 是活動時程、投稿網址、預覽 ID 及導覽列更新版本的唯一設定入口。`isPublished: false` 時首頁顯示「敬請期待」；時程與 NEW 狀態每 30 秒及重新可見時更新。活動細節見[萬聖節筆記](docs/HALLOWEEN-ACTIVITY-NOTES.md)。導覽列版本改為新的唯一值會顯示橘色提示，造訪後清除；沒有更新維持 `null`。
+Firebase 模式由後台與資料庫控制活動、作品及導覽更新提示；`src/contentUpdates.js` 是 legacy 遷移種子與時間計算工具。活動未公開時首頁顯示「敬請期待」；設定每 30 秒及重新可見時更新。活動細節見[萬聖節筆記](docs/HALLOWEEN-ACTIVITY-NOTES.md)。導覽列有新版本時顯示橘色提示，造訪後清除。
 
-**每次正式發布皆須站主當次明確同意。** 本機、非 main 分支與 Deploy Preview 不代表授權；取得核准且準備合併前才執行：
+**每次正式部署皆須站主當次明確同意。** 本機、非 main 分支與 Deploy Preview 不代表授權。
+
+Firebase 作品採兩段流程：先核准部署打包檔案，再驗證正式資源並登錄，最後由後台確認上架。新作品在來源 JSON 保持 `releasePending: true`；第一次後台上架才記錄 `publishedAt`，NEW 起算 15 天。純改介紹、標籤、排序或上下架不需重新部署。以下指令在 Firebase 模式呼叫相同發布交易，需先儲存草稿與確認正式資源，不再修改來源 JSON：
 
 ```powershell
 npm run release:mark -- <待發布作品 UUID>
 ```
 
-此時才寫入 `publishedAt`，NEW 從該時間起計 15 天；更新既有作品不重算。正式建置若仍有待發布作品會失敗。
+legacy 模式仍是在取得核准、準備合併前執行此指令，寫入來源 JSON 的日期；若正式建置有待發布作品則失敗。Firebase 模式可部署尚未上架的遊戲檔案，但不公開草稿介紹；這些檔案可能透過直接網址開啟。完整順序見 [第二階段操作指南](docs/FIREBASE-WORKS-SETUP.md)。
 
 Netlify 依 `netlify.toml` 建置並發佈 `dist/` 與 Functions。正式網址為 `https://giraffegallery.com`，由 `SITE_URL`／Netlify `URL` 決定；舊 Netlify 子網域轉址至正式網域，只支援根網域部署。正式頁有 canonical、分享標籤、sitemap；預覽 noindex，無 SPA catch-all。網域／標頭變更後執行 `npm run check:live -- https://giraffegallery.com`。可在 Search Console 提交 sitemap；不保證收錄與排名。
 

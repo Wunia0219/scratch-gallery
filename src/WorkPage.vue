@@ -3,12 +3,10 @@ import { defineAsyncComponent, onMounted, ref } from 'vue'
 import GameCard from './components/GameCard.vue'
 import SiteHeader from './components/SiteHeader.vue'
 import SiteFooter from './components/SiteFooter.vue'
-import { catalog } from './composables/useGames.js'
 import { usePlayCounts } from './composables/usePlayCounts.js'
-const props = defineProps({ game: { type: Object, required: true } })
+defineProps({ game: { type: Object, required: true }, related: { type: Array, default: () => [] } })
 const GamePlayerDialog = defineAsyncComponent(() => import('./components/GamePlayerDialog.vue'))
 const selectedGame = ref(null)
-const related = catalog.filter(g => g.id !== props.game.id && g.category === props.game.category).slice(0, 3)
 const { counts: playCounts, loaded: playCountsLoaded, load: loadPlayCounts, record: recordPlay } = usePlayCounts()
 onMounted(loadPlayCounts)
 function play(game) { selectedGame.value = game; void recordPlay(game.id) }

@@ -1,7 +1,7 @@
 export async function localActivityApi(req, res, next) {
-  if (!req.url?.startsWith('/api/admin/') && !['/api/site-config', '/api/activities'].includes(req.url?.split('?')[0])) return next()
+  if (!req.url?.startsWith('/api/admin/') && !req.url?.startsWith('/api/works') && !['/api/site-config', '/api/activities'].includes(req.url?.split('?')[0])) return next()
   try {
-    const name = req.url.startsWith('/api/admin/') ? 'activity-admin' : 'site-config'
+    const name = req.url.startsWith('/api/admin/work') ? 'work-admin' : req.url.startsWith('/api/admin/') ? 'activity-admin' : req.url.startsWith('/api/works') ? 'works' : 'site-config'
     const chunks = []
     let length = 0
     for await (const chunk of req) { length += chunk.length; if (length > 16000) { res.statusCode = 413; return res.end('Request too large') } chunks.push(chunk) }
@@ -17,3 +17,11 @@ export async function localActivityApi(req, res, next) {
 }
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+export async function localCatalogPages(req, res, next) {
+  if (!/^\/(?:students\/(?:index\.html)?|teachers\/(?:index\.html)?|works\/.*|sitemap\.xml)$/.test(req.url?.split('?')[0])) return next()
+  try {
+    const handler = (await import(pathToFileURL(resolve('netlify/functions/catalog-pages.mjs')).href)).default
+    const response = await handler(new Request(new URL(req.url, `http://${req.headers.host}`), { method: req.method }))
+    res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(Buffer.from(await response.arrayBuffer()))
+  } catch { res.writeHead(503, { 'Cache-Control': 'no-store' }); res.end('作品服務暫時無法取得') }
+}

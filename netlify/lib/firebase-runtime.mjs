@@ -26,7 +26,7 @@ export async function getFirebaseServices() {
   const db = getFirestore(app)
   function toStored(value) {
     if (Array.isArray(value)) return value.map(toStored)
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, /^(remindFrom|startsAt|endsAt|createdAt|updatedAt)$/.test(key) && typeof item === 'string' ? Timestamp.fromDate(new Date(item)) : toStored(item)]))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, /^(remindFrom|startsAt|endsAt|createdAt|updatedAt|publishedAt|verifiedAt|assetsDeployedAt)$/.test(key) && typeof item === 'string' ? Timestamp.fromDate(new Date(item)) : toStored(item)]))
     return value
   }
   function toPlain(value) {
@@ -37,7 +37,15 @@ export async function getFirebaseServices() {
   }
   const store = {
     async get(path) { const snap = await db.doc(path).get(); return snap.exists ? toPlain(snap.data()) : null },
-    async list(path) { const snap = await db.collection(path).limit(100).get(); return snap.docs.map(doc => ({ ...toPlain(doc.data()), id: doc.id })) },
+    async list(path) { const snap = await db.collection(path).limit(501).get(); if (snap.size > 500) throw new ActivityError('管理清單超過 500 筆，請先擴充後台分頁', 503); return snap.docs.map(doc => ({ ...toPlain(doc.data()), id: doc.id })) },
+    async query(path, options) {
+      let query = db.collection(path).orderBy(options.orderBy, options.direction || 'asc')
+      if (options.after !== undefined) query = query.startAfter(options.after)
+      else if (options.startAt !== undefined) query = query.startAt(options.startAt)
+      if (options.endBefore !== undefined) query = query.endBefore(options.endBefore)
+      const snap = await query.limit(options.limit).get()
+      return snap.docs.map(doc => ({ ...toPlain(doc.data()), id: doc.id }))
+    },
     async transaction(callback) {
       return db.runTransaction(tx => callback({
         async get(path) { const snap = await tx.get(db.doc(path)); return snap.exists ? toPlain(snap.data()) : null },

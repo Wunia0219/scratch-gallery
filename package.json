@@ -1,6 +1,6 @@
 {
   "name": "scratch-gallery",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "A minimal Vue 3 gallery for packaged Scratch games.",
@@ -11,7 +11,7 @@
     "test:maintenance": "node --test scripts/maintenance.test.mjs",
     "test:browser": "node scripts/test-browser.mjs",
     "check:live": "node scripts/check-live.mjs",
-    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run test:maintenance && npm run test:activities && npm run build && node scripts/check-output.mjs && npm run test:activity-render",
+    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run test:maintenance && npm run test:activities && npm run test:works && npm run build && node scripts/check-output.mjs && npm run test:activity-render && npm run test:catalog-render",
     "verify:local": "node scripts/verify-local.mjs",
     "preview": "vite preview",
     "check": "vue-tsc --noEmit",
@@ -25,7 +25,10 @@
     "audit:catalog": "node scripts/audit-catalog.cjs",
     "test:activities": "node --test scripts/activity.test.mjs",
     "firebase:initialize": "node scripts/firebase-initialize.mjs",
-    "test:activity-render": "node scripts/test-activity-render.mjs"
+    "test:activity-render": "node scripts/test-activity-render.mjs",
+    "test:works": "node --test scripts/work.test.mjs",
+    "test:catalog-render": "node scripts/test-catalog-render.mjs",
+    "firebase:catalog": "node scripts/firebase-catalog.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.0",

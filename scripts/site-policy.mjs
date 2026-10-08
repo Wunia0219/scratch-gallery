@@ -11,8 +11,8 @@ export function siteConfig(env = process.env) {
   return { origin: url.origin, indexable }
 }
 
-export function assertReleaseReady(games, indexable) {
-  if (!indexable) return
+export function assertReleaseReady(games, indexable, firebaseCatalog = false) {
+  if (!indexable || firebaseCatalog) return
   const pending = games.filter(game => game.releasePending)
   if (pending.length) throw new Error(`正式建置包含尚未標記發布時間的作品：${pending.map(game => game.id).join(', ')}`)
 }

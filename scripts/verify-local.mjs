@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url'
 const npmCli = process.env.npm_execpath
 if (!npmCli) throw new Error('請使用 npm run verify:local 執行')
 const env = { ...process.env }
+env.CATALOG_DATA_MODE = 'legacy'
+env.ACTIVITY_DATA_MODE = 'legacy'
+env.CATALOG_LOCAL_ASSETS = 'false'
 for (const key of ['SITE_URL', 'CONTEXT', 'NETLIFY', 'URL', 'DEPLOY_URL', 'DEPLOY_PRIME_URL']) delete env[key]
 const cwd = fileURLToPath(new URL('../', import.meta.url))
 console.log('執行免費本機檢查：建置、安全回歸、Chrome 遊戲測試及 npm 弱點掃描。')

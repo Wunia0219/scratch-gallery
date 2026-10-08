@@ -26,7 +26,7 @@ export function formatActivityDate(value, language = 'zh-Hant', full = false) {
 }
 
 export function getActivityPhase(now = Date.now(), activity = featuredActivity) {
-  if (!activity.isPublished) return 'unpublished'
+  if (!activity?.isPublished) return 'unpublished'
   if (now > Date.parse(activity.endsAt)) return 'closed'
   if (now < Date.parse(activity.startsAt)) return 'upcoming'
   return Date.parse(activity.endsAt) - now <= 3 * 86400000 ? 'closing' : 'open'

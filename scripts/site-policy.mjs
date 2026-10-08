@@ -18,6 +18,12 @@ export function assertReleaseReady(games, indexable) {
 }
 
 export const galleryCsp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+export function adminCsp(env = process.env) {
+  const projectId = env.FIREBASE_PROJECT_ID || 'scratch-gallery-c0e33'
+  if (!/^[a-z][a-z0-9-]{4,62}$/.test(projectId)) throw new Error('Firebase 專案 ID 格式不正確')
+  const domain = `https://${projectId}.firebaseapp.com`
+  return `default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com ${domain}; frame-src 'self' ${domain} https://accounts.google.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`
+}
 export function runtimeSources(origin, env = process.env) {
   return [...new Set([origin, env.DEPLOY_URL, env.DEPLOY_PRIME_URL].filter(Boolean).map(value => {
     const url = new URL(value)
@@ -34,5 +40,6 @@ export function buildHeaders(origin, indexable, paths, sources = origin) {
   if (!indexable) common.push('  X-Robots-Tag: noindex, nofollow')
   const pages = [...new Set(['/', '/index.html', '/404.html', ...paths.flatMap(p => [p, `${p}index.html`])])]
   return common.join('\n') + '\n\n' + pages.map(p => `${p}\n  Content-Security-Policy: ${galleryCsp}\n  X-Frame-Options: DENY\n  Cache-Control: public, max-age=0, must-revalidate`).join('\n\n')
+    + ['/admin/', '/admin/index.html'].map(path => `\n\n${path}\n  Content-Security-Policy: ${adminCsp()}\n  X-Frame-Options: DENY\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store`).join('')
     + `\n\n/games/*\n  Access-Control-Allow-Origin: *\n  X-Robots-Tag: noindex\n  Content-Security-Policy: ${gameCsp(sources)}\n\n/games.json\n  X-Robots-Tag: noindex\n\n/standalone-games.json\n  X-Robots-Tag: noindex\n\n/creators.json\n  X-Robots-Tag: noindex\n\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n`
 }

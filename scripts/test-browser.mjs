@@ -6,6 +6,7 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
 import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
+import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
 import { studentClasses } from '../src/lib/catalog.js'
 const root = path.resolve('dist')
@@ -14,8 +15,12 @@ const rules = (await readFile('dist/_headers', 'utf8')).trim().split(/\n\s*\n/).
   return { pattern, headers: lines.map(line => { const i = line.indexOf(':'); return [line.slice(0, i).trim(), line.slice(i + 1).trim()] }) }
 })
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.mp3': 'audio/mpeg' }
+// Browser tests never connect to the owner's cloud database.
+const publicStateFixture = { ...initialSiteState(), mode: 'firebase' }
 const server = createServer(async (req, res) => {
   try {
+    if (req.url === '/api/admin/config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"configured":false}'); return }
+    if (req.url === '/api/site-config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(publicStateFixture)); return }
     const urlPath = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname)
     let file = path.resolve(root, '.' + urlPath)
     if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(403).end(); return }
@@ -48,9 +53,17 @@ try {
     .sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))[0]
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
+  await page.goto(`${testOrigin}/admin/`)
+  await page.getByText('後台已準備好，等待完成 Firebase 連接設定。完成後即可使用 Google 帳號登入。').waitFor()
+  assert.equal(await page.getByRole('button', { name: '確認發布' }).count(), 0, 'unauthenticated visitors must not receive an editor')
+  assert.equal(await page.getByRole('heading', { name: '活動管理', exact: true }).count(), 1)
+  await page.setViewportSize({ width: 375, height: 812 })
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'admin should fit a phone viewport')
+  await page.setViewportSize({ width: 1280, height: 720 })
   const mediaRequests = []
   page.on('request', request => { if (/\.(?:MP4|mp4)(?:$|\?)/.test(request.url())) mediaRequests.push(request.url()) })
   await page.goto(`${testOrigin}/`)
+  await page.getByRole('heading', { name: featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待', exact: true }).waitFor()
   await page.locator('.hero-video-frame video').evaluate(video => video.play())
   assert.equal(mediaRequests.some(url => url.includes('IMG_3294')), false, 'homepage must not fetch full video')
   assert.equal(mediaRequests.some(url => url.includes('showcase-preview')), true, 'homepage should fetch small preview')

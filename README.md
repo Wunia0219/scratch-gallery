@@ -1,6 +1,6 @@
 # Scratch 學習館
 
-Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 發佈靜態頁面，遊玩計數與煉金塔排行榜各使用獨立 Function／Blobs；沒有登入、私人作品或公開上傳功能。
+Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 提供頁面，遊玩計數與煉金塔排行榜使用獨立 Function／Blobs。第一階段新增 Firebase 站主登入與活動後台；作品仍在本機打包，沒有公開上傳功能。
 
 ## 本機與驗證
 
@@ -15,12 +15,13 @@ Chrome 可用 `CHROME_PATH` 指定。`verify:local` 產生 noindex 測試版 `di
 
 ## 架構與入口
 
-- `src/main.js` 依網址動態載入 `App.vue`、`GalleryPage.vue` 或 `WorkPage.vue`；無 Router，首頁不載入作品目錄。`/students/`、`/teachers/` 每批顯示 9 件。
+- `src/main.js` 依網址動態載入首頁、作品庫、作品頁或 `/admin/`；無 Router，首頁不載入作品目錄。`/students/`、`/teachers/` 每批顯示 9 件。
 - `public/creators.json` 保存作者 UUID、姓名、role、班級；`public/games.json` 以 `creatorId` 關聯。`src/lib/catalog.js` 驗證，`useGames.js` 提供畫面資料。
 - `public/standalone-games.json` 保存活動示範，不列入師生作品庫。
 - `src/components/` 管理導覽、卡片、媒體及遊戲對話框；`src/media.js` 管理媒體，`src/i18n.js` 管理雙語，`styles.css` 管理共用樣式。
 - `scripts/build-site.mjs` 預先渲染首頁、兩個作品庫、`/works/<UUID>/`，並產生 SEO、安全標頭及真正的 404；政策集中在 `scripts/site-policy.mjs`。瀏覽器重新掛載 Vue，並非 hydration。
 - `netlify/functions/` 提供計數與排行榜。計數記錄匿名事件 UUID，同瀏覽器 30 分鐘冷卻；GET 可在 Netlify 快取 60 秒，自己的成功寫入即時更新。localhost 使用測試資料。排行榜規格見[煉金塔維護筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
+- 活動另由 `home.mjs` 產生首頁 HTML、`site-config.mjs` 提供公開設定、`activity-admin.mjs` 驗證站主並管理草稿／發布／關閉。Firestore 僅由伺服器存取。首次連接與正式切換見 [Firebase 活動後台設定](docs/FIREBASE-ADMIN-SETUP.md)；預設 `legacy` 模式保留現有公開活動，完成驗證後才切換。
 
 ## 匯入與更新作品
 

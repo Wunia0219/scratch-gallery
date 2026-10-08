@@ -1,6 +1,7 @@
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { featuredActivity, formatActivityDate, getActivityPhase } from '../contentUpdates.js'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { formatActivityDate, getActivityPhase } from '../contentUpdates.js'
+import { useSiteState } from '../composables/useSiteState.js'
 import { useLanguage } from '../i18n'
 import { useNow } from '../composables/useNow.js'
 import previews from '../../public/standalone-games.json'
@@ -8,14 +9,18 @@ import previews from '../../public/standalone-games.json'
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
 const { t, language } = useLanguage()
 const now = useNow()
-const phase = computed(() => getActivityPhase(now.value))
-const dates = computed(() => ({ start: formatActivityDate(featuredActivity.startsAt, language.value, true), end: formatActivityDate(featuredActivity.endsAt, language.value, true) }))
-const status = computed(() => phase.value === 'upcoming' ? t('halloweenStatus', { date: formatActivityDate(featuredActivity.startsAt, language.value) }) : phase.value === 'closed' ? t('activityClosed') : t(phase.value === 'closing' ? 'activityReminderClosing' : 'activityReminderOpen'))
-const submissionUrl = featuredActivity.submissionUrl
+const { activity, state } = useSiteState()
+const availability = computed(() => state.value.availability)
+const phase = computed(() => getActivityPhase(now.value, activity.value))
+const dates = computed(() => activity.value ? ({ start: formatActivityDate(activity.value.startsAt, language.value, true), end: formatActivityDate(activity.value.endsAt, language.value, true) }) : {})
+const status = computed(() => phase.value === 'upcoming' ? t('halloweenStatus', { date: formatActivityDate(activity.value.startsAt, language.value) }) : phase.value === 'closed' ? t('activityClosed') : t(phase.value === 'closing' ? 'activityReminderClosing' : 'activityReminderOpen'))
+const submissionUrl = computed(() => activity.value?.submissionUrl)
+const title = computed(() => language.value === 'en' ? activity.value?.titleEn || activity.value?.title || t('halloweenTitle') : activity.value?.title || t('halloweenTitle'))
+const summary = computed(() => language.value === 'en' ? activity.value?.descriptionEn || activity.value?.description || t('halloweenSummary') : activity.value?.description || t('halloweenSummary'))
 const previewOpen = ref(false)
-const activityPublished = featuredActivity.isPublished
-const halloweenPreview = previews.find(preview => preview.id === featuredActivity.previewId)
-if (!halloweenPreview) throw new Error('活動預覽未登錄')
+const activityPublished = computed(() => Boolean(activity.value?.isPublished))
+const halloweenPreview = computed(() => previews.find(preview => preview.id === activity.value?.previewId))
+watch([activityPublished, halloweenPreview], () => { previewOpen.value = false })
 
 </script>
 
@@ -37,8 +42,8 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
           <span class="announcement-label">{{ t('halloweenLabel') }}</span>
         </div>
         <p class="announcement-kicker">SCRATCH HALLOWEEN CHALLENGE</p>
-        <h3>{{ t('halloweenTitle') }}</h3>
-        <p class="announcement-summary">{{ t('halloweenSummary') }}</p>
+        <h3>{{ title }}</h3>
+        <p class="announcement-summary">{{ summary }}</p>
 
         <section class="announcement-prizes" aria-labelledby="announcement-prizes-title">
           <h4 id="announcement-prizes-title">{{ t('halloweenPrizesTitle') }}</h4>
@@ -83,7 +88,7 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
         </svg>
         <span class="halloween-bat halloween-bat-one"></span>
         <span class="halloween-bat halloween-bat-two"></span>
-        <button class="announcement-preview" type="button" :aria-label="t('halloweenPreviewPlay')" @click="previewOpen = true">
+        <button v-if="halloweenPreview" class="announcement-preview" type="button" :aria-label="t('halloweenPreviewPlay')" @click="previewOpen = true">
           <img :src="halloweenPreview.thumbnail" :alt="t('halloweenPreviewAlt')" width="480" height="360" loading="lazy" decoding="async" />
           <span class="announcement-preview-badge">{{ t('halloweenPreviewLabel') }}</span>
           <span class="announcement-preview-play" aria-hidden="true">
@@ -103,21 +108,19 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
             <span class="announcement-private-line announcement-private-line-short"></span>
             <div class="announcement-private-details"><span></span><span></span><span></span></div>
           </div>
-          <div class="announcement-private-art">
-            <img :src="halloweenPreview.thumbnail" alt="" width="480" height="360" loading="lazy" decoding="async" />
-          </div>
+          <div class="announcement-private-art"></div>
         </div>
         <div class="announcement-coming-soon" role="status">
           <span class="announcement-coming-soon-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M6 3v4M18 3v4M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M9 14h6M12 11v6" /></svg>
           </span>
           <p class="eyebrow">COMING SOON</p>
-          <h3>{{ t('activityComingSoon') }}</h3>
-          <p>{{ t('activityComingSoonText') }}</p>
+          <h3>{{ availability === 'unavailable' ? (language === 'en' ? 'Events temporarily unavailable' : '活動資訊暫時無法載入') : availability === 'loading' ? (language === 'en' ? 'Loading events' : '正在讀取活動資訊') : t('activityComingSoon') }}</h3>
+          <p>{{ availability === 'unavailable' ? (language === 'en' ? 'Please try again in a moment.' : '請稍後再試，或重新整理頁面。') : availability === 'loading' ? (language === 'en' ? 'Please wait a moment.' : '請稍候。') : t('activityComingSoonText') }}</p>
         </div>
       </template>
     </article>
 
-    <GamePlayerDialog v-if="activityPublished && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
+    <GamePlayerDialog v-if="activityPublished && halloweenPreview && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

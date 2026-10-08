@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { contentUpdates, contentUpdatesStorageKey } from '../contentUpdates.js'
+import { contentUpdatesStorageKey } from '../contentUpdates.js'
+import { useSiteState } from '../composables/useSiteState.js'
 import { useLanguage } from '../i18n.js'
 import { readStoredObject, writeStored } from '../lib/storage.js'
 import ActivityReminder from './ActivityReminder.vue'
@@ -10,6 +11,7 @@ const props = defineProps({
 })
 
 const { language, t, setLanguage } = useLanguage()
+const { updates } = useSiteState()
 const drawerOpen = ref(false)
 const drawer = ref(null)
 const menuButton = ref(null)
@@ -32,14 +34,14 @@ function loadSeenUpdates() {
 }
 
 function hasNewContent(section) {
-  const version = contentUpdates[section]
+  const version = updates.value[section]
   return updatesReady.value && Boolean(version) && seenUpdates.value[section] !== version && props.active !== section
 }
 
 const hasAnyNewContent = computed(() => navItems.value.some(item => hasNewContent(item.section)))
 
 function markSeen(section) {
-  const version = contentUpdates[section]
+  const version = updates.value[section]
   if (!version) return
   seenUpdates.value = { ...seenUpdates.value, [section]: version }
   writeStored(contentUpdatesStorageKey, JSON.stringify(seenUpdates.value))

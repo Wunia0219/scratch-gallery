@@ -1,8 +1,14 @@
 # Scratch Gallery 安全維護
 
-本站無登入、付款或公開上傳。計數只保存匿名事件；排行榜另保存玩家自行輸入的名稱與成績。`public/` 全部公開，不放權杖、私人 SB3 或未授權素材；noindex 不是存取控制。
+訪客不需要登入；管理後台使用 Firebase Google 登入，沒有付款或公開上傳。計數只保存匿名事件；排行榜另保存玩家自行輸入的名稱與成績。`public/` 全部公開，不放權杖、私人 SB3 或未授權素材；noindex 不是存取控制。
 
 ## 防護界線
+
+- 活動管理 API 驗證 Firebase ID token（含撤銷狀態）與 `admins/{uid}` 的啟用 owner 權限。瀏覽器不能直接讀寫 Firestore；`firestore.rules` 預設全部拒絕，Admin SDK 的權限由 IAM 控制。服務帳號私鑰只能放在本機受保護檔案或 Netlify Functions 的秘密設定。
+- 草稿與公開活動分開保存；發布／關閉、版本更新及稽核在同一個資料庫交易內完成。管理寫入同源限定、JSON 大小限制、版本衝突與重試識別碼避免誤覆寫。公開回應採明確欄位投影，不回傳草稿、權限或稽核。
+- `/admin/` 使用獨立 CSP，僅增加 Google 登入需要的腳本、連線及 iframe 來源，no-store／noindex。公開首頁和遊戲的 CSP 維持隔離。
+- 預覽環境不能使用正式 Firebase 專案；未配置獨立測試專案時管理 API 拒絕服務。Firebase 正式模式遇到讀取失敗時不回復舊活動，避免已關閉活動再曝光。首頁與公開設定有 15 秒 CDN 快取，前台每 30 秒重新讀取；不可將活動開關當作敏感檔案的存取控制。
+- 新增 SDK 時以相容的 `@grpc/grpc-js` override 使用修補版，避免 Firebase Web SDK 固定舊的傳遞相依套件。移除 override 前重新掃描；不得降級 Firebase 或跳過弱點檢查。
 
 - 網站 CSP 禁止行內程式、eval、外部框架／嵌入、表單、外部 base URL 與外掛；遊戲所需行內 script／eval 只開放於隔離的 `/games/*`，連線限定本站及部署來源。
 - iframe 固定 `sandbox="allow-scripts allow-pointer-lock"`；Netlify CSP sandbox 另保護直接開啟的遊戲。不可加入 `allow-same-origin`。

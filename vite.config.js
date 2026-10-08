@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { localActivityApi } from './scripts/local-activity-api.mjs'
 
 function publicGameCors(server) {
   server.middlewares.use((req, res, next) => {
@@ -9,8 +10,10 @@ function publicGameCors(server) {
   })
 }
 
-export default defineConfig({
-  plugins: [vue(), { name: 'sandbox-game-assets', configureServer: publicGameCors, configurePreviewServer: publicGameCors }],
+export default defineConfig(({ mode }) => {
+  Object.assign(process.env, loadEnv(mode, process.cwd(), ''))
+  return {
+  plugins: [vue(), { name: 'sandbox-game-assets', configureServer(server) { publicGameCors(server); server.middlewares.use(localActivityApi) }, configurePreviewServer(server) { publicGameCors(server); server.middlewares.use(localActivityApi) } }],
   build: {
     manifest: true,
     assetsInlineLimit: 2048,
@@ -19,4 +22,5 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 3000,
   },
+  }
 })

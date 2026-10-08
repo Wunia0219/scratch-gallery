@@ -22,6 +22,12 @@ for (const route of pageRoutes) {
 }
 assert.equal((sitemap.match(/<loc>/g) || []).length, indexable ? games.length + 3 : 0)
 assert.doesNotMatch(sitemap, /\/games\//)
+const admin = await readFile('dist/admin/index.html', 'utf8')
+assert.match(admin, /name="robots" content="noindex, nofollow"/)
+assert.doesNotMatch(sitemap, /\/admin\//)
+assert.doesNotMatch(admin, /PRIVATE KEY|FIREBASE_PRIVATE_KEY|GOOGLE_APPLICATION_CREDENTIALS/)
+const headers = await readFile('dist/_headers', 'utf8')
+assert.match(headers, /\/admin\/\n  Content-Security-Policy: [^\n]+\n  X-Frame-Options: DENY\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store/)
 // Prevent common accidental secret/build-source publication; not a comprehensive secret scanner.
 async function inspect(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {

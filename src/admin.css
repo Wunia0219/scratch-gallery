@@ -51,6 +51,31 @@
 .admin-work-preview { max-width: 400px; }
 .admin-edit-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .admin-history > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #dbe3ed; }
+.vote-date-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.vote-entry-picker { max-height: 320px; overflow-y: auto; border: 1px solid #b5c3d5; border-radius: 10px; margin: 0 0 24px; }
+.vote-entry-picker label { display: flex; align-items: center; gap: 12px; min-height: 44px; margin: 0; font-weight: 400; }
+.vote-entry-picker input { width: 22px; min-height: 22px; flex: none; }
+.vote-health, .vote-totals { margin: 28px 0; padding: 20px; background: #f3f8ff; border-radius: 12px; }
+.vote-health dl > div { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 12px; padding: 10px 0; }
+.vote-health dt { font-weight: 700; }
+.vote-health dd { margin: 0; overflow-wrap: anywhere; }
+.vote-count-list { padding: 0; list-style: none; display: grid; gap: 12px; }
+.vote-count-list li { display: flex; gap: 16px; justify-content: space-between; }
+.vote-count-list strong { white-space: nowrap; }
+.vote-visibility { margin-top: 28px; }
+.vote-connection-guide { margin-bottom: 28px; }
+.vote-connection-steps { display: grid; gap: 20px; }
+.vote-connection-steps article { padding: 22px; border: 1px solid #dbe3ed; border-radius: 12px; background: #f8fbff; }
+.vote-connection-steps p { line-height: 1.8; }
+.vote-step-number { color: #1b4d8d; font-weight: 800; }
+.vote-connection-steps h3 { margin: 8px 0 12px; }
+.vote-connection-steps details { padding: 16px; background: #fff8e2; border-radius: 10px; }
+.vote-connection-steps summary { min-height: 44px; cursor: pointer; display: list-item; }
+.vote-connection-steps code { display: block; white-space: normal; overflow-wrap: anywhere; }
+.vote-connection-state { font-weight: 700; color: #244568; }
+.vote-repair { margin-top: 24px; padding: 16px; border: 1px solid #dbe3ed; border-radius: 10px; }
+.vote-repair summary { min-height: 44px; cursor: pointer; }
+@media (max-width: 760px) { .vote-date-fields { grid-template-columns: 1fr; } .vote-health dl > div { grid-template-columns: 1fr; gap: 6px; } }
 @media (max-width: 1050px) { .admin-date-fields { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .admin-header { align-items: flex-start; flex-direction: column; padding: 20px; } .admin-workspace { grid-template-columns: 1fr; } .admin-main { padding: 28px 16px 48px; } .admin-panel { padding: 20px; } .admin-login { padding: 24px; } .admin-account { overflow-wrap: anywhere; } }
 @media (prefers-reduced-motion: reduce) { .admin-shell button { transition: none; } }

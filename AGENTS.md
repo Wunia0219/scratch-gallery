@@ -2,12 +2,13 @@
 
 ## 專案與閱讀入口
 
-- Vue 3 + Vite，Node.js 24，繁體中文介面；Netlify Functions／Blobs 提供計數與排行，Firebase 提供站主登入及活動資料；無公開上傳。Firebase 正式切換狀態見 `docs/FIREBASE-ADMIN-SETUP.md`，不可將本機功能完成當作雲端設定完成。
+- Vue 3 + Vite，Node.js 24，繁體中文介面；Netlify Functions／Blobs 提供計數與排行，Firebase 提供站主登入及活動、作品、投票管理；無公開上傳。Firebase 正式切換狀態見 `docs/FIREBASE-ADMIN-SETUP.md`，不可將本機功能完成當作雲端設定完成。
 - 先讀 [README.md](README.md) 的架構與操作；安全、部署或套件變更另讀 [SECURITY.md](SECURITY.md)。作品維護見 `docs/`，不要將過期規劃當作現況。
 - `src/main.js` 按網址拆分首頁、師生作品庫與作品頁；首頁不載入作品目錄，作品庫每批 9 件。不新增 Router／全域狀態套件。
 - `games.json` 以永久 creatorId 關聯 `creators.json`，作者 role 衍生 creatorType。catalog.js 驗證、useGames.js 提供資料；standalone-games.json 為獨立示範。
 - build-site.mjs 建立首頁／作品伺服器模板與後台；Firebase 作品庫、作品頁與 sitemap 由 catalog-pages Function 讀取公開投影，legacy 才靜態預渲染。首頁由 home Function 渲染；site-policy.mjs 集中 SEO／CSP。Netlify 發佈 dist/ 與 Functions，不手改產出或加入 SPA catch-all。
 - 活動草稿不得進公開 API／HTML；所有管理寫入需驗證 owner、同源、資料及版本。Firebase 正式模式不得自動回復舊活動設定；預覽不得連正式專案。服務帳號金鑰不得放公開目錄、Git 或 VITE_ 變數。
+- 投票另用獨立 Google 表單，來源與控制 HMAC 用途分離、完整重算、版本去重；只接彙總，不接身份／逐票資料。規則啟用後固定，結算保存版本，更正另建新版本。後台內建串接指南；Google 來源、觸發器與正式設定狀態見 `docs/FIREBASE-VOTING-SETUP.md`，不可把模擬票數當真票。
 
 ## Netlify 維護入口與建議時機
 

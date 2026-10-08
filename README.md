@@ -2,6 +2,8 @@
 
 Vue 3 + Vite、Node.js 24 的繁體中文 Scratch 展示網站。Netlify 提供頁面，遊玩計數與煉金塔排行榜使用獨立 Function／Blobs。Firebase 提供站主登入、活動與作品管理；遊戲仍在本機打包，沒有公開上傳功能。正式切換狀態見 [Firebase 設定](docs/FIREBASE-ADMIN-SETUP.md)。
 
+投票管理支援獨立 Google 表單、完整統計同步、收票開關、公開方式、固定結算版本與 CSV。Google 表單／Apps Script 的連接與驗收見 [第三階段指南](docs/FIREBASE-VOTING-SETUP.md)；本機程式完成不代表 Google 授權或正式部署完成。本次第三階段保留版本 **1.4.0**，待站主驗收後再決定版本與發布。
+
 ## 本機與驗證
 
 ```powershell
@@ -22,6 +24,7 @@ Chrome 可用 `CHROME_PATH` 指定。`verify:local` 產生 noindex 測試版 `di
 - `scripts/build-site.mjs` 建立首頁／作品頁的伺服器模板與後台 HTML。Firebase 模式由 Function 渲染作品庫、`/works/<UUID>/` 與 sitemap，避免下架後留下舊 HTML；legacy 模式保留靜態驗證。SEO／CSP 集中在 `scripts/site-policy.mjs`。瀏覽器重新掛載 Vue，並非 hydration。
 - `netlify/functions/` 提供計數與排行榜。計數記錄匿名事件 UUID，同瀏覽器 30 分鐘冷卻；GET 可在 Netlify 快取 60 秒，自己的成功寫入即時更新。localhost 使用測試資料。排行榜規格見[煉金塔維護筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
 - 活動另由 `home.mjs` 產生首頁 HTML、`site-config.mjs` 提供公開設定、`activity-admin.mjs` 驗證站主並管理草稿／發布／關閉。Firestore 僅由伺服器存取。首次連接與正式切換見 [Firebase 活動後台設定](docs/FIREBASE-ADMIN-SETUP.md)；預設 `legacy` 模式保留現有公開活動，完成驗證後才切換。
+- 投票由 `voting-admin.mjs` 管理、`voting.mjs` 提供公開投影、`vote-sync.mjs` 接收 HMAC 彙總；Google 範本位於 `integrations/google-voting/`，透過 owner 專用下載提供。前台只在已公開活動讀取票數，投票資料不放靜態 HTML；來源與正式接通狀態見第三階段指南。
 
 ## 匯入與更新作品
 

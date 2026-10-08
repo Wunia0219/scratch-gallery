@@ -5,6 +5,9 @@
 ## 防護界線
 
 - 活動管理 API 驗證 Firebase ID token（含撤銷狀態）與 `admins/{uid}` 的啟用 owner 權限。瀏覽器不能直接讀寫 Firestore；`firestore.rules` 預設全部拒絕，Admin SDK 的權限由 IAM 控制。服務帳號私鑰只能放在本機受保護檔案或 Netlify Functions 的秘密設定。
+- 投票管理沿用 owner／同源／版本／重試識別碼驗證；公開票數另採明確欄位投影。獨立 Google 投票表單限每帳號一次，不收姓名與電子郵件，僅一題必填選擇題，禁止修改回覆、其他選項、公開原始回覆摘要；帳號限制無法證明一人只有一帳號。
+- Apps Script 同步與控制使用各活動派生的不同 HMAC 金鑰、5 分鐘簽章時限與簽章用途分離；POST 本文最多 64 KB。來源僅傳完整彙總與版本，不傳回覆 ID、帳號或原始選票。控制網址限 Google Script 的 /exec，ContentService 跳轉只允許 Google 內容站的 GET，不轉送簽章本文。規則啟用後固定，過期／亂序統計不能覆寫新版本；關閉失敗不冒稱已停止 Google 收票。
+- 結算需要已確認關閉與最近完整統計，舊結算永久保留、更正另建版本並記錄原因。一般同步不覆寫公開結算；CSV 固定指定版本並跳脫公式。金鑰根值僅存本機私密 .env.local／Netlify Functions，活動金鑰存 Apps Script Properties；不進後台 HTML、Git、VITE_ 或公開 JSON。配置與仍待 Google 實測項目見 [投票指南](docs/FIREBASE-VOTING-SETUP.md)。
 - 草稿與公開活動／作品分開保存；發布／關閉、版本更新及稽核在同一個資料庫交易內完成。作品另保留私有版本紀錄，還原只建立草稿。管理寫入同源限定、JSON 大小限制、版本衝突與重試識別碼避免誤覆寫。公開回應採明確欄位投影，不回傳草稿、權限或稽核。
 - 遊戲與封面來源由建置資源清單限制；正式上架需要正式網址檔案的雜湊驗證及資源登錄，本機驗證不能啟動新作品首次上架。正式資源登錄後拒絕以 `--local` 覆寫該資料庫。Firebase 建置移除公開原始作品／作者 JSON 及靜態作品頁；動態 404／sitemap 與計數／排行榜資格都使用有效公開作品。
 - `/admin/` 使用獨立 CSP，僅增加 Google 登入需要的腳本、連線及 iframe 來源，no-store／noindex。公開首頁和遊戲的 CSP 維持隔離。

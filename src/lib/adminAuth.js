@@ -22,3 +22,11 @@ export async function adminRequest(path, body) {
   if (!response.ok) throw new Error(result.error || '暫時無法完成操作')
   return result
 }
+export async function adminDownload(path, filename, body) {
+  const token = await auth.currentUser?.getIdToken()
+  if (!token) throw new Error('請先登入管理帳號')
+  const response = await fetch(`/api/admin/${path}`, { method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}), cache: 'no-store' })
+  if (!response.ok) { const value = await response.json(); throw new Error(value.error || '匯出暫時無法完成') }
+  const url = URL.createObjectURL(await response.blob()), link = document.createElement('a')
+  link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url)
+}

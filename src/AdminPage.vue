@@ -12,10 +12,12 @@ const busy = ref(false), error = ref(''), notice = ref(''), records = ref([]), s
 const form = reactive({}), preview = ref(null), confirmation = ref(''), pendingOperation = ref(null)
 const original = ref('')
 const WorkAdmin = defineAsyncComponent(() => import('./components/WorkAdmin.vue'))
-const section = ref('activities'), workAdmin = ref(null), workBusy = ref(false)
+const VotingAdmin = defineAsyncComponent(() => import('./components/VotingAdmin.vue'))
+const section = ref('activities'), workAdmin = ref(null), workBusy = ref(false), voteAdmin = ref(null), voteBusy = ref(false)
 function switchSection(next) {
-  if (busy.value || workBusy.value || next === section.value) return
+  if (busy.value || workBusy.value || voteBusy.value || next === section.value) return
   if (section.value === 'works' && !workAdmin.value?.canLeave()) return
+  if (section.value === 'voting' && !voteAdmin.value?.canLeave()) return
   if (section.value === 'activities' && changed.value && !window.confirm('活動有尚未儲存的修改，要捨棄並切換嗎？')) return
   if (section.value === 'activities' && selected.value) { original.value = JSON.stringify(form); select(selected.value); preview.value = null }
   section.value = next
@@ -82,7 +84,8 @@ function requestPublish() {
 }
 function beforeUnload(event) { if (changed.value) { event.preventDefault(); event.returnValue = '' } }
 onMounted(async () => {
-  if (new URLSearchParams(window.location.search).get('section') === 'works') section.value = 'works'
+  const requested = new URLSearchParams(window.location.search).get('section')
+  if (['works', 'voting'].includes(requested)) section.value = requested
   window.addEventListener('beforeunload', beforeUnload)
   await run(async () => {
     const response = await fetch('/api/admin/config', { cache: 'no-store' })
@@ -110,11 +113,11 @@ onBeforeUnmount(() => { unsubscribe?.(); window.removeEventListener('beforeunloa
   <div class="admin-shell">
     <header class="admin-header">
       <a class="brand" href="/"><img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48"><span class="brand-name"><strong>東勢長頸鹿美語</strong><small>Scratch 創作館 · 管理後台</small></span></a>
-      <div class="admin-account"><span v-if="user">{{ user.email }}</span><button v-if="user" type="button" :disabled="busy || workBusy" @click="(!workAdmin || workAdmin.canLeave()) && run(signOutAdmin)">登出</button><a href="/">返回網站</a></div>
+      <div class="admin-account"><span v-if="user">{{ user.email }}</span><button v-if="user" type="button" :disabled="busy || workBusy || voteBusy" @click="(!workAdmin || workAdmin.canLeave()) && (!voteAdmin || voteAdmin.canLeave()) && run(signOutAdmin)">登出</button><a href="/">返回網站</a></div>
     </header>
     <main id="admin-main" class="admin-main">
-      <div class="admin-title"><p class="eyebrow">GALLERY ADMIN</p><h1>{{ section === 'works' ? '作品管理' : '活動管理' }}</h1><p>先儲存草稿，預覽確認後再公開。</p></div>
-      <nav v-if="authorized" class="admin-tabs" aria-label="管理項目"><button type="button" :aria-current="section === 'activities' ? 'page' : undefined" :disabled="busy || workBusy" @click="switchSection('activities')">活動管理</button><button type="button" :aria-current="section === 'works' ? 'page' : undefined" :disabled="busy || workBusy" @click="switchSection('works')">作品管理</button></nav>
+      <div class="admin-title"><p class="eyebrow">GALLERY ADMIN</p><h1>{{ section === 'works' ? '作品管理' : section === 'voting' ? '投票管理' : '活動管理' }}</h1><p>先儲存草稿，確認後再公開；投票結算會保留固定結果版本。</p></div>
+      <nav v-if="authorized" class="admin-tabs" aria-label="管理項目"><button type="button" :aria-current="section === 'activities' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('activities')">活動管理</button><button type="button" :aria-current="section === 'works' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('works')">作品管理</button><button type="button" :aria-current="section === 'voting' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('voting')">投票管理</button></nav>
       <p v-if="error" class="admin-message admin-error" role="alert">{{ error }}</p>
       <p v-if="notice" class="admin-message" role="status">{{ notice }}</p>
       <section v-if="!user || !authorized" class="admin-panel admin-login" :aria-busy="busy">
@@ -125,6 +128,7 @@ onBeforeUnmount(() => { unsubscribe?.(); window.removeEventListener('beforeunloa
         <template v-else><p>此 Google 帳號需要站主授權才可管理活動。</p><p class="admin-uid">管理員識別碼：<code>{{ user.uid }}</code></p><button type="button" :disabled="busy" @click="run(() => reload())">重新確認權限</button></template>
       </section>
       <WorkAdmin v-else-if="section === 'works'" ref="workAdmin" :key="user.uid" @busy="workBusy = $event" />
+      <VotingAdmin v-else-if="section === 'voting'" ref="voteAdmin" :key="user.uid" @busy="voteBusy = $event" />
       <div v-else class="admin-workspace" :aria-busy="busy">
         <aside class="admin-panel admin-list"><div class="admin-panel-heading"><h2>所有活動</h2><button type="button" :disabled="busy" @click="addActivity">新增活動</button></div>
           <button v-for="record in records" :key="record.id" type="button" class="admin-activity-item" :aria-pressed="selected?.id === record.id" :disabled="busy" @click="select(record)"><strong>{{ (record.draft ?? record.published).title }}</strong><span>{{ record.published?.status === 'published' ? '已公開' : '未公開' }}<template v-if="record.draft"> · 有草稿</template></span></button>

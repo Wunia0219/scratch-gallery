@@ -1,10 +1,10 @@
 export async function localActivityApi(req, res, next) {
-  if (!req.url?.startsWith('/api/admin/') && !req.url?.startsWith('/api/works') && !['/api/site-config', '/api/activities'].includes(req.url?.split('?')[0])) return next()
+  if (!req.url?.startsWith('/api/admin/') && !req.url?.startsWith('/api/works') && !req.url?.startsWith('/api/voting/') && !['/api/site-config', '/api/activities', '/api/vote-sync'].includes(req.url?.split('?')[0])) return next()
   try {
-    const name = req.url.startsWith('/api/admin/work') ? 'work-admin' : req.url.startsWith('/api/admin/') ? 'activity-admin' : req.url.startsWith('/api/works') ? 'works' : 'site-config'
+    const name = req.url.startsWith('/api/admin/vot') ? 'voting-admin' : req.url.startsWith('/api/vote-sync') ? 'vote-sync' : req.url.startsWith('/api/voting/') ? 'voting' : req.url.startsWith('/api/admin/work') ? 'work-admin' : req.url.startsWith('/api/admin/') ? 'activity-admin' : req.url.startsWith('/api/works') ? 'works' : 'site-config'
     const chunks = []
     let length = 0
-    for await (const chunk of req) { length += chunk.length; if (length > 16000) { res.statusCode = 413; return res.end('Request too large') } chunks.push(chunk) }
+    for await (const chunk of req) { length += chunk.length; if (length > (name.startsWith('vot') ? 64000 : 16000)) { res.statusCode = 413; return res.end('Request too large') } chunks.push(chunk) }
     const origin = `http://${req.headers.host}`
     const request = new Request(new URL(req.url, origin), { method: req.method, headers: req.headers, ...(!['GET', 'HEAD'].includes(req.method) ? { body: Buffer.concat(chunks) } : {}) })
     // Vite bundles its config in a temporary folder; resolve server modules from the workspace.

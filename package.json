@@ -11,7 +11,7 @@
     "test:maintenance": "node --test scripts/maintenance.test.mjs",
     "test:browser": "node scripts/test-browser.mjs",
     "check:live": "node scripts/check-live.mjs",
-    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run test:maintenance && npm run test:activities && npm run test:works && npm run build && node scripts/check-output.mjs && npm run test:activity-render && npm run test:catalog-render",
+    "verify": "npm run audit:catalog && npm run audit:assets && npm run check && npm run test:security && npm run test:maintenance && npm run test:activities && npm run test:works && npm run test:voting && npm run build && node scripts/check-output.mjs && npm run test:activity-render && npm run test:catalog-render",
     "verify:local": "node scripts/verify-local.mjs",
     "preview": "vite preview",
     "check": "vue-tsc --noEmit",
@@ -28,7 +28,9 @@
     "test:activity-render": "node scripts/test-activity-render.mjs",
     "test:works": "node --test scripts/work.test.mjs",
     "test:catalog-render": "node scripts/test-catalog-render.mjs",
-    "firebase:catalog": "node scripts/firebase-catalog.mjs"
+    "firebase:catalog": "node scripts/firebase-catalog.mjs",
+    "test:voting": "node --test scripts/voting.test.mjs",
+    "voting:prepare": "node scripts/voting-prepare.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.0",

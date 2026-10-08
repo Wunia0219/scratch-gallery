@@ -23,6 +23,7 @@ const server = createServer(async (req, res) => {
   try {
     if (req.url === '/api/admin/config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"configured":false}'); return }
     if (req.url === '/api/site-config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(publicStateFixture)); return }
+    if (req.url.startsWith('/api/voting/')) { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"voting":null}'); return }
     if (req.url.startsWith('/api/works')) {
       const response = await worksHandler(new Request(new URL(req.url, 'http://127.0.0.1')))
       res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(await response.text()); return

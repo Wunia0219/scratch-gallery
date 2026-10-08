@@ -7,6 +7,7 @@ import { useNow } from '../composables/useNow.js'
 import previews from '../../public/standalone-games.json'
 
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
+const VotingResults = defineAsyncComponent(() => import('./VotingResults.vue'))
 const { t, language } = useLanguage()
 const now = useNow()
 const { activity, state } = useSiteState()
@@ -121,6 +122,7 @@ watch([activityPublished, halloweenPreview], () => { previewOpen.value = false }
       </template>
     </article>
 
+    <VotingResults v-if="activityPublished" :key="activity.id" :activity-id="activity.id" />
     <GamePlayerDialog v-if="activityPublished && halloweenPreview && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

@@ -26,7 +26,7 @@ export async function getFirebaseServices() {
   const db = getFirestore(app)
   function toStored(value) {
     if (Array.isArray(value)) return value.map(toStored)
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, /^(remindFrom|startsAt|endsAt|createdAt|updatedAt|publishedAt|verifiedAt|assetsDeployedAt)$/.test(key) && typeof item === 'string' ? Timestamp.fromDate(new Date(item)) : toStored(item)]))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, /^(remindFrom|startsAt|endsAt|createdAt|updatedAt|publishedAt|verifiedAt|assetsDeployedAt|voteStartsAt|voteEndsAt|sourceGeneratedAt|lastSyncedAt|confirmedAt|closeRequestedAt|completedAt)$/.test(key) && typeof item === 'string' ? Timestamp.fromDate(new Date(item)) : toStored(item)]))
     return value
   }
   function toPlain(value) {

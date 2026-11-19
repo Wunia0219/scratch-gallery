@@ -20,6 +20,13 @@ try {
   const closed = await renderHome(state)
   assert.doesNotMatch(closed, /萬聖節魔法 Scratch 創作挑戰|forms\.gle|halloween-activity-intro/)
   assert.match(closed, /敬請期待/)
+  const showcase = { covers: [{ id: 'showcase-preview', title: '作品封面', thumbnail: '/brand/dongshi-giraffe-logo.webp' }] }
+  const showcaseOnly = await renderHome({ ...state, halloweenShowcase: showcase })
+  assert.match(showcaseOnly, /逛萬聖節作品展/)
+  assert.doesNotMatch(showcaseOnly, /敬請期待|aria-controls="announcement-slides"/)
+  const bothActivities = await renderHome({ ...initialSiteState(), halloweenShowcase: showcase })
+  assert.match(bothActivities, /aria-controls="announcement-slides"/)
+  assert.match(bothActivities, /<article[^>]*class="halloween-announcement announcement-slide"[^>]*inert/)
   state.featuredActivity = { ...initialSiteState().featuredActivity, title: '</script><script>alert(1)</script>' }
   assert.match(await renderHome(state), /&lt;\/script&gt;/)
   assert.doesNotMatch(await renderHome(state), /<script>alert/)

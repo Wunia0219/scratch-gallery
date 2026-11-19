@@ -1,9 +1,11 @@
 <script setup>
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { formatActivityDate, getActivityPhase } from '../contentUpdates.js'
 import { useSiteState } from '../composables/useSiteState.js'
+import { catalogRequest } from '../composables/useGames.js'
 import { useLanguage } from '../i18n'
 import { useNow } from '../composables/useNow.js'
+import { halloweenShowcase } from '../lib/halloweenShowcase.js'
 import HalloweenAnnouncement from './HalloweenAnnouncement.vue'
 import previews from '../../public/standalone-games.json'
 
@@ -24,6 +26,46 @@ const activityPublished = computed(() => Boolean(activity.value?.isPublished))
 const halloweenPreview = computed(() => previews.find(preview => preview.id === activity.value?.previewId))
 watch([activityPublished, halloweenPreview], () => { previewOpen.value = false })
 
+const initialShowcase = state.value.halloweenShowcase
+const covers = ref(initialShowcase?.covers ?? [])
+const hasShowcase = computed(() => covers.value.length > 0)
+const showChallenge = computed(() => activityPublished.value || !hasShowcase.value)
+const hasTwoActivities = computed(() => activityPublished.value && hasShowcase.value)
+const currentSlide = ref(0)
+const viewport = ref(null)
+const navigation = ref(null)
+let teaserRequest = 0
+
+async function refreshShowcase() {
+  const request = ++teaserRequest
+  try {
+    const data = await catalogRequest(halloweenShowcase.api + '?view=teaser')
+    if (request === teaserRequest) covers.value = data.covers
+  } catch {
+    if (request === teaserRequest) covers.value = []
+  }
+}
+onMounted(() => { if (!initialShowcase) void refreshShowcase() })
+watch(() => state.value.catalogRevision, (revision, previous) => {
+  if (revision && previous && revision !== previous) void refreshShowcase()
+})
+watch(hasTwoActivities, hasTwo => { if (!hasTwo) currentSlide.value = 0 })
+
+function showSlide(index) {
+  if (!hasTwoActivities.value || index === currentSlide.value) return
+  const carousel = viewport.value
+  if (carousel) carousel.scrollTo({ left: index * carousel.clientWidth })
+}
+function updateSlide(event) {
+  if (!hasTwoActivities.value) return
+  const carousel = event.currentTarget
+  const index = carousel.scrollLeft >= carousel.clientWidth / 2 ? 1 : 0
+  if (index === currentSlide.value) return
+  if (carousel.contains(document.activeElement)) {
+    navigation.value?.querySelectorAll('button')[index ? 0 : 1]?.focus({ preventScroll: true })
+  }
+  currentSlide.value = index
+}
 </script>
 
 <template>
@@ -33,10 +75,25 @@ watch([activityPublished, halloweenPreview], () => { previewOpen.value = false }
         <p class="eyebrow">WHAT'S HAPPENING</p>
         <h2 id="announcements-title">{{ t('announcementsTitle') }}</h2>
       </div>
-      <p class="section-note">{{ t('announcementsIntro') }}</p>
+      <div class="announcement-heading-actions">
+        <p class="section-note">{{ t('announcementsIntro') }}</p>
+        <div v-if="hasTwoActivities" ref="navigation" class="announcement-navigation" role="group" :aria-label="t('announcementNavigation')"
+          @keydown.left.prevent="showSlide(0)" @keydown.right.prevent="showSlide(1)">
+          <button type="button" :aria-label="t('previousAnnouncement')" :aria-disabled="currentSlide === 0" aria-controls="announcement-slides" @click="showSlide(0)">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" /></svg>
+          </button>
+          <span class="announcement-position" aria-hidden="true">{{ currentSlide + 1 }} / 2</span>
+          <span class="sr-only" aria-live="polite">{{ t('announcementPosition', { current: currentSlide + 1, title: currentSlide === 0 ? title : t('halloweenShowcaseTitle') }) }}</span>
+          <button type="button" :aria-label="t('nextAnnouncement')" :aria-disabled="currentSlide === 1" aria-controls="announcement-slides" @click="showSlide(1)">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <article class="announcement-card announcement-card-halloween" :class="{ 'announcement-card-coming-soon': !activityPublished }">
+    <div id="announcement-slides" ref="viewport" class="announcement-carousel" @scroll.passive="updateSlide">
+    <article v-if="showChallenge" class="announcement-slide announcement-card announcement-card-halloween"
+      :class="{ 'announcement-card-coming-soon': !activityPublished }" :inert="currentSlide === 1">
       <template v-if="activityPublished">
       <div class="announcement-copy">
         <div class="announcement-meta">
@@ -123,8 +180,10 @@ watch([activityPublished, halloweenPreview], () => { previewOpen.value = false }
       </template>
     </article>
 
-    <VotingResults v-if="activityPublished" :key="activity.id" :activity-id="activity.id" />
-    <HalloweenAnnouncement />
+      <HalloweenAnnouncement v-if="hasShowcase" class="announcement-slide" :covers="covers" :inert="hasTwoActivities && currentSlide === 0" />
+    </div>
+
+    <VotingResults v-if="activityPublished" v-show="currentSlide === 0" :key="activity.id" :activity-id="activity.id" />
     <GamePlayerDialog v-if="activityPublished && halloweenPreview && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

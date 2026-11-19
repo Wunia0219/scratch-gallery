@@ -462,7 +462,7 @@
     "thumbnail": "/games/7164bc9d-2c75-4a78-b53e-85669bb1cb40/cover.webp",
     "creatorId": "6609410b-ba7b-4fb2-b547-2ba58f3c1502",
     "releasePending": true,
-    "controls": "點開始，等開場動畫結束後再選難度與關卡。按 A／D 左右移動、空白鍵跳躍，頭目戰按 Q／E 攻擊。",
+    "controls": "點開始，等開場動畫結束後再點中央按鈕，接著選難度與關卡。按 A／D 左右移動、空白鍵跳躍，頭目戰按 Q／E 攻擊。",
     "objective": "避開尖刺和幽靈，抵達終點或打倒頭目。",
     "devices": [
       "desktop"
@@ -585,7 +585,7 @@
     "thumbnail": "/games/88d3d009-e5df-45b6-a9d4-1a9602329a64/cover.webp",
     "creatorId": "e1c50351-fabe-45f5-92a8-21a3c221d28a",
     "releasePending": true,
-    "controls": "方向鍵移動，滑鼠點怪獸可讓牠暫時消失。目前可能在開場立即停止。",
+    "controls": "按方向鍵移動，滑鼠點怪獸可讓牠暫時消失。碰到怪獸即結束，點綠旗可以重玩。",
     "objective": "避開碰撞，觀察點擊不同角色時的分數變化。",
     "devices": [
       "desktop"

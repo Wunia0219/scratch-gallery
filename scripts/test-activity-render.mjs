@@ -22,8 +22,9 @@ try {
   assert.match(closed, /敬請期待/)
   const showcase = { covers: [{ id: 'showcase-preview', title: '作品封面', thumbnail: '/brand/dongshi-giraffe-logo.webp' }] }
   const showcaseOnly = await renderHome({ ...state, halloweenShowcase: showcase })
-  assert.match(showcaseOnly, /aria-label="萬聖節活動的作品"/)
-  assert.match(showcaseOnly, /看活動作品/)
+  assert.match(showcaseOnly, /id="halloween-announcement-title">萬聖節活動的作品</)
+  assert.match(showcaseOnly, /小鹿發現魔法燈熄了/)
+  assert.match(showcaseOnly, /看同學的作品/)
   assert.doesNotMatch(showcaseOnly, /敬請期待|aria-controls="announcement-slides"/)
   const bothActivities = await renderHome({ ...initialSiteState(), halloweenShowcase: showcase })
   assert.match(bothActivities, /aria-controls="announcement-slides"/)

@@ -8,7 +8,7 @@ const props = defineProps({ covers: { type: Array, required: true }, active: Boo
 const { t } = useLanguage()
 const reel = ref(null)
 const frame = ref(0)
-const finished = ref(false)
+const failedClips = ref(new Set())
 const inView = ref(false)
 const pageVisible = ref(false)
 const motionAllowed = ref(false)
@@ -20,21 +20,30 @@ const covers = computed(() => props.covers.map(cover => {
 }))
 const currentCover = computed(() => covers.value[frame.value] ?? covers.value[0])
 const canPlay = computed(() => props.active && inView.value && pageVisible.value && motionAllowed.value)
-const clip = computed(() => canPlay.value && !finished.value ? currentCover.value?.clip : undefined)
+const playableFrames = computed(() => covers.value.flatMap((cover, index) =>
+  cover.clip && !failedClips.value.has(cover.id) ? [index] : [],
+))
+const clip = computed(() => canPlay.value && playableFrames.value.includes(frame.value) ? currentCover.value.clip : undefined)
 let observer
 let motionPreference
 
 function resetReel() {
-  frame.value = 0
-  finished.value = false
+  frame.value = playableFrames.value[0] ?? 0
 }
 function nextClip() {
   if (!canPlay.value) return
-  if (frame.value + 1 < props.covers.length) frame.value++
-  else finished.value = true
+  frame.value = playableFrames.value.find(index => index > frame.value) ?? playableFrames.value[0] ?? frame.value
+}
+function skipUnavailableClip() {
+  if (!canPlay.value) return
+  failedClips.value.add(currentCover.value.id)
+  nextClip()
 }
 watch(() => props.active, active => { if (!active) resetReel() })
-watch(() => props.covers.map(cover => cover.id).join(','), resetReel)
+watch(() => props.covers.map(cover => cover.id).join(','), () => {
+  failedClips.value.clear()
+  resetReel()
+})
 
 function syncVisibility() { pageVisible.value = !document.hidden }
 function syncMotion() { motionAllowed.value = !motionPreference?.matches }
@@ -78,10 +87,9 @@ onBeforeUnmount(() => {
       </svg>
     </div>
     <div class="halloween-announcement-copy">
-      <h3 id="halloween-announcement-title" :aria-label="t('halloweenAnnouncementTitle')">
-        <span>{{ t('halloweenAnnouncementSeason') }}</span>{{ t('halloweenAnnouncementFormat') }}
-      </h3>
-      <p>{{ t('halloweenAnnouncementText') }}</p>
+      <h3 id="halloween-announcement-title">{{ t('halloweenAnnouncementTitle') }}</h3>
+      <p class="halloween-announcement-lead">{{ t('halloweenAnnouncementLead') }}</p>
+      <p class="halloween-announcement-intro">{{ t('halloweenAnnouncementText') }}</p>
       <a :href="halloweenShowcase.path" class="button halloween-showcase-button">
         {{ t('halloweenAnnouncementVisit') }}
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
@@ -92,11 +100,14 @@ onBeforeUnmount(() => {
         <img v-for="(cover, index) in covers" :key="cover.id" :src="cover.poster"
           :alt="t('workCoverAlt', { title: cover.title })" :aria-hidden="index !== frame"
           :class="{ 'showcase-frame-current': index === frame }" width="480" height="360" loading="lazy" decoding="async">
-        <video v-if="clip" :key="clip" :src="clip" :poster="currentCover.poster" autoplay muted playsinline
-          preload="none" aria-hidden="true" @ended="nextClip" @error="nextClip"></video>
+        <video v-if="clip" :key="clip" :src="clip" :poster="currentCover.poster" :loop="playableFrames.length === 1"
+          autoplay muted playsinline preload="none" aria-hidden="true" @ended="nextClip" @error="skipUnavailableClip"></video>
       </div>
       <figcaption class="showcase-reel-caption">
-        <strong>{{ currentCover.title }}</strong>
+        <div class="showcase-reel-heading">
+          <span aria-hidden="true">{{ t('showcasePreview') }}</span>
+          <strong>{{ currentCover.title }}</strong>
+        </div>
         <ul v-if="covers.length > 1" class="showcase-reel-strip" aria-hidden="true">
           <li v-for="(cover, index) in covers" :key="cover.id" :class="{ 'showcase-strip-current': index === frame }">
             <img :src="cover.thumbnail" alt="" width="48" height="32" loading="lazy" decoding="async">

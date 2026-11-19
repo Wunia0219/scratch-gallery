@@ -20,7 +20,6 @@ export const halloweenWorkIds = [
   '7164bc9d-2c75-4a78-b53e-85669bb1cb40',
   '76ca8942-38b2-4591-b4f2-d3ef26f23df5',
   '38481121-72a0-4dc1-af55-2c3cee997c4a',
-  'e6a3907c-2a71-4ac4-b692-e262713015ed',
   'eb77070d-2ce9-463d-85ad-0eed1d790442',
   'c92c573e-c549-4386-bdb6-24681547c28d',
   'd3c85a72-2b17-4875-bda3-d0ba359369bb',

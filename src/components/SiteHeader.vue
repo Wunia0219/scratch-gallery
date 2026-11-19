@@ -165,8 +165,8 @@ onBeforeUnmount(() => {
 
     <div class="header-actions">
       <div class="language-switch" role="group" :aria-label="t('languageLabel')">
-        <button type="button" :aria-pressed="language === 'zh-Hant'" @click="setLanguage('zh-Hant')">中</button>
-        <button type="button" :aria-pressed="language === 'en'" @click="setLanguage('en')">EN</button>
+        <button type="button" lang="zh-Hant" :aria-pressed="language === 'zh-Hant'" @click="setLanguage('zh-Hant')">中文</button>
+        <button type="button" lang="en" :aria-pressed="language === 'en'" @click="setLanguage('en')">English</button>
       </div>
     </div>
   </header>

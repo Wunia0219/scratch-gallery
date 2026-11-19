@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLanguage } from '../i18n.js'
 import { halloweenShowcase } from '../lib/halloweenShowcase.js'
-import { halloweenTeaserClips } from '../media.js'
+import { halloweenTeaserMedia } from '../media.js'
 
 const props = defineProps({ covers: { type: Array, required: true }, active: Boolean })
 const { t } = useLanguage()
@@ -12,9 +12,15 @@ const finished = ref(false)
 const inView = ref(false)
 const pageVisible = ref(false)
 const motionAllowed = ref(false)
-const currentCover = computed(() => props.covers[frame.value] ?? props.covers[0])
+const covers = computed(() => props.covers.map(cover => {
+  const media = halloweenTeaserMedia[cover.id]
+  // The client build resolves the HD poster to an assets URL. SSR can use the catalog cover.
+  const poster = typeof window === 'undefined' ? cover.thumbnail : media?.poster ?? cover.thumbnail
+  return { ...cover, clip: media?.clip, poster }
+}))
+const currentCover = computed(() => covers.value[frame.value] ?? covers.value[0])
 const canPlay = computed(() => props.active && inView.value && pageVisible.value && motionAllowed.value)
-const clip = computed(() => canPlay.value && !finished.value ? halloweenTeaserClips[currentCover.value?.id] : undefined)
+const clip = computed(() => canPlay.value && !finished.value ? currentCover.value?.clip : undefined)
 let observer
 let motionPreference
 
@@ -72,21 +78,21 @@ onBeforeUnmount(() => {
       </svg>
     </div>
     <div class="halloween-announcement-copy">
-      <h3 id="halloween-announcement-title">
-        <span>{{ t('halloweenShowcaseSeason') }}</span> {{ t('halloweenShowcaseFormat') }}
+      <h3 id="halloween-announcement-title" :aria-label="t('halloweenAnnouncementTitle')">
+        <span>{{ t('halloweenAnnouncementSeason') }}</span>{{ t('halloweenAnnouncementFormat') }}
       </h3>
-      <p>{{ t('halloweenShowcaseTeaser') }}</p>
+      <p>{{ t('halloweenAnnouncementText') }}</p>
       <a :href="halloweenShowcase.path" class="button halloween-showcase-button">
-        {{ t('halloweenShowcaseVisit') }}
+        {{ t('halloweenAnnouncementVisit') }}
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
       </a>
     </div>
     <figure ref="reel" class="showcase-reel" :aria-label="t('showcasePreview')">
       <div class="halloween-announcement-covers">
-        <img v-for="(cover, index) in covers" :key="cover.id" :src="cover.thumbnail"
+        <img v-for="(cover, index) in covers" :key="cover.id" :src="cover.poster"
           :alt="t('workCoverAlt', { title: cover.title })" :aria-hidden="index !== frame"
           :class="{ 'showcase-frame-current': index === frame }" width="480" height="360" loading="lazy" decoding="async">
-        <video v-if="clip" :key="clip" :src="clip" :poster="currentCover.thumbnail" autoplay muted playsinline
+        <video v-if="clip" :key="clip" :src="clip" :poster="currentCover.poster" autoplay muted playsinline
           preload="none" aria-hidden="true" @ended="nextClip" @error="nextClip"></video>
       </div>
       <figcaption class="showcase-reel-caption">

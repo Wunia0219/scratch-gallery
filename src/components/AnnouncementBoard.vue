@@ -30,7 +30,7 @@ const initialShowcase = state.value.halloweenShowcase
 const covers = ref(initialShowcase?.covers ?? [])
 const slides = computed(() => {
   const items = []
-  if (covers.value.length) items.push({ id: 'showcase', title: t('halloweenShowcaseTitle'), date: halloweenShowcase.announcementDate })
+  if (covers.value.length) items.push({ id: 'showcase', title: t('halloweenAnnouncementTitle'), date: halloweenShowcase.announcementDate })
   if (activityPublished.value) items.push({ id: 'challenge', title: title.value, date: activity.value.remindFrom || activity.value.startsAt })
   return items.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
 })
@@ -89,7 +89,7 @@ function updateSlide(event) {
       <h2 id="announcements-title">{{ t('announcementsTitle') }}</h2>
     </div>
 
-    <div class="announcement-stage" :class="{ 'announcement-stage-paged': slides.length > 1 }">
+    <div class="announcement-stage" :class="{ 'announcement-stage-paged': slides.length > 1, 'announcement-stage-showcase': activeAnnouncement === 'showcase' }">
     <div id="announcement-slides" ref="viewport" class="announcement-carousel" @scroll.passive="updateSlide">
       <template v-for="(slide, index) in slides" :key="slide.id">
       <HalloweenAnnouncement v-if="slide.id === 'showcase'" class="announcement-slide" :covers="covers"
@@ -184,10 +184,10 @@ function updateSlide(event) {
       <div v-if="slides.length > 1" ref="navigation" class="announcement-navigation" role="group" :aria-label="t('announcementNavigation')"
         @keydown.left.prevent="showSlide(currentSlide - 1)" @keydown.right.prevent="showSlide(currentSlide + 1)">
         <button type="button" :aria-label="t('previousAnnouncement')" :aria-disabled="currentSlide === 0" aria-controls="announcement-slides" @click="showSlide(currentSlide - 1)">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" /></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12H4m7-7-7 7 7 7" /></svg>
         </button>
         <button type="button" :aria-label="t('nextAnnouncement')" :aria-disabled="currentSlide === slides.length - 1" aria-controls="announcement-slides" @click="showSlide(currentSlide + 1)">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12h17m-7-7 7 7-7 7" /></svg>
         </button>
       </div>
     </div>

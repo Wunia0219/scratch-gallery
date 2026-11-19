@@ -223,18 +223,21 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
   height: 44px;
   padding: 0;
   place-items: center;
-  border: 1px solid #f5e0c8;
-  border-radius: 50%;
-  background: #fff7ed;
-  color: #2e2135;
+  border: 0;
+  background: transparent;
+  color: #4b325b;
   pointer-events: auto;
   cursor: pointer;
-  box-shadow: 0 3px 12px #19112540;
 }
-.announcement-navigation button:not([aria-disabled="true"]):hover { background: #ffda94; }
-.announcement-navigation button[aria-disabled="true"] { background: #f6eddf; color: #66546a; opacity: .64; cursor: default; }
-.announcement-navigation button:focus-visible { outline: 2px solid #a04b14; outline-offset: 3px; }
-.announcement-navigation svg { width: 21px; height: 21px; }
+.announcement-stage-showcase .announcement-navigation button { color: #ffd999; }
+@media (min-width: 761px) {
+  .announcement-stage:not(.announcement-stage-showcase) .announcement-navigation button:last-child { color: #fff0cd; }
+}
+.announcement-navigation button[aria-disabled="true"] { opacity: .42; cursor: default; }
+.announcement-navigation button:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; border-radius: 8px; }
+.announcement-navigation svg { width: 28px; height: 28px; stroke-width: 1.7; transition: transform var(--motion-fast); }
+.announcement-navigation button:not([aria-disabled="true"]):first-child:hover svg { transform: translateX(-3px); }
+.announcement-navigation button:not([aria-disabled="true"]):last-child:hover svg { transform: translateX(3px); }
 .announcement-indicators { display: flex; justify-content: center; margin-top: 12px; }
 .announcement-indicators button { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; border: 0; border-radius: 12px; background: transparent; cursor: pointer; }
 .announcement-indicators span { width: 10px; height: 10px; border-radius: 999px; background: var(--line-strong); }
@@ -414,7 +417,7 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .showcase-reel-caption { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; min-height: 42px; padding: 8px 3px 0; }
 .showcase-reel-caption strong { color: #ffe9c4; font-size: clamp(.77rem, 1.3vw, .96rem); line-height: 1.35; overflow-wrap: anywhere; }
 .showcase-reel-strip { display: flex; flex: none; gap: 5px; margin: 0; padding: 0; list-style: none; }
-.showcase-reel-strip li { width: clamp(29px, 4vw, 48px); overflow: hidden; border: 1px solid #835b69; border-radius: 6px; opacity: .72; }
+.showcase-reel-strip li { width: clamp(23px, 3.5vw, 42px); overflow: hidden; border: 1px solid #835b69; border-radius: 6px; opacity: .72; }
 .showcase-reel-strip li.showcase-strip-current { border-color: #ffc886; box-shadow: 0 0 0 1px #ffc886; opacity: 1; }
 .showcase-reel-strip img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
 

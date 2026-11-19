@@ -3,7 +3,7 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useLanguage } from '../i18n'
 import { useNow } from '../composables/useNow.js'
 const props = defineProps({ activityId: { type: String, required: true } })
-const { language } = useLanguage(), now = useNow(), voting = ref(null), error = ref(false), busy = ref(false), host = ref(null)
+const { t, language } = useLanguage(), now = useNow(), voting = ref(null), error = ref(false), busy = ref(false), host = ref(null)
 let timer, observer, controller, alive = true, inView = true, timeOffset = 0
 const text = (zh, en) => language.value === 'en' ? en : zh
 const canVote = computed(() => voting.value?.canVote && !error.value && now.value + timeOffset < Date.parse(voting.value.voteEndsAt))
@@ -31,7 +31,7 @@ onBeforeUnmount(() => { alive = false; controller?.abort(); clearInterval(timer)
 <template>
   <div ref="host">
     <section v-if="voting" class="voting-results" :aria-labelledby="`voting-title-${activityId}`">
-      <div class="section-heading"><div><p class="eyebrow">COMMUNITY VOTE</p><h3 :id="`voting-title-${activityId}`">{{ voting.title }}</h3></div><span class="voting-status">{{ voting.resultVersion ? text(`已結算 · 版本 ${voting.resultVersion}`, `Final · version ${voting.resultVersion}`) : now + timeOffset >= Date.parse(voting.voteEndsAt) ? text('投票已截止', 'Voting has ended') : voting.phase === 'upcoming' ? text('投票尚未開始', 'Voting opens soon') : canVote ? text('開放投票中', 'Voting is open') : text('投票入口暫未開放', 'Voting is not currently available') }}</span></div>
+      <div class="section-heading"><div><p class="eyebrow">{{ t('votingEyebrow') }}</p><h3 :id="`voting-title-${activityId}`">{{ voting.title }}</h3></div><span class="voting-status">{{ voting.resultVersion ? text(`已結算 · 版本 ${voting.resultVersion}`, `Final · version ${voting.resultVersion}`) : now + timeOffset >= Date.parse(voting.voteEndsAt) ? text('投票已截止', 'Voting has ended') : voting.phase === 'upcoming' ? text('投票尚未開始', 'Voting opens soon') : canVote ? text('開放投票中', 'Voting is open') : text('投票入口暫未開放', 'Voting is not currently available') }}</span></div>
       <p>{{ text('每個 Google 帳號僅能提交一次；不收集姓名與電子郵件。', 'One response per Google account. No names or email addresses collected.') }} {{ text(voting.maxChoices === 1 ? '每票選一件作品。' : `每票最多選 ${voting.maxChoices} 件作品。`, `Choose up to ${voting.maxChoices} work(s).`) }}</p>
       <p>{{ text('投票期間（台灣時間）：', 'Voting period (Taiwan time): ') }}{{ date(voting.voteStartsAt) }} — {{ date(voting.voteEndsAt) }}</p>
       <a v-if="canVote" class="button button-primary" :href="voting.formUrl" target="_blank" rel="noreferrer">{{ text('前往 Google 表單投票', 'Vote in Google Forms') }}<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9" /></svg></a>

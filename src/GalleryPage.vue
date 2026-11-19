@@ -42,22 +42,22 @@ function play(game) {
 </script>
 
 <template>
-  <a class="skip-link" href="#main-content">跳到主要內容</a>
+  <a class="skip-link" href="#main-content">{{ t('skipToMain') }}</a>
   <SiteHeader :active="isTeacher ? 'teachers' : 'students'" />
 
   <main id="main-content">
     <section class="gallery-hero">
-      <p class="eyebrow">{{ isTeacher ? "TEACHER'S LAB" : 'STUDENT SHOWCASE' }}</p>
+      <p class="eyebrow">{{ t(isTeacher ? 'teacherShowcase' : 'studentShowcase') }}</p>
       <h1>{{ isTeacher ? t('teacherGalleryTitle') : t('studentGalleryTitle') }}</h1>
       <p class="hero-text">{{ isTeacher ? t('teacherGalleryText') : t('studentGalleryText') }}</p>
-      <p class="result-count" aria-live="polite">{{ total !== null ? t('workCount', { count: total }) : `已載入 ${games.length} 件作品` }}</p>
+      <p class="result-count" aria-live="polite">{{ total !== null ? t('workCount', { count: total }) : t('projectsLoaded', { count: games.length }) }}</p>
     </section>
 
     <section class="gallery-library" :aria-label="isTeacher ? t('teacherCollectionNav') : t('studentCollectionNav')">
       <div class="library-tools" role="search">
         <label class="search-field" for="gallery-search">
           <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m16 16 4 4" /></svg>
-          <span class="sr-only">搜尋作品</span>
+          <span class="sr-only">{{ t('searchWorksLabel') }}</span>
           <input id="gallery-search" v-model="query" type="search" :placeholder="t('search')" autocomplete="off" />
         </label>
         <div class="filter-groups">
@@ -78,22 +78,22 @@ function play(game) {
         </div>
       </div>
 
-      <p v-if="loading" role="status">正在載入作品…</p>
-      <div v-if="error" class="empty-state" role="alert"><h2>作品暫時無法載入</h2><p>{{ error }}</p><button class="button button-secondary" type="button" @click="refresh">重新載入</button></div>
+      <p v-if="loading" role="status">{{ t('projectsLoading') }}</p>
+      <div v-if="error" class="empty-state" role="alert"><h2>{{ t('projectsUnavailable') }}</h2><p>{{ t('tryReload') }}</p><button class="button button-secondary" type="button" @click="refresh">{{ t('reload') }}</button></div>
       <div v-else-if="visibleGames.length" class="game-grid">
         <GameCard v-for="game in visibleGames" :key="game.id" :game="game" :play-count="playCountsLoaded ? (playCounts[game.id] ?? 0) : null" @play="play" />
       </div>
       <div v-else-if="!loading" class="empty-state">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6.5h16v11H4z" /><path d="M8 10h8M8 14h5" /></svg>
         <h2>{{ query || selectedClass !== '全部' || selectedDevice !== 'all' ? t('noMatches') : t('collectionEmpty') }}</h2>
-        <p>{{ cursor ? '還有作品尚未搜尋，請繼續載入。' : t('tryAgain') }}</p>
+        <p>{{ t(cursor ? 'morePending' : 'tryAgain') }}</p>
       </div>
       <div v-if="cursor" class="load-more">
         <button class="button button-secondary" type="button" :disabled="loading" @click="load(filters(), true)">
-          {{ loading ? '載入中…' : t('showMore', { count: 9 }) }}
+          {{ loading ? t('loadingMore') : t('showMore', { count: 9 }) }}
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
         </button>
-        <p>{{ total !== null ? t('showingCount', { shown: visibleGames.length, total }) : `已載入 ${visibleGames.length} 件符合條件的作品` }}</p>
+        <p>{{ total !== null ? t('showingCount', { shown: visibleGames.length, total }) : t('matchingProjectsLoaded', { count: visibleGames.length }) }}</p>
       </div>
     </section>
   </main>

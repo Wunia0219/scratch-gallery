@@ -1,7 +1,9 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadLeaderboard, submitLeaderboard } from '../lib/leaderboardClient.js'
+import { useLanguage } from '../i18n'
 
+const { t } = useLanguage()
 const props = defineProps({
   game: { type: Object, default: null },
 })
@@ -167,21 +169,21 @@ onBeforeUnmount(() => {
     <template v-if="game">
       <div class="dialog-bar">
         <div>
-          <p class="eyebrow">正在遊玩</p>
+          <p class="eyebrow">{{ t('nowPlaying') }}</p>
           <h2 id="dialog-title">{{ game.title }}</h2>
         </div>
         <div class="dialog-actions">
           <button
             class="icon-button"
             type="button"
-            :aria-label="playerExpanded ? '縮小遊戲畫面' : '全螢幕遊玩'"
+            :aria-label="t(playerExpanded ? 'playerExitFullscreen' : 'playerFullscreen')"
             :aria-pressed="playerExpanded"
             @click="togglePlayerSize"
           >
             <svg v-if="playerExpanded" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" /></svg>
             <svg v-else aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" /></svg>
           </button>
-          <button class="icon-button" type="button" aria-label="關閉遊戲播放器" @click="close">
+          <button class="icon-button" type="button" :aria-label="t('playerClose')" @click="close">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
           </button>
         </div>
@@ -190,7 +192,7 @@ onBeforeUnmount(() => {
         <iframe
           ref="playerFrame"
           :src="game.playUrl"
-          :title="`${game.title} 遊戲播放器`"
+          :title="t('playerTitle', { title: game.title })"
           sandbox="allow-scripts allow-pointer-lock"
           referrerpolicy="no-referrer"
           allow="fullscreen; autoplay"
@@ -198,7 +200,7 @@ onBeforeUnmount(() => {
           loading="lazy"
         />
       </div>
-      <p class="dialog-note">關閉這個視窗即可結束遊戲。</p>
+      <p class="dialog-note">{{ t('closeGame') }}</p>
       <p v-if="game.leaderboard" class="dialog-note" role="status">
         {{ leaderboardStatus }}
         <button v-if="retrySubmission" class="button" type="button" @click="retryLeaderboard">重試儲存成績</button>

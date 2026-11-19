@@ -49,7 +49,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         <img
           class="game-cover-image"
           :src="game.thumbnail"
-          :alt="`${game.title} 的遊戲畫面`"
+          :alt="t('workCoverAlt', { title: game.title })"
           width="480"
           height="360"
           loading="lazy"
@@ -79,7 +79,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         <span class="work-update-emblem">
           <svg viewBox="0 0 24 24"><path d="m12 3 1.25 4.25L17.5 8.5l-4.25 1.25L12 14l-1.25-4.25L6.5 8.5l4.25-1.25L12 3Z" /><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" /></svg>
         </span>
-        <span class="work-update-copy"><small>NEW</small><strong>{{ updateLabel }}</strong></span>
+        <span class="work-update-copy"><small>{{ t('newBadge') }}</small><strong>{{ updateLabel }}</strong></span>
       </span>
       <span v-if="game.playUrl" class="cover-play" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /></svg>
@@ -98,10 +98,14 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
           {{ t(deviceLabels[device]) }}
         </span>
       </div>
-      <h3><a :href="game.detailUrl">{{ game.title || '精彩作品' }}<span class="sr-only">：{{ game.student }}的作品介紹</span></a></h3>
-      <p>{{ game.description || '一起來看看這件作品吧。' }}</p>
+      <h3><a :href="game.detailUrl">{{ game.title || t('featuredWorkFallback') }}<span class="sr-only"> · {{ t('workAuthorDetail', { name: game.student || t('studentCreatorFallback') }) }}</span></a></h3>
+      <p>{{ game.description || t('workDescriptionFallback') }}</p>
+      <dl v-if="game.creatorType === 'student' && game.controls" class="game-card-controls">
+        <dt>{{ t('controlsLabel') }}</dt>
+        <dd>{{ game.controls }}</dd>
+      </dl>
       <div class="game-card-footer">
-        <p class="student-credit">{{ t('creator') }}{{ game.student || '學生創作者' }}</p>
+        <p class="student-credit">{{ t('creator') }}{{ game.student || t('studentCreatorFallback') }}</p>
         <p
           class="play-count"
           :class="{ 'play-count-pending': !formattedPlayCount }"

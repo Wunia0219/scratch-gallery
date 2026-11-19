@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="nav-drawer-intro">
-        <p class="eyebrow">CODE · CREATE · SHARE</p>
+        <p class="eyebrow">{{ t('codeCreateShare') }}</p>
         <h2>{{ t('drawerTitle') }}</h2>
         <p>{{ t('drawerText') }}</p>
       </div>

@@ -59,7 +59,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 </script>
 <template>
   <div class="work-admin">
-    <p class="admin-help">遊戲先於本機打包並部署，再於這裡確認上架。作品依首次上架時間由新到舊，待上架草稿依登錄時間排列。首次上架開始顯示 NEW 15 天。</p>
+    <p class="admin-help">遊戲先於本機打包並部署，再於這裡確認上架。作品依首次上架時間由新到舊，待上架草稿依登錄時間排列。首次上架會顯示新作標記 15 天。</p>
     <p v-if="error" class="admin-message admin-error" role="alert">{{ error }}</p><p v-if="notice" class="admin-message" role="status">{{ notice }}</p>
     <div class="admin-workspace" :aria-busy="busy">
       <aside class="admin-panel admin-list"><div class="admin-panel-heading"><h2>作品清單</h2><span>{{ records.length }} 件</span></div>
@@ -78,7 +78,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
           <label>封面<select v-model="form.thumbnail"><option v-for="path in selected.asset?.thumbnails ?? []" :key="path" :value="path">{{ path.split('/').at(-1) }}</option></select></label>
           <div class="admin-editor-actions"><button class="admin-primary" type="submit" :disabled="busy">儲存草稿</button><button type="button" :disabled="busy" @click="showPreview">預覽作品</button><button class="admin-publish" type="button" :disabled="busy || !selected.assetsReady" @click="requestPublish">確認上架</button><button v-if="selected.status === 'published'" type="button" :disabled="busy" @click="confirmation = 'hide'">下架作品</button><button type="button" :disabled="busy" @click="run(async () => { history = (await adminRequest(`work-history?id=${selected.id}`)).history })">版本紀錄</button></div>
         </fieldset></form>
-        <div v-if="confirmation" class="admin-confirm"><h3>{{ confirmation === 'publish' ? '將此版本上架到作品庫？' : '將作品從前台下架？' }}</h3><p>{{ confirmation === 'publish' ? selected.hasPublished ? '已儲存的草稿將取代公開介紹。首次上架日期維持不變。' : '將記錄第一次上架時間，NEW 從此刻開始計算 15 天。' : '作品庫、介紹頁與 sitemap 將移除這個作品。遊戲檔案仍可能經直接網址開啟；未儲存的編輯將捨棄，已儲存草稿會清除。' }}</p><button class="admin-primary" type="button" :disabled="busy" @click="mutate(confirmation)">確定{{ confirmation === 'publish' ? '上架' : '下架' }}</button><button type="button" :disabled="busy" @click="confirmation = ''">取消</button></div>
+        <div v-if="confirmation" class="admin-confirm"><h3>{{ confirmation === 'publish' ? '將此版本上架到作品庫？' : '將作品從前台下架？' }}</h3><p>{{ confirmation === 'publish' ? selected.hasPublished ? '已儲存的草稿將取代公開介紹。首次上架日期維持不變。' : '將記錄第一次上架時間，並從此刻顯示新作標記 15 天。' : '作品庫、介紹頁與 sitemap 將移除這個作品。遊戲檔案仍可能經直接網址開啟；未儲存的編輯將捨棄，已儲存草稿會清除。' }}</p><button class="admin-primary" type="button" :disabled="busy" @click="mutate(confirmation)">確定{{ confirmation === 'publish' ? '上架' : '下架' }}</button><button type="button" :disabled="busy" @click="confirmation = ''">取消</button></div>
         <div v-if="history.length" class="admin-history"><h3>最近 10 個公開版本</h3><p>還原會建立草稿；確認上架後才公開。</p><div v-for="entry in history" :key="entry.revision"><span>版本 {{ entry.revision }} · {{ entry.content.title }} · {{ date(entry.createdAt) }}</span><button type="button" :disabled="busy" @click="canLeave() && mutate('restore', entry.revision)">還原成草稿</button></div></div>
       </section>
     </div>

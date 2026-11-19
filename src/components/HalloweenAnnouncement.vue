@@ -61,7 +61,7 @@ onBeforeUnmount(() => {
     <figure ref="reel" class="showcase-reel" :class="{ 'showcase-reel-playing': playing }">
       <div class="halloween-announcement-covers">
         <img v-for="(cover, index) in covers" :key="cover.id" :src="cover.thumbnail"
-          :alt="t('halloweenShowcaseCover', { title: cover.title })" :aria-hidden="index !== frame"
+          :alt="t('workCoverAlt', { title: cover.title })" :aria-hidden="index !== frame"
           :class="{ 'showcase-frame-current': index === frame }" width="480" height="360" loading="lazy" decoding="async">
       </div>
       <figcaption class="showcase-reel-caption">

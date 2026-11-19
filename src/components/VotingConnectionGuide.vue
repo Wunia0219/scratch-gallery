@@ -7,7 +7,7 @@ const prepareCommand = computed(() => `npm run voting:prepare -- --activity=${pr
 </script>
 <template>
   <section class="admin-panel vote-connection-guide" aria-labelledby="vote-connection-title">
-    <div class="admin-panel-heading"><div><p class="eyebrow">GOOGLE FORMS CONNECTION</p><h2 id="vote-connection-title">投票串接指南</h2></div><button type="button" :aria-expanded="open" aria-controls="vote-connection-steps" @click="open = !open">{{ open ? '收合指南' : '展開指南' }}</button></div>
+    <div class="admin-panel-heading"><div><p class="eyebrow">Google 表單串接</p><h2 id="vote-connection-title">投票串接指南</h2></div><button type="button" :aria-expanded="open" aria-controls="vote-connection-steps" @click="open = !open">{{ open ? '收合指南' : '展開指南' }}</button></div>
     <p>可以先準備規則與名單。這些下載操作不會建立 Google 表單，也不會開放投票。</p>
     <div v-if="open" id="vote-connection-steps" class="vote-connection-steps">
       <article><span class="vote-step-number">01</span><h3>準備投票名單</h3><p>選擇活動、填寫投票名稱、單選或複選規則，再勾選已上架作品。下載的名單使用固定選項代號，日後照名單建立獨立的投票表單。</p><button type="button" :disabled="busy || !activityId" @click="emit('setup')">下載名單設定</button><p class="admin-help">投票表單與投稿表單分開；一帳號一次，不收姓名或 Email，不允許修改回覆與公開回覆摘要。</p></article>

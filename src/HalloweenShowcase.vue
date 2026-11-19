@@ -55,7 +55,7 @@ watch(() => state.value.catalogRevision, (revision, previous) => {
 </script>
 
 <template>
-  <a class="skip-link" href="#main-content">{{ t('halloweenShowcaseSkip') }}</a>
+  <a class="skip-link" href="#main-content">{{ t('skipToMain') }}</a>
   <SiteHeader active="events" />
   <main id="main-content">
     <section class="halloween-showcase-hero" aria-labelledby="halloween-showcase-title">
@@ -96,10 +96,10 @@ watch(() => state.value.catalogRevision, (revision, previous) => {
         <p class="result-count" aria-live="polite">{{ t('workCount', { count: matching.length }) }}</p>
       </div>
       <div v-if="error" class="empty-state" role="alert">
-        <h2>{{ t('halloweenShowcaseUnavailable') }}</h2>
-        <button class="button button-secondary" type="button" :disabled="loading" @click="refresh">{{ t('halloweenShowcaseRetry') }}</button>
+        <h2>{{ t('projectsUnavailable') }}</h2>
+        <button class="button button-secondary" type="button" :disabled="loading" @click="refresh">{{ t('reload') }}</button>
       </div>
-      <p v-else-if="loading && !works.length" role="status">{{ t('halloweenShowcaseLoading') }}</p>
+      <p v-else-if="loading && !works.length" role="status">{{ t('projectsLoading') }}</p>
       <template v-else-if="matching.length">
         <div class="game-grid">
           <GameCard v-for="work in matching.slice(0, shown)" :key="work.id" :game="work" :play-count="loaded ? (counts[work.id] ?? 0) : null" @play="play" />

@@ -521,6 +521,9 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .device-badge svg { width: 15px; height: 15px; stroke-width: 2; }
 .game-body h3 { margin-bottom: 8px; }
 .game-body > p:not(.student-credit) { min-height: 3.2em; margin: 0 0 14px; color: var(--muted); }
+.game-card-controls { margin: 0 0 14px; padding: 9px 12px; border-inline-start: 2px solid var(--brand); border-radius: 6px; background: var(--surface-soft); color: var(--text); font-size: .9rem; line-height: 1.55; }
+.game-card-controls dt { margin-bottom: 2px; color: var(--brand-hover); font-weight: 800; }
+.game-card-controls dd { margin: 0; overflow-wrap: anywhere; }
 .game-card-footer { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
 .student-credit { margin: 0; color: var(--brand); font-size: .9rem; font-weight: 750; }
 .play-count { display: inline-flex; flex: none; align-items: center; gap: 5px; min-width: 42px; margin: 0; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 750; white-space: nowrap; }

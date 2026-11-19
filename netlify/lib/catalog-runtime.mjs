@@ -11,6 +11,11 @@ export function catalogMode() {
   return mode
 }
 export const legacyCatalog = () => validateCatalog(games, creators).filter(game => !game.releasePending).map((game, index) => ({ ...game, sortOrder: 0, sortKey: `legacy:${String(9999999999999 - (Date.parse(game.publishedAt) || 0)).padStart(13, '0')}:${String(index).padStart(6, '0')}` })).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+const publishedSourceControls = new Map(games.filter(game => !game.releasePending && game.controls).map(game => [game.id, game.controls]))
+export function withStudentControls(work) {
+  const controls = publishedSourceControls.get(work.id)
+  return work.creatorType === 'student' && !work.controls?.trim() && controls ? { ...work, controls } : work
+}
 let manifest
 export async function assetManifest() {
   if (!envValue('CONTEXT') && envValue('CATALOG_LOCAL_ASSETS') === 'true') {

@@ -1,10 +1,11 @@
-import { catalogMode, legacyCatalog, catalogServices } from './catalog-runtime.mjs'
+import { catalogMode, legacyCatalog, catalogServices, withStudentControls } from './catalog-runtime.mjs'
 import { listPublishedWorks, readPublishedWork } from './work-service.mjs'
 import { ActivityError } from '../../src/lib/activitySchema.js'
 export async function publicList(filters = {}) {
   if (catalogMode() === 'firebase') {
     const { store, manifest, environment } = await catalogServices()
-    return listPublishedWorks(store, manifest, environment, filters)
+    const page = await listPublishedWorks(store, manifest, environment, filters)
+    return { ...page, items: page.items.map(withStudentControls) }
   }
   const { role = 'student', q = '', className = '', device = 'all', cursor = '' } = filters
   if (!['student', 'teacher'].includes(role) || q.length > 120 || className.length > 100 || !['all', 'desktop', 'mobile'].includes(device) || (cursor && !/^\d{1,6}$/.test(cursor))) throw new ActivityError('搜尋條件不正確')
@@ -21,7 +22,7 @@ export async function publicDetail(id) {
   } else game = legacyCatalog().find(work => work.id === id)
   if (!game) throw new ActivityError('作品不存在或已下架', 404)
   const list = await publicList({ role: game.creatorType, q: game.category })
-  return { game, related: list.items.filter(work => work.id !== id && work.category === game.category).slice(0, 3), revision: list.revision }
+  return { game: withStudentControls(game), related: list.items.filter(work => work.id !== id && work.category === game.category).slice(0, 3), revision: list.revision }
 }
 export async function publishedIds(leaderboard = false) {
   if (catalogMode() === 'legacy') return legacyCatalog().filter(game => !leaderboard || game.leaderboard?.type === 'word-alchemy-v1').map(game => game.id)

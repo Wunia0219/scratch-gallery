@@ -116,7 +116,7 @@ onBeforeUnmount(() => { unsubscribe?.(); window.removeEventListener('beforeunloa
       <div class="admin-account"><span v-if="user">{{ user.email }}</span><button v-if="user" type="button" :disabled="busy || workBusy || voteBusy" @click="(!workAdmin || workAdmin.canLeave()) && (!voteAdmin || voteAdmin.canLeave()) && run(signOutAdmin)">登出</button><a href="/">返回網站</a></div>
     </header>
     <main id="admin-main" class="admin-main">
-      <div class="admin-title"><p class="eyebrow">GALLERY ADMIN</p><h1>{{ section === 'works' ? '作品管理' : section === 'voting' ? '投票管理' : '活動管理' }}</h1><p>先儲存草稿，確認後再公開；投票結算會保留固定結果版本。</p></div>
+      <div class="admin-title"><p class="eyebrow">創作館後台</p><h1>{{ section === 'works' ? '作品管理' : section === 'voting' ? '投票管理' : '活動管理' }}</h1><p>先儲存草稿，確認後再公開；投票結算會保留固定結果版本。</p></div>
       <nav v-if="authorized" class="admin-tabs" aria-label="管理項目"><button type="button" :aria-current="section === 'activities' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('activities')">活動管理</button><button type="button" :aria-current="section === 'works' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('works')">作品管理</button><button type="button" :aria-current="section === 'voting' ? 'page' : undefined" :disabled="busy || workBusy || voteBusy" @click="switchSection('voting')">投票管理</button></nav>
       <p v-if="error" class="admin-message admin-error" role="alert">{{ error }}</p>
       <p v-if="notice" class="admin-message" role="status">{{ notice }}</p>

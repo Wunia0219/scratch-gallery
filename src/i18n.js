@@ -4,7 +4,8 @@ import { readStored, writeStored } from './lib/storage.js'
 const language = ref('zh-Hant')
 const messages = {
   'zh-Hant': {
-    announcementNavigation: '切換活動公告', previousAnnouncement: '上一則活動', nextAnnouncement: '下一則活動', announcementPosition: '第 {current} 則，共兩則。{title}',
+    announcementNavigation: '切換活動公告', previousAnnouncement: '上一則活動', nextAnnouncement: '下一則活動', announcementPosition: '第 {current} 則，共 {count} 則公告', announcementJump: '查看第 {current} 則公告，{title}',
+    showcasePreview: '作品動畫預覽', showcasePlay: '播放作品預覽', showcasePause: '暫停作品預覽', showcaseReplay: '重播作品預覽',
     halloweenShowcaseTitle: '萬聖節 Scratch 作品展', halloweenShowcaseTeaser: '接南瓜、躲幽靈，看看兩個班級的同學把萬聖節變成了哪些玩法！',
     halloweenShowcaseVisit: '逛萬聖節作品展', halloweenShowcaseCover: '《{title}》的遊戲畫面', halloweenShowcaseIntro: '來自 Scratch-114 和 Scratch-115 的萬聖節創作。點一下封面，和同學一起闖進南瓜、幽靈和怪物的世界。',
     halloweenShowcaseSkip: '跳到主要內容', halloweenShowcaseRetry: '重新載入', halloweenShowcaseLoading: '正在載入作品…', halloweenShowcaseUnavailable: '作品暫時無法載入',
@@ -25,7 +26,8 @@ const messages = {
     footer: 'Scratch 創作成果展', languageLabel: '選擇語言', primaryNavigation: '主要導覽', navigationLabel: '網站導覽', browseMenu: '瀏覽選單', openMenu: '開啟導覽選單', closeMenu: '關閉導覽選單', homeLabel: 'Scratch 創作館首頁', newContent: '有新內容', menuHasUpdates: '導覽中有新內容', drawerTitle: '今天想探索什麼？', drawerText: '從學生作品、活動消息到教學創作，選一條路開始逛逛。', drawerFooter: '每一個作品，都是孩子把想法做出來的證明。', studentNavHint: '瀏覽學生 Scratch 創作', eventsNavHint: '查看活動與投稿消息', teacherNavHint: '探索老師示範作品', learningNavHint: '認識課程學習理念', activityReminderLabel: '活動時程提醒', activityReminderUpcoming: '萬聖節創作挑戰即將開始', activityReminderOpen: '萬聖節創作挑戰徵稿中', activityReminderClosing: '萬聖節創作挑戰即將截止', activityReminderDates: '{start} 開始徵稿 · {end} 截止', activityReminderDays: '剩 {count} 天', viewActivity: '查看活動', dismissActivityReminder: '關閉活動提醒', newWork: '新上架', playWork: '遊玩《{title}》', unavailableWork: '《{title}》尚未上架', play: '遊玩', ready: '可遊玩', preparing: '準備中', creator: '創作者：', playCount: '遊玩次數 {count}', closeGame: '關閉這個視窗即可結束遊戲。', nowPlaying: '正在遊玩', close: '關閉',
   },
   en: {
-    announcementNavigation: 'Browse event announcements', previousAnnouncement: 'Previous event', nextAnnouncement: 'Next event', announcementPosition: '{current} of 2. {title}',
+    announcementNavigation: 'Browse event announcements', previousAnnouncement: 'Previous event', nextAnnouncement: 'Next event', announcementPosition: 'Announcement {current} of {count}', announcementJump: 'Show announcement {current}, {title}',
+    showcasePreview: 'Animated project preview', showcasePlay: 'Play project preview', showcasePause: 'Pause project preview', showcaseReplay: 'Replay project preview',
     halloweenShowcaseTitle: 'Halloween Scratch Showcase', halloweenShowcaseTeaser: 'Catch pumpkins, dodge ghosts, and see how two Scratch classes turned Halloween into play.',
     halloweenShowcaseVisit: 'Explore the Halloween showcase', halloweenShowcaseCover: 'Gameplay from “{title}”', halloweenShowcaseIntro: 'Halloween creations by Scratch-114 and Scratch-115. Select a cover to enter a world of pumpkins, ghosts, and monsters.',
     halloweenShowcaseSkip: 'Skip to main content', halloweenShowcaseRetry: 'Reload', halloweenShowcaseLoading: 'Loading projects…', halloweenShowcaseUnavailable: 'Projects are temporarily unavailable',

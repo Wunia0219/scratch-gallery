@@ -1,6 +1,7 @@
 export const halloweenShowcase = {
   path: '/events/halloween-showcase/',
   api: '/api/works/halloween-showcase',
+  announcementDate: '2026-11-19T00:00:00+08:00',
   title: '萬聖節 Scratch 作品展',
   description: '探索 Scratch-114、Scratch-115 的萬聖節遊戲與互動創作。點選作品封面即可遊玩。',
 }

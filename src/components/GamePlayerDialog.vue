@@ -3,7 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadLeaderboard, submitLeaderboard } from '../lib/leaderboardClient.js'
 import { useLanguage } from '../i18n'
 
-const { t } = useLanguage()
+const { t, language } = useLanguage()
 const props = defineProps({
   game: { type: Object, default: null },
 })
@@ -12,6 +12,7 @@ const emit = defineEmits(['close'])
 const dialog = ref(null)
 const playerFrame = ref(null)
 const playerExpanded = ref(false)
+const initialPlayerLanguage = ref(language.value)
 let closing = false
 let usingNativeFullscreen = false
 const leaderboardChannel = 'scratch-gallery-leaderboard-v1'
@@ -22,6 +23,7 @@ let leaderboardQueue = Promise.resolve()
 watch(
   () => props.game,
   async (game) => {
+    initialPlayerLanguage.value = language.value
     leaderboardStatus.value = ''
     retrySubmission.value = null
     await nextTick()
@@ -29,6 +31,15 @@ watch(
   },
   { immediate: true },
 )
+watch(language, syncPlayerLanguage)
+
+function syncPlayerLanguage() {
+  // The sandboxed frame has an opaque origin. The message carries only the locale.
+  playerFrame.value?.contentWindow?.postMessage({
+    channel: 'scratch-gallery-player-language',
+    language: language.value,
+  }, '*')
+}
 
 function close() {
   if (usingNativeFullscreen && getFullscreenElement() === dialog.value) exitFullscreen()
@@ -117,22 +128,22 @@ function handleGameMessage(event) {
 
 async function syncLeaderboard(frame, gameId, submission) {
   const isCurrent = () => frame === playerFrame.value?.contentWindow && gameId === props.game?.id
-  const showStatus = message => {
-    leaderboardStatus.value = message
-    frame.postMessage({ channel: leaderboardChannel, action: 'status', gameId, message }, '*')
+  const showStatus = status => {
+    leaderboardStatus.value = status
+    frame.postMessage({ channel: leaderboardChannel, action: 'status', gameId, message: t(status) }, '*')
   }
   if (!isCurrent()) return
-  showStatus(submission ? '成績儲存中，請稍候…' : '排行榜載入中…')
+  showStatus(submission ? 'scoreSaving' : 'leaderboardLoading')
   try {
     const leaderboard = submission ? await submitLeaderboard(submission) : await loadLeaderboard(gameId)
     if (!isCurrent()) return
     if (submission) retrySubmission.value = null
-    showStatus(retrySubmission.value ? '成績尚未儲存，請重試。' : submission ? '成績已儲存。' : '排行榜已更新。')
+    showStatus(retrySubmission.value ? 'scorePending' : submission ? 'scoreSaved' : 'leaderboardUpdated')
     sendLeaderboard(frame, gameId, leaderboard)
   } catch (error) {
     if (!isCurrent()) return
     if (submission) retrySubmission.value = submission
-    showStatus(retrySubmission.value ? '成績儲存失敗，請在播放器下方重試；離開頁面將無法保留本次成績。' : '排行榜載入失敗，請返回選單後重試。')
+    showStatus(retrySubmission.value ? 'scoreSaveFailed' : 'leaderboardLoadFailed')
     console.warn('Leaderboard unavailable', error)
   }
 }
@@ -191,19 +202,20 @@ onBeforeUnmount(() => {
       <div class="player-shell">
         <iframe
           ref="playerFrame"
-          :src="game.playUrl"
+          :src="`${game.playUrl}?lang=${initialPlayerLanguage}`"
           :title="t('playerTitle', { title: game.title })"
           sandbox="allow-scripts allow-pointer-lock"
           referrerpolicy="no-referrer"
           allow="fullscreen; autoplay"
           allowfullscreen
           loading="lazy"
+          @load="syncPlayerLanguage"
         />
       </div>
       <p class="dialog-note">{{ t('closeGame') }}</p>
       <p v-if="game.leaderboard" class="dialog-note" role="status">
-        {{ leaderboardStatus }}
-        <button v-if="retrySubmission" class="button" type="button" @click="retryLeaderboard">重試儲存成績</button>
+        {{ leaderboardStatus && t(leaderboardStatus) }}
+        <button v-if="retrySubmission" class="button" type="button" @click="retryLeaderboard">{{ t('scoreRetry') }}</button>
       </p>
     </template>
   </dialog>

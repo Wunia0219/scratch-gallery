@@ -101,7 +101,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
       <h3><a :href="game.detailUrl">{{ game.title || t('featuredWorkFallback') }}<span class="sr-only"> · {{ t('workAuthorDetail', { name: game.student || t('studentCreatorFallback') }) }}</span></a></h3>
       <p>{{ game.description || t('workDescriptionFallback') }}</p>
       <dl v-if="game.creatorType === 'student' && game.controls" class="game-card-controls">
-        <dt>{{ t('controlsLabel') }}</dt>
+        <dt>{{ isEnglish ? 'Controls' : '操作方式' }}</dt>
         <dd>{{ game.controls }}</dd>
       </dl>
       <div class="game-card-footer">

@@ -28,7 +28,7 @@ export async function buildAssetManifest(root = resolve('public')) {
     const folder = `/games/${game.id}`
     await walk(folder, paths)
     const html = await readFile(resolve(root, game.playUrl.slice(1)), 'utf8')
-    for (const match of html.matchAll(/\.\.\/_shared\/(runtime-[a-f0-9]+\.js)/g)) paths.add(`/games/_shared/${match[1]}`)
+    for (const match of html.matchAll(/\.\.\/_shared\/(runtime-[a-f0-9]+\.js|player-locale\.js)/g)) paths.add(`/games/_shared/${match[1]}`)
     const project = JSON.parse(await readFile(resolve(root, folder.slice(1), 'assets/project.json'), 'utf8'))
     for (const target of project.targets) for (const item of [...(target.costumes || []), ...(target.sounds || [])]) {
       if (!/^[a-f0-9]+\.[a-z0-9]+$/i.test(item.md5ext)) throw new Error('Scratch 資源名稱不正確')

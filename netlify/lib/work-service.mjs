@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 import { ActivityError, OPERATION_ID } from '../../src/lib/activitySchema.js'
-import { WORK_ID, editableWork, validateWork, publicWork } from '../../src/lib/workSchema.js'
+import { WORK_ID, editableWork, validateWork, publicWork, compareWorksByDate } from '../../src/lib/workSchema.js'
 const publicPath = id => `publicWorks/${id}`
 export const assetFor = (manifest, id) => manifest.works.find(asset => asset.id === id)
 export function assetsReady(record, asset, environment) { return Boolean(asset && record?.assetVersion === asset.assetVersion && record?.environment === environment && record?.verifiedAt) }
 export async function listAdminWorks(store, manifest, environment) {
   const [works, drafts, creators, deployments] = await Promise.all([store.list('works'), store.list('workDrafts'), store.list('creators'), store.list('workAssets')])
-  return { works: works.map(work => ({ ...work, draft: drafts.find(draft => draft.id === work.id) ?? null, assetsReady: assetsReady(deployments.find(asset => asset.id === work.id), assetFor(manifest, work.id), !work.hasPublished && environment === 'local' ? 'production' : environment), asset: assetFor(manifest, work.id) ? (({ resources, ...asset }) => asset)(assetFor(manifest, work.id)) : null })), creators }
+  return { works: works.sort(compareWorksByDate).map(work => ({ ...work, draft: drafts.find(draft => draft.id === work.id) ?? null, assetsReady: assetsReady(deployments.find(asset => asset.id === work.id), assetFor(manifest, work.id), !work.hasPublished && environment === 'local' ? 'production' : environment), asset: assetFor(manifest, work.id) ? (({ resources, ...asset }) => asset)(assetFor(manifest, work.id)) : null })), creators }
 }
 export async function mutateWork(store, actorUid, input, manifest, environment, now = () => new Date().toISOString()) {
   if (!input || Object.keys(input).some(key => !['id', 'action', 'operationId', 'expectedRevision', 'expectedDraftRevision', 'work', 'historyRevision'].includes(key)) || !WORK_ID.test(input.id) || !OPERATION_ID.test(input.operationId) || !['save', 'publish', 'hide', 'restore'].includes(input.action) || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 0 || !Number.isInteger(input.expectedDraftRevision) || input.expectedDraftRevision < 0) throw new ActivityError('作品操作格式不正確')
@@ -62,7 +62,7 @@ export async function readPublishedWork(store, manifest, environment, id) {
 }
 export async function listPublishedWorks(store, manifest, environment, filters = {}) {
   const { role = 'student', q = '', className = '', device = 'all', cursor = '' } = filters
-  if (!['student', 'teacher'].includes(role) || typeof q !== 'string' || q.length > 120 || typeof className !== 'string' || className.length > 100 || !['all', 'desktop', 'mobile'].includes(device) || cursor.length > 2000) throw new ActivityError('搜尋條件不正確')
+  if (!['student', 'teacher'].includes(role) || typeof q !== 'string' || q.length > 120 || typeof className !== 'string' || className.length > 100 || !['all', 'desktop', 'mobile'].includes(device) || typeof cursor !== 'string' || cursor.length > 2000) throw new ActivityError('搜尋條件不正確')
   const stats = await store.get('siteSettings/catalog')
   if (!stats) throw new ActivityError('作品資料尚未初始化', 503)
   const signature = createHash('sha256').update(JSON.stringify([role, q, className, device])).digest('hex').slice(0, 16)
@@ -70,19 +70,22 @@ export async function listPublishedWorks(store, manifest, environment, filters =
   if (cursor) {
     let parsed
     try { parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString()) } catch { throw new ActivityError('分頁識別碼不正確') }
-    if (parsed.signature !== signature || typeof parsed.after !== 'string' || !parsed.after.startsWith(`${role}:`) || parsed.after.length > 160) throw new ActivityError('分頁識別碼不正確')
-    if (parsed.revision !== stats.revision) throw new ActivityError('作品已更新，請重新載入列表', 409)
-    after = parsed.after
+    if (parsed?.signature !== signature) throw new ActivityError('分頁識別碼不正確')
+    const [publishedAt, sortKey] = Array.isArray(parsed.after) ? parsed.after : [null, parsed.after]
+    const validDate = publishedAt === null || (typeof publishedAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(publishedAt) && Number.isFinite(Date.parse(publishedAt)))
+    if (!validDate || typeof sortKey !== 'string' || !sortKey.startsWith(`${role}:`) || sortKey.length > 160 || (Array.isArray(parsed.after) && parsed.after.length !== 2)) throw new ActivityError('分頁識別碼不正確')
+    if (parsed.revision !== stats.revision || typeof parsed.after === 'string') throw new ActivityError('作品已更新，請重新載入列表', 409)
+    after = [publishedAt, sortKey]
   }
   const needle = q.trim().toLocaleLowerCase('zh-Hant'), items = []
   let scanned = 0, hasMore = true
   // Firestore has no substring search. Bound scans to 120 documents per request;
   // an empty page may still have a cursor, so clients can continue explicitly.
   while (items.length < 9 && scanned < 120 && hasMore) {
-    const batch = await store.query('publicWorks', { orderBy: 'sortKey', startAt: `${role}:`, endBefore: `${role};`, after, limit: Math.min(12, 120 - scanned) })
+    const batch = await store.query('publicWorks', { where: { field: 'creatorType', value: role }, orderBy: 'publishedAt', direction: 'desc', thenBy: 'sortKey', after, limit: Math.min(12, 120 - scanned) })
     if (!batch.length) { hasMore = false; break }
     for (const work of batch) {
-      after = work.sortKey; scanned++
+      after = [work.publishedAt, work.sortKey]; scanned++
       if ((!className || className === work.className) && (device === 'all' || work.devices.includes(device)) && (!needle || [work.title, work.description, work.category, work.student, work.className, ...work.tags].join(' ').toLocaleLowerCase('zh-Hant').includes(needle))) {
         const asset = assetFor(manifest, work.id)
         if (work.assetVersion !== asset?.assetVersion || !assetsReady(await store.get(`workAssets/${work.id}`), asset, environment)) throw new ActivityError('作品資源正在確認，請稍後重試', 503)

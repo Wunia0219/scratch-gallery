@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { envValue, getFirebaseServices } from '../lib/firebase-runtime.mjs'
 import { initialSiteState, readPublicState } from '../lib/activity-service.mjs'
 import { galleryCsp } from '../../scripts/site-policy.mjs'
+import { readHalloweenShowcase } from '../lib/halloween-showcase.mjs'
 let runtime
 async function loadRuntime() {
   runtime ??= Promise.all([import(pathToFileURL(resolve('.netlify/server/home.mjs')).href), readFile(resolve('.netlify/server/template.json'), 'utf8').then(JSON.parse)])
@@ -12,6 +13,7 @@ async function loadRuntime() {
 export default async request => {
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD', 'Cache-Control': 'no-store' } })
   const [{ renderHome }, template] = await loadRuntime()
+  const showcase = readHalloweenShowcase(true).catch(() => null)
   let state, status = 200
   try {
     const mode = envValue('ACTIVITY_DATA_MODE') || 'legacy'
@@ -21,6 +23,7 @@ export default async request => {
     status = 503
     state = { featuredActivity: null, contentUpdates: { students: null, teachers: null, events: null }, mode: 'firebase', newWorkWindowDays: 15, revision: 0, availability: 'unavailable' }
   }
+  state.halloweenShowcase = await showcase
   let content = await renderHome(state)
   for (const asset of Object.values(template.assets)) if (asset.src) content = content.replaceAll(`/${asset.src}`, `/${asset.file}`)
   const bootstrap = `<script type="application/json" id="site-state">${JSON.stringify(state).replaceAll('<', '\\u003c')}</script>`

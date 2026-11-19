@@ -1,0 +1,27 @@
+export const halloweenShowcase = {
+  path: '/events/halloween-showcase/',
+  api: '/api/works/halloween-showcase',
+  title: '萬聖節 Scratch 作品展',
+  description: '探索 Scratch-114、Scratch-115 的萬聖節遊戲與互動創作。點選作品封面即可遊玩。',
+}
+
+export const halloweenTeaserIds = [
+  'e76333e7-ccb4-48cd-b6a3-911ac633bd43', // 南瓜彈彈樂
+  '86df55bd-9bde-4c1e-911b-4c5d63d04194', // 怪物擂台
+  '7164bc9d-2c75-4a78-b53e-85669bb1cb40', // 幽靈試煉
+]
+
+export const halloweenWorkIds = [
+  ...halloweenTeaserIds,
+  '5887c58c-baa0-42fa-ace1-26a18f37cb8a',
+  '76ca8942-38b2-4591-b4f2-d3ef26f23df5',
+  '38481121-72a0-4dc1-af55-2c3cee997c4a',
+  '8c539740-899c-41cd-a1e2-66e0f78c486b',
+  'e6a3907c-2a71-4ac4-b692-e262713015ed',
+  'eb77070d-2ce9-463d-85ad-0eed1d790442',
+  '25e0877c-2718-4ab2-8de1-14d0249d0126',
+  'eac415f6-9288-4c46-ad6c-c63f1b443a0a',
+  'c92c573e-c549-4386-bdb6-24681547c28d',
+  'd3c85a72-2b17-4875-bda3-d0ba359369bb',
+  '88d3d009-e5df-45b6-a9d4-1a9602329a64',
+]

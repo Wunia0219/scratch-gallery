@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import '../styles.css'
 import { createSiteState, siteStateKey } from './composables/useSiteState.js'
 import { catalogStateKey } from './composables/useGames.js'
+import { halloweenShowcase } from './lib/halloweenShowcase.js'
 
 const path = window.location.pathname.replace(/index\.html$/, '')
 let component
@@ -15,6 +16,8 @@ if (path === '/admin/') {
 } else if (path === '/teachers/') {
   component = (await import('./GalleryPage.vue')).default
   props = { creatorType: 'teacher' }
+} else if (path === halloweenShowcase.path) {
+  component = (await import('./HalloweenShowcase.vue')).default
 } else if (path.startsWith('/works/')) {
   component = (await import('./WorkRoute.vue')).default
   props = { id: path.split('/')[2] }

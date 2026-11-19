@@ -59,7 +59,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 </script>
 <template>
   <div class="work-admin">
-    <p class="admin-help">遊戲先於本機打包並部署，再於這裡確認上架。首次上架開始顯示 NEW 15 天；修改與重新上架不會重算。</p>
+    <p class="admin-help">遊戲先於本機打包並部署，再於這裡確認上架。作品依首次上架時間由新到舊，待上架草稿依登錄時間排列。首次上架開始顯示 NEW 15 天。</p>
     <p v-if="error" class="admin-message admin-error" role="alert">{{ error }}</p><p v-if="notice" class="admin-message" role="status">{{ notice }}</p>
     <div class="admin-workspace" :aria-busy="busy">
       <aside class="admin-panel admin-list"><div class="admin-panel-heading"><h2>作品清單</h2><span>{{ records.length }} 件</span></div>
@@ -76,7 +76,6 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
           <fieldset class="admin-devices"><legend>適用裝置</legend><label><input v-model="form.devices" type="checkbox" value="desktop">電腦</label><label><input v-model="form.devices" type="checkbox" value="mobile">行動裝置</label></fieldset>
           <label>操作說明<textarea v-model="form.controls" rows="2" maxlength="1000"></textarea></label><label>遊戲目標<textarea v-model="form.objective" rows="2" maxlength="1000"></textarea></label>
           <label>封面<select v-model="form.thumbnail"><option v-for="path in selected.asset?.thumbnails ?? []" :key="path" :value="path">{{ path.split('/').at(-1) }}</option></select></label>
-          <label>排序優先值<input v-model.number="form.sortOrder" type="number" min="-9999" max="9999" required><small>數字小的排前面；相同數字依首次上架時間由新到舊。</small></label>
           <div class="admin-editor-actions"><button class="admin-primary" type="submit" :disabled="busy">儲存草稿</button><button type="button" :disabled="busy" @click="showPreview">預覽作品</button><button class="admin-publish" type="button" :disabled="busy || !selected.assetsReady" @click="requestPublish">確認上架</button><button v-if="selected.status === 'published'" type="button" :disabled="busy" @click="confirmation = 'hide'">下架作品</button><button type="button" :disabled="busy" @click="run(async () => { history = (await adminRequest(`work-history?id=${selected.id}`)).history })">版本紀錄</button></div>
         </fieldset></form>
         <div v-if="confirmation" class="admin-confirm"><h3>{{ confirmation === 'publish' ? '將此版本上架到作品庫？' : '將作品從前台下架？' }}</h3><p>{{ confirmation === 'publish' ? selected.hasPublished ? '已儲存的草稿將取代公開介紹。首次上架日期維持不變。' : '將記錄第一次上架時間，NEW 從此刻開始計算 15 天。' : '作品庫、介紹頁與 sitemap 將移除這個作品。遊戲檔案仍可能經直接網址開啟；未儲存的編輯將捨棄，已儲存草稿會清除。' }}</p><button class="admin-primary" type="button" :disabled="busy" @click="mutate(confirmation)">確定{{ confirmation === 'publish' ? '上架' : '下架' }}</button><button type="button" :disabled="busy" @click="confirmation = ''">取消</button></div>

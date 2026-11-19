@@ -4,6 +4,8 @@ import { createCatalogPageHandler } from '../netlify/functions/catalog-pages.mjs
 import api from '../netlify/functions/works.mjs'
 import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
 import { renderCatalog } from '../.netlify/server/catalog.mjs'
+import { halloweenShowcase } from '../src/lib/halloweenShowcase.js'
+import { halloweenShowcaseData } from '../netlify/lib/halloween-showcase.mjs'
 const previous = { CATALOG_DATA_MODE: process.env.CATALOG_DATA_MODE, SITE_URL: process.env.SITE_URL, CONTEXT: process.env.CONTEXT }
 const template = JSON.parse(await readFile('.netlify/server/catalog-template.json', 'utf8'))
 const handler = createCatalogPageHandler(async () => [{ renderCatalog }, { ...template, origin: 'https://giraffegallery.com', indexable: true }])
@@ -20,7 +22,13 @@ try {
   assert.equal(unknown.status, 404); assert.equal(unknown.headers.get('cache-control'), 'no-store'); assert.doesNotMatch(await unknown.text(), /萬聖節魔法|id="site-state"/)
   assert.equal((await handler(new Request('https://giraffegallery.com/works/invalid/extra/'))).status, 404)
   const sitemap = await (await handler(new Request('https://giraffegallery.com/sitemap.xml'))).text()
-  assert.equal((sitemap.match(/<loc>/g) || []).length, legacyCatalog().length + 3)
+  const showcase = halloweenShowcaseData(legacyCatalog())
+  const showcasePage = await handler(new Request('https://giraffegallery.com' + halloweenShowcase.path))
+  assert.equal(showcasePage.status, 200)
+  const showcaseHtml = await showcasePage.text()
+  assert.ok(showcaseHtml.includes(halloweenShowcase.title))
+  assert.equal(showcaseHtml.includes('rel="canonical"'), showcase.items.length > 0)
+  assert.equal((sitemap.match(/<loc>/g) || []).length, legacyCatalog().length + 3 + Number(showcase.items.length > 0))
   assert.doesNotMatch(sitemap, /\/games\//)
   const escaped = await renderCatalog('work', { id: game.id }, { game: { ...game, title: '</script><script>alert(1)</script>' }, related: [] })
   assert.match(escaped, /&lt;\/script&gt;/); assert.doesNotMatch(escaped, /<script>alert/)

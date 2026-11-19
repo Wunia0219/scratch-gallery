@@ -1,0 +1,14 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "publicWorks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "creatorType", "order": "ASCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" },
+        { "fieldPath": "sortKey", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

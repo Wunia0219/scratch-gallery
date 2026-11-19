@@ -18,7 +18,7 @@ export async function localActivityApi(req, res, next) {
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 export async function localCatalogPages(req, res, next) {
-  if (!/^\/(?:students\/(?:index\.html)?|teachers\/(?:index\.html)?|works\/.*|sitemap\.xml)$/.test(req.url?.split('?')[0])) return next()
+  if (!/^\/(?:students\/(?:index\.html)?|teachers\/(?:index\.html)?|events\/halloween-showcase\/(?:index\.html)?|works\/.*|sitemap\.xml)$/.test(req.url?.split('?')[0])) return next()
   try {
     const handler = (await import(pathToFileURL(resolve('netlify/functions/catalog-pages.mjs')).href)).default
     const response = await handler(new Request(new URL(req.url, `http://${req.headers.host}`), { method: req.method }))

@@ -4,6 +4,7 @@ import { formatActivityDate, getActivityPhase } from '../contentUpdates.js'
 import { useSiteState } from '../composables/useSiteState.js'
 import { useLanguage } from '../i18n'
 import { useNow } from '../composables/useNow.js'
+import HalloweenAnnouncement from './HalloweenAnnouncement.vue'
 import previews from '../../public/standalone-games.json'
 
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
@@ -123,6 +124,7 @@ watch([activityPublished, halloweenPreview], () => { previewOpen.value = false }
     </article>
 
     <VotingResults v-if="activityPublished" :key="activity.id" :activity-id="activity.id" />
+    <HalloweenAnnouncement />
     <GamePlayerDialog v-if="activityPublished && halloweenPreview && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

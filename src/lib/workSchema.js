@@ -17,6 +17,14 @@ export function validateWork(value, asset, creator) {
 export function workSortKey(work, creator) {
   return `${creator.role}:${String(work.sortOrder + 9999).padStart(5, '0')}:${String(9999999999999 - (Date.parse(work.publishedAt) || 0)).padStart(13, '0')}:${String(work.sourceOrder ?? 999999).padStart(6, '0')}:${work.id}`
 }
+export function compareWorksByDate(a, b) {
+  const aDate = Date.parse(a.publishedAt ?? (a.status === 'draft' ? a.createdAt : null))
+  const bDate = Date.parse(b.publishedAt ?? (b.status === 'draft' ? b.createdAt : null))
+  return (Number.isFinite(bDate) ? bDate : -Infinity) - (Number.isFinite(aDate) ? aDate : -Infinity)
+    || (a.sortKey ?? '').localeCompare(b.sortKey ?? '')
+    || (a.sourceOrder ?? Infinity) - (b.sourceOrder ?? Infinity)
+    || a.id.localeCompare(b.id)
+}
 export function publicWork(work, asset, creator) {
   const result = { ...editableWork(work), student: creator.name, className: creator.className, creatorType: creator.role, playUrl: asset.playUrl, detailUrl: `/works/${work.id}/`, publishedAt: work.publishedAt ?? null, assetVersion: asset.assetVersion, revision: work.revision, sortKey: workSortKey(work, creator) }
   if (asset.thumbnailLayers?.length && work.thumbnail === asset.thumbnail) result.thumbnailLayers = asset.thumbnailLayers

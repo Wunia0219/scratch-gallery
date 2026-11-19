@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { ActivityError, ACTIVITY_ID, OPERATION_ID } from '../../src/lib/activitySchema.js'
 import { editableVoting, exactKeys, validateVoting, votingDate, votingPhase, safeCsv, googleScriptUrl } from '../../src/lib/votingSchema.js'
+import { compareWorksByDate } from '../../src/lib/workSchema.js'
 
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const privateFields = ['formId', 'questionItemId', 'controlUrl']
@@ -20,7 +21,7 @@ export async function listAdminVoting(store) {
       activityPublished: activities.find(item => item.id === id)?.status === 'published', config: config ? { ...config, ...source } : null,
       draft: drafts.find(item => item.id === id) ?? null, summary: summaries.find(item => item.id === id) ?? null,
       final: config?.finalVersion ? await store.get(`voteResults/${id}/versions/${config.finalVersion}`) : null }
-  })), works: works.map(item => ({ id: item.id, title: item.title })), serverTime: new Date().toISOString() }
+  })), works: works.sort(compareWorksByDate).map(item => ({ id: item.id, title: item.title })), serverTime: new Date().toISOString() }
 }
 export async function mutateVoting(store, uid, input, now = () => new Date().toISOString()) {
   exactKeys(input, ['id', 'action', 'operationId', 'expectedRevision', 'expectedDraftRevision', 'voting', 'resultsVisibility', 'expectedSourceRevision', 'expectedFinalVersion', 'reason', 'controlUrl'], '投票管理')

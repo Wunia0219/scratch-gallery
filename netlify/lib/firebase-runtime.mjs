@@ -39,10 +39,15 @@ export async function getFirebaseServices() {
     async get(path) { const snap = await db.doc(path).get(); return snap.exists ? toPlain(snap.data()) : null },
     async list(path) { const snap = await db.collection(path).limit(501).get(); if (snap.size > 500) throw new ActivityError('管理清單超過 500 筆，請先擴充後台分頁', 503); return snap.docs.map(doc => ({ ...toPlain(doc.data()), id: doc.id })) },
     async query(path, options) {
-      let query = db.collection(path).orderBy(options.orderBy, options.direction || 'asc')
-      if (options.after !== undefined) query = query.startAfter(options.after)
-      else if (options.startAt !== undefined) query = query.startAt(options.startAt)
-      if (options.endBefore !== undefined) query = query.endBefore(options.endBefore)
+      let query = db.collection(path)
+      if (options.where) query = query.where(options.where.field, '==', options.where.value)
+      query = query.orderBy(options.orderBy, options.direction || 'asc')
+      if (options.thenBy) query = query.orderBy(options.thenBy)
+      if (options.after !== undefined) {
+        const fields = options.thenBy ? [options.orderBy, options.thenBy] : [options.orderBy]
+        const values = options.thenBy ? options.after : [options.after]
+        query = query.startAfter(...fields.map((field, index) => toStored({ [field]: values[index] })[field]))
+      }
       const snap = await query.limit(options.limit).get()
       return snap.docs.map(doc => ({ ...toPlain(doc.data()), id: doc.id }))
     },

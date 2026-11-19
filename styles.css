@@ -206,32 +206,42 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .hero-brand-stamp strong { color: var(--text); font-size: .92rem; }
 
 .announcement-board { padding-block: 96px; border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent); scroll-margin-top: 100px; }
-.announcement-heading { align-items: center; }
-.announcement-heading-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px 24px; }
-.announcement-navigation { display: inline-flex; flex: none; align-items: center; gap: 8px; }
+.announcement-stage { position: relative; }
+.announcement-navigation {
+  position: absolute;
+  z-index: 5;
+  inset-inline: clamp(10px, 1.6vw, 20px);
+  top: 50%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
 .announcement-navigation button {
   display: grid;
   width: 44px;
   height: 44px;
   padding: 0;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface-raised);
-  color: var(--ink);
+  border: 1px solid #f5e0c8;
+  border-radius: 50%;
+  background: #fff7ed;
+  color: #2e2135;
+  pointer-events: auto;
   cursor: pointer;
+  box-shadow: 0 3px 12px #19112540;
 }
-.announcement-navigation button:not([aria-disabled="true"]):hover { background: var(--ink); color: white; }
-.announcement-navigation button[aria-disabled="true"] { color: var(--muted); opacity: .58; cursor: default; }
+.announcement-navigation button:not([aria-disabled="true"]):hover { background: #ffda94; }
+.announcement-navigation button[aria-disabled="true"] { background: #f6eddf; color: #66546a; opacity: .64; cursor: default; }
+.announcement-navigation button:focus-visible { outline: 2px solid #a04b14; outline-offset: 3px; }
 .announcement-navigation svg { width: 21px; height: 21px; }
-.announcement-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; }
-.announcement-position { margin: 0; color: var(--muted); font-size: .85rem; font-weight: 750; font-variant-numeric: tabular-nums; }
-.announcement-indicators { display: flex; }
+.announcement-indicators { display: flex; justify-content: center; margin-top: 12px; }
 .announcement-indicators button { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; border: 0; border-radius: 12px; background: transparent; cursor: pointer; }
 .announcement-indicators span { width: 10px; height: 10px; border-radius: 999px; background: var(--line-strong); }
 .announcement-indicators button[aria-current="true"] span { width: 24px; background: var(--ink); }
 .announcement-indicators button:hover span { background: var(--brand); }
 .announcement-carousel {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 100%;
@@ -321,91 +331,92 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .announcement-carousel .announcement-details li { gap: 8px; padding: 6px 0; border: 0; background: transparent; box-shadow: none; }
 .announcement-carousel .announcement-details strong { display: inline; margin-right: .4em; }
 .announcement-carousel .announcement-actions { margin-top: 16px; }
+.announcement-stage-paged .announcement-copy { padding-inline-start: clamp(64px, 6vw, 78px); }
+.announcement-stage-paged .announcement-art { padding-inline-end: clamp(64px, 6vw, 78px); }
 
 .halloween-announcement {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, .96fr) minmax(0, 1.04fr);
   align-items: center;
   align-content: center;
-  gap: clamp(24px, 4vw, 58px);
-  padding: clamp(18px, 4vw, 50px);
+  gap: clamp(20px, 4vw, 52px);
+  padding: clamp(28px, 4.5vw, 64px);
   overflow: hidden;
-  border: 1px solid #41465e;
+  border: 1px solid #794b53;
   border-radius: var(--radius-lg);
-  background: radial-gradient(ellipse at 100% 90%, #614257, transparent 70%), linear-gradient(145deg, #192641, #22213e);
-  color: #fff8e8;
+  background:
+    radial-gradient(ellipse at 75% 12%, #573149 0, transparent 60%),
+    radial-gradient(ellipse at 12% 112%, #643830 0, transparent 54%),
+    linear-gradient(123deg, #161026 12%, #27152d 68%, #1b132b);
+  color: #fff6e8;
 }
-.halloween-announcement::before {
+.announcement-stage-paged .halloween-announcement { padding-inline: clamp(64px, 6.8vw, 92px); }
+.showcase-night {
   position: absolute;
   z-index: -1;
   inset: 0;
-  content: "";
   pointer-events: none;
-  background: radial-gradient(circle at 8% 16%, #ffdc91 1px, transparent 2px),
-    radial-gradient(circle at 37% 15%, #dbad7d 1px, transparent 2px),
-    radial-gradient(circle at 86% 12%, #ffdc91 1px, transparent 2px),
-    radial-gradient(circle at 40% 82%, #b88786 1px, transparent 2px),
-    radial-gradient(circle at 12% 91%, #b88786 1px, transparent 2px);
+  background: radial-gradient(circle at 10% 17%, #ffc784 1px, transparent 2px),
+    radial-gradient(circle at 34% 11%, #ffa879 1px, transparent 2px),
+    radial-gradient(circle at 50% 26%, #efbc9c 1px, transparent 2px),
+    radial-gradient(circle at 15% 71%, #bd8e9c 1px, transparent 2px),
+    radial-gradient(circle at 48% 89%, #ea9f80 1px, transparent 2px);
 }
-.halloween-announcement-copy h3 { margin-bottom: 14px; font-size: clamp(1.75rem, 4vw, 3rem); text-wrap: balance; }
-.halloween-announcement-copy p { max-width: 28em; margin-bottom: 22px; color: #e6dbea; }
-.halloween-showcase-button { background: #ffcd76; color: #252136; }
-.halloween-showcase-button:hover { background: #ffe2a7; }
+.showcase-moon {
+  position: absolute;
+  top: -11%;
+  right: -1%;
+  width: clamp(150px, 25vw, 355px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 34%, #e9a269 0 7%, transparent 8%),
+    radial-gradient(ellipse at 69% 24%, #eab07b 0 9%, transparent 10%),
+    radial-gradient(ellipse at 33% 68%, #ed9d67 0 12%, transparent 13%),
+    linear-gradient(135deg, #ffe6ac, #d27c5f 74%, #ad5260);
+  box-shadow: 0 0 46px #ffb97966, 0 0 100px #e68d6f51;
+  opacity: .79;
+}
+.showcase-bats { position: absolute; top: 8%; right: 17%; width: clamp(92px, 17%, 178px); fill: #201429; stroke: none; }
+.showcase-lanterns { position: absolute; bottom: -13px; left: clamp(34px, 9.5vw, 145px); width: min(25%, 220px); stroke: none; filter: drop-shadow(0 0 16px #f586484a); opacity: .69; }
+.halloween-announcement-copy h3 { margin: 0 0 18px; font-size: clamp(2rem, 4.2vw, 4rem); line-height: 1.08; letter-spacing: -.025em; text-wrap: balance; }
+.halloween-announcement-copy h3 span { display: block; margin-bottom: .12em; color: #ffb565; }
+.halloween-announcement-copy p { max-width: 27em; margin: 0 0 25px; color: #f1dce1; font-size: clamp(.94rem, 1.55vw, 1.12rem); line-height: 1.65; }
+.halloween-showcase-button { border-color: #f8b071; background: linear-gradient(144deg, #ffdc94, #ffb465); color: #371c29; box-shadow: 0 6px 25px #ff995e35; }
+.halloween-showcase-button:hover { background: #ffe5b1; }
 .showcase-reel {
   width: min(100%, 480px);
   margin: 0;
-  padding: 8px;
+  padding: clamp(7px, 1vw, 11px);
   justify-self: center;
-  border: 1px solid #856472;
-  border-radius: 20px;
-  background: #14192e;
-  box-shadow: 0 14px 28px #12132866, inset 0 1px #ffffff14;
+  border: 1px solid #be856c;
+  border-radius: 23px;
+  background: linear-gradient(150deg, #4c3038, #23162d 36%, #1e152c);
+  box-shadow: 0 20px 44px #120d24a6, inset 0 1px #ffe8c83d;
 }
 .halloween-announcement-covers {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border: 1px solid #82646e;
-  border-radius: 13px;
-  background: #19223f;
+  border: 1px solid #b88783;
+  border-radius: 15px;
+  background: #201529;
 }
-.halloween-announcement-covers img {
+.halloween-announcement-covers :is(img, video) {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  opacity: 0;
-  transition: opacity var(--motion-base);
+  object-fit: cover;
 }
-.halloween-announcement-covers .showcase-frame-current { opacity: 1; animation: showcase-reel-pan 2400ms ease-out both paused; }
-.showcase-reel-playing .showcase-frame-current { animation-play-state: running; }
-@keyframes showcase-reel-pan { from { transform: scale(1); } to { transform: scale(1.035); } }
-.showcase-reel-caption { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 7px 5px; }
-.showcase-reel-label { display: grid; gap: 2px; line-height: 1.3; overflow-wrap: anywhere; }
-.showcase-reel-label span { color: #ffcf84; font-size: .72rem; font-weight: 750; }
-.showcase-reel-label strong { color: #fff8e8; font-size: .94rem; }
-.showcase-reel-play, .showcase-reel-strip button {
-  display: grid;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid #82646e;
-  border-radius: 10px;
-  background: #252640;
-  color: #ffdc91;
-  cursor: pointer;
-}
-.showcase-reel-play { flex: none; }
-.showcase-reel-play svg { width: 20px; height: 20px; fill: currentColor; }
-.showcase-reel-play:hover { background: #3c304a; }
-.showcase-reel-strip { display: flex; gap: 7px; padding: 2px 7px 4px; }
-.showcase-reel-strip button { width: 70px; overflow: hidden; }
-.showcase-reel-strip button[aria-pressed="true"] { border-color: #ffcf84; box-shadow: 0 0 0 1px #ffcf84; }
-.showcase-reel-strip img { width: 100%; height: 42px; object-fit: cover; }
+.halloween-announcement-covers img:not(.showcase-frame-current) { visibility: hidden; }
+.showcase-reel-caption { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; min-height: 42px; padding: 8px 3px 0; }
+.showcase-reel-caption strong { color: #ffe9c4; font-size: clamp(.77rem, 1.3vw, .96rem); line-height: 1.35; overflow-wrap: anywhere; }
+.showcase-reel-strip { display: flex; flex: none; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.showcase-reel-strip li { width: clamp(29px, 4vw, 48px); overflow: hidden; border: 1px solid #835b69; border-radius: 6px; opacity: .72; }
+.showcase-reel-strip li.showcase-strip-current { border-color: #ffc886; box-shadow: 0 0 0 1px #ffc886; opacity: 1; }
+.showcase-reel-strip img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
 
 .halloween-showcase-hero {
   position: relative;
@@ -432,7 +443,18 @@ h3 { font-size: 1.15rem; letter-spacing: -.02em; }
 .halloween-showcase-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 22px; }
 @media (max-width: 760px) {
   .halloween-announcement, .halloween-showcase-hero { grid-template-columns: minmax(0, 1fr); }
-  .halloween-announcement { gap: 16px; }
+  .halloween-announcement { align-content: start; gap: 19px; }
+  .announcement-navigation { top: 12px; transform: none; }
+  .announcement-stage-paged .announcement-slide { padding-top: 64px; }
+  .announcement-stage-paged .halloween-announcement { padding-inline: clamp(18px, 5.5vw, 35px); }
+  .announcement-stage-paged .announcement-copy { padding-inline-start: clamp(18px, 4vw, 46px); }
+  .announcement-stage-paged .announcement-art { padding-inline-end: 24px; }
+  .showcase-moon { top: -32px; right: -39px; opacity: .49; }
+  .showcase-bats { top: 35px; right: 8%; }
+  .showcase-lanterns { bottom: -3px; left: 3%; width: 30%; opacity: .44; }
+  .halloween-announcement-copy h3 { margin-bottom: 11px; }
+  .halloween-announcement-copy p { margin-bottom: 16px; }
+  .showcase-reel { justify-self: start; }
   .halloween-showcase-copy { padding: 24px 24px 0; }
   .halloween-showcase-scene { width: min(62%, 230px); justify-self: end; margin-top: -7px; }
 }
@@ -641,7 +663,6 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .announcement-actions { align-items: stretch; flex-direction: column; }
   .announcement-button { width: 100%; }
   .announcement-art { min-height: 320px; }
-  .announcement-heading-actions { justify-content: space-between; width: 100%; }
   .announcement-carousel .announcement-meta { margin-bottom: 14px; }
   .announcement-carousel .announcement-copy { padding: 24px 18px 16px; }
   .announcement-carousel .announcement-copy h3 { margin-bottom: 10px; font-size: 1.85rem; }
@@ -670,5 +691,4 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .nav-drawer-layer { transition-delay: 0s; }
   .hero-scroll-cue svg { transform: rotate(-45deg); }
-  .halloween-announcement-covers .showcase-frame-current { animation-name: none; }
 }

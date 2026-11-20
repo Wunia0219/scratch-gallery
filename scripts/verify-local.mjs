@@ -7,6 +7,7 @@ const env = { ...process.env }
 env.CATALOG_DATA_MODE = 'legacy'
 env.ACTIVITY_DATA_MODE = 'legacy'
 env.CATALOG_LOCAL_ASSETS = 'false'
+env.PUBLISH_RELEASED_ONLY = 'false'
 for (const key of ['SITE_URL', 'CONTEXT', 'NETLIFY', 'URL', 'DEPLOY_URL', 'DEPLOY_PRIME_URL']) delete env[key]
 const cwd = fileURLToPath(new URL('../', import.meta.url))
 console.log('執行免費本機檢查：建置、安全回歸、Chrome 遊戲測試及 npm 弱點掃描。')

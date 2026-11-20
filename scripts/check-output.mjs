@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
+import { relative, join, sep } from 'node:path'
 import { siteConfig } from './site-policy.mjs'
 import { loadEnv } from 'vite'
+import { releasedFilesOnly } from './lib/released-files.mjs'
+import { sharedResourcePaths } from './lib/game-assets.mjs'
 import { halloweenShowcase, halloweenWorkIds } from '../src/lib/halloweenShowcase.js'
 Object.assign(process.env, loadEnv('production', process.cwd(), ''))
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
@@ -11,6 +14,26 @@ if (indexable) assert.equal(origin, 'https://giraffegallery.com', 'production or
 const sitemap = await readFile('dist/sitemap.xml', 'utf8')
 const titles = new Set()
 const released = games.filter(game => !game.releasePending)
+if (releasedFilesOnly()) {
+  const json = async path => JSON.parse(await readFile(path, 'utf8'))
+  const standalone = await json('public/standalone-games.json')
+  const allowed = [...released, ...standalone]
+  assert.deepEqual(await json('dist/games.json'), released)
+  const creators = await json('public/creators.json')
+  assert.deepEqual(await json('dist/creators.json'), creators.filter(c => released.some(g => g.creatorId === c.id)))
+  assert.deepEqual(new Set(await readdir('dist/games')), new Set(['_shared', ...allowed.map(g => g.id)]))
+  assert.deepEqual(new Set(await readdir('dist/works')), new Set(released.map(g => g.id)))
+  const manifest = await json('dist/game-assets.json')
+  assert.deepEqual(manifest.works.map(w => w.id), released.map(g => g.id))
+  assert.deepEqual(await json('.netlify/catalog/assets.json'), manifest)
+  const shared = new Set()
+  for (const game of allowed) for (const path of await sharedResourcePaths('public', game)) shared.add(path)
+  const files = await readdir('dist/games/_shared', { recursive: true, withFileTypes: true })
+  const paths = files.filter(file => file.isFile()).map(file => {
+    return '/' + relative('dist', join(file.parentPath, file.name)).split(sep).join('/')
+  })
+  assert.deepEqual(new Set(paths), shared)
+}
 const showcasePublished = released.some(game => halloweenWorkIds.includes(game.id))
 const pageRoutes = firebaseCatalog ? ['/'] : ['/', '/students/', '/teachers/', halloweenShowcase.path, ...released.map(g => `/works/${g.id}/`)]
 for (const route of pageRoutes) {

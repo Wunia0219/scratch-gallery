@@ -6,10 +6,13 @@ import { siteConfig, assertReleaseReady, buildHeaders, runtimeSources } from './
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
 import { buildAssetManifest } from './lib/game-assets.mjs'
+import { copyReleasedFiles, releasedFilesOnly } from './lib/released-files.mjs'
 import { halloweenShowcase } from '../src/lib/halloweenShowcase.js'
 import { halloweenShowcaseData, halloweenTeaserData } from '../netlify/lib/halloween-showcase.mjs'
 
 Object.assign(process.env, loadEnv('production', process.cwd(), ''))
+const onlyReleased = releasedFilesOnly()
+if (onlyReleased) await copyReleasedFiles()
 export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const { origin, indexable } = siteConfig()
 const template = await readFile('dist/index.html', 'utf8')
@@ -36,7 +39,7 @@ try {
     ...(!firebaseCatalog ? { halloweenShowcase: halloweenTeaserData(catalog) } : {}),
   }
   const showcaseCatalog = halloweenShowcaseData(catalog)
-  assertReleaseReady(JSON.parse(await readFile('public/games.json', 'utf8')), indexable, firebaseCatalog)
+  assertReleaseReady(JSON.parse(await readFile('dist/games.json', 'utf8')), indexable, firebaseCatalog)
   const pages = [{ path: '/', title: '東勢長頸鹿美語｜Scratch 遊戲與學生創作成果展', description: '探索東勢長頸鹿美語的 Scratch 學生與老師作品，線上遊玩互動遊戲、欣賞程式創作成果。', component: App },
     { path: '/students/', title: '學生 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿學生完成的 Scratch 遊戲與互動創作，依班級、裝置或關鍵字探索作品。', component: GalleryPage, props: { creatorType: 'student' } },
     { path: '/teachers/', title: '老師 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿老師設計的 Scratch 遊戲、教學示範與互動創作。', component: GalleryPage, props: { creatorType: 'teacher' } },
@@ -78,6 +81,6 @@ await writeFile('.netlify/server/template.json', JSON.stringify(runtimeTemplate)
 await build({ ssr: { noExternal: true }, build: { ssr: 'src/catalog-server.js', outDir: '.netlify/server', emptyOutDir: false, copyPublicDir: false, manifest: false, rollupOptions: { output: { entryFileNames: 'catalog.mjs' } } } })
 await writeFile('.netlify/server/catalog-template.json', JSON.stringify({ html: productionAssets(template), assets: manifest, origin, indexable }))
 await mkdir('.netlify/catalog', { recursive: true })
-const assets = await buildAssetManifest()
+const assets = await buildAssetManifest(onlyReleased ? 'dist' : 'public')
 await writeFile('.netlify/catalog/assets.json', JSON.stringify(assets))
 await writeFile('dist/game-assets.json', JSON.stringify(assets))

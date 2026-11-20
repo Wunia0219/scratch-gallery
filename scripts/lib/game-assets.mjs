@@ -3,6 +3,18 @@ import { resolve, relative, sep } from 'node:path'
 import { createHash } from 'node:crypto'
 import { validateCatalog } from '../../src/lib/catalog.js'
 const hash = data => createHash('sha256').update(data).digest('hex')
+export async function sharedResourcePaths(root, game) {
+  const paths = new Set()
+  const html = await readFile(resolve(root, game.playUrl.slice(1)), 'utf8')
+  for (const match of html.matchAll(/\.\.\/_shared\/(runtime-[a-f0-9]+\.js|player-locale\.js)/g)) paths.add(`/games/_shared/${match[1]}`)
+  const project = JSON.parse(await readFile(resolve(root, 'games', game.id, 'assets/project.json'), 'utf8'))
+  for (const target of project.targets) for (const item of [...(target.costumes || []), ...(target.sounds || [])]) {
+    if (!/^[a-f0-9]+\.[a-z0-9]+$/i.test(item.md5ext)) throw new Error('Scratch 資源名稱不正確')
+    paths.add(`/games/_shared/assets/${item.md5ext}`)
+  }
+  return paths
+}
+
 export async function buildAssetManifest(root = resolve('public')) {
   const games = validateCatalog(JSON.parse(await readFile(resolve(root, 'games.json'), 'utf8')), JSON.parse(await readFile(resolve(root, 'creators.json'), 'utf8')))
   const files = new Map()
@@ -23,16 +35,9 @@ export async function buildAssetManifest(root = resolve('public')) {
     }
   }
   for (const [sourceOrder, game] of games.entries()) {
-    const paths = new Set()
+    const paths = await sharedResourcePaths(root, game)
     const folder = `/games/${game.id}`
     await walk(folder, paths)
-    const html = await readFile(resolve(root, game.playUrl.slice(1)), 'utf8')
-    for (const match of html.matchAll(/\.\.\/_shared\/(runtime-[a-f0-9]+\.js|player-locale\.js)/g)) paths.add(`/games/_shared/${match[1]}`)
-    const project = JSON.parse(await readFile(resolve(root, folder.slice(1), 'assets/project.json'), 'utf8'))
-    for (const target of project.targets) for (const item of [...(target.costumes || []), ...(target.sounds || [])]) {
-      if (!/^[a-f0-9]+\.[a-z0-9]+$/i.test(item.md5ext)) throw new Error('Scratch 資源名稱不正確')
-      paths.add(`/games/_shared/assets/${item.md5ext}`)
-    }
     const thumbnails = [...new Set([game.thumbnail, ...(game.thumbnailLayers || []).map(layer => layer.src)])]
     for (const path of thumbnails) paths.add(path)
     for (const path of paths) await add(path)

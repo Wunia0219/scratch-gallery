@@ -84,9 +84,11 @@ ffmpeg -ss 3 -i src/assets/IMG_3294.MP4 -frames:v 1 -vf "scale=480:-2" -quality 
 
 活動由後台管理。前台每 30 秒及回到頁面時更新，導覽提示在造訪後清除。`src/contentUpdates.js` 保存 legacy 種子與時間規則。[萬聖節筆記](docs/HALLOWEEN-ACTIVITY-NOTES.md)
 
-**每次正式部署皆須站主當次核准。** Firebase 先部署資源、核對正式檔案並登錄，再由後台確認上架。來源 JSON 保持 `releasePending: true`，首次上架起算 NEW 15 天。已部署檔案可由直接網址開啟。只改介紹、標籤、排序或上下架，可直接用後台。
+**每次正式部署皆須站主當次核准。** Netlify 使用 legacy 作品庫時，`PUBLISH_RELEASED_ONLY=true` 僅部署已上架作品、獨立示範及其素材。本機完整檢查涵蓋待上架作品。
 
-`npm run release:mark -- <作品 UUID>` 在 Firebase 模式使用同一筆發布交易，需先存草稿並驗證正式資源。legacy 才在核准合併前標記 JSON 日期；有待發布作品會擋下正式建置。[作品發布流程](docs/FIREBASE-WORKS-SETUP.md)
+切換 Firebase 後，先部署資源、核對正式檔案並登錄，再由後台確認上架。來源 JSON 保持 `releasePending: true`，首次上架起算 NEW 15 天。已部署檔案可由直接網址開啟。只改介紹、標籤、排序或上下架，可直接用後台。
+
+`npm run release:mark -- <作品 UUID>` 在 Firebase 模式使用同一筆發布交易，需先存草稿並驗證正式資源。legacy 模式在核准上架時標記 JSON 日期；正式建置會檢查輸出目錄只包含已上架作品與獨立示範。[作品發布流程](docs/FIREBASE-WORKS-SETUP.md)
 
 Netlify 依 `netlify.toml` 建置並發佈 `dist/` 與 Functions。正式網址為 `https://giraffegallery.com`，由 `SITE_URL`／Netlify `URL` 決定；舊 Netlify 子網域轉址至正式網域，只支援根網域部署。正式頁有 canonical、分享標籤、sitemap；預覽 noindex，無 SPA catch-all。網域／標頭變更後執行 `npm run check:live -- https://giraffegallery.com`。可在 Search Console 提交 sitemap；不保證收錄與排名。
 

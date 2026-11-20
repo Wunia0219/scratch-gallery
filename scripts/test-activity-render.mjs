@@ -66,8 +66,8 @@ try {
       await cp(file, join(isolated, file), { recursive: true })
     }
     const manifest = JSON.parse(await readFile(join(isolated, '.netlify/catalog/assets.json'), 'utf8'))
-    const cover = manifest.works.find(work => halloweenTeaserIds.includes(work.id))
-    assert.ok(cover?.thumbnail, 'homepage package includes the showcase cover manifest')
+    const cover = manifest.works.find(work => halloweenTeaserIds.includes(work.id)) ?? manifest.works.find(work => work.thumbnail)
+    assert.ok(cover?.thumbnail, 'homepage package includes a deployed cover for the rendering test')
     const standalone = await import(pathToFileURL(join(isolated, '.netlify/server/home.mjs')).href)
     assert.match(await standalone.renderHome(initialSiteState()), /萬聖節魔法 Scratch 創作挑戰/)
     const withCover = await standalone.renderHome({ ...state, halloweenShowcase: { covers: [{ id: cover.id, title: '作品封面', thumbnail: cover.thumbnail }] } })

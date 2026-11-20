@@ -42,5 +42,6 @@
 [build.environment]
   NODE_VERSION = "24"
   SITE_URL = "https://giraffegallery.com"
+  PUBLISH_RELEASED_ONLY = "true"
 
 # No SPA catch-all: nonexistent work URLs must remain real 404 responses.

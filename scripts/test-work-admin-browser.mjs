@@ -6,7 +6,6 @@ import { randomUUID } from 'node:crypto'
 import { loadEnv } from 'vite'
 import { chromium } from 'playwright-core'
 import games from '../public/games.json' with { type: 'json' }
-import creators from '../public/creators.json' with { type: 'json' }
 import { getFirebaseServices } from '../netlify/lib/firebase-runtime.mjs'
 import { initializeApp, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
@@ -35,10 +34,12 @@ try {
     await sdk.signInWithCustomToken(sdk.getAuth(app.getApp('gallery-admin')), token)
   }, token)
   await page.getByRole('heading', { name: '編輯作品', exact: true }).waitFor()
-  const authorName = creators.find(creator => creator.id === game.creatorId).name
-  const row = page.locator('.admin-list .admin-activity-item').filter({ hasText: authorName })
+  const search = page.getByRole('searchbox', { name: '搜尋作品' })
+  await search.fill(game.id)
+  const row = page.locator('.admin-list .admin-activity-item')
   assert.equal(await row.count(), 1); await row.click()
   assert.equal(await page.getByLabel('作品代號', { exact: true }).inputValue(), game.id)
+  await search.fill('')
   assert.equal(await page.getByRole('button', { name: '活動管理', exact: true }).count(), 1)
   assert.equal(await page.getByRole('button', { name: '作品管理', exact: true }).count(), 1)
   await page.getByLabel('作品名稱', { exact: true }).fill(title)
@@ -69,10 +70,19 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
   await page.screenshot({ path: '.packages/work-stage2/admin-works-mobile.png', fullPage: true })
   assert.deepEqual(errors, [])
-  await page.getByRole('button', { name: '登出', exact: true }).click()
+  await page.getByRole('button', { name: '活動管理', exact: true }).click()
+  await page.getByRole('button', { name: '新增活動' }).click()
+  const activityTitle = page.getByLabel('活動名稱', { exact: true })
+  await activityTitle.fill(marker)
+  const logout = page.getByRole('button', { name: '登出', exact: true })
+  page.once('dialog', dialog => dialog.dismiss())
+  await logout.click()
+  assert.equal(await activityTitle.inputValue(), marker)
+  page.once('dialog', dialog => dialog.accept())
+  await logout.click()
   await page.getByRole('button', { name: '使用 Google 帳號登入' }).waitFor()
   assert.equal(await page.getByRole('heading', { name: '編輯作品', exact: true }).count(), 0)
-  console.log('PASS owner editor, private draft, preview, publish confirmation, 15 works, mobile width and logout; public content unchanged.')
+  console.log('PASS owner editor, UUID selection, private draft, preview, publish confirmation, mobile width and unsaved activity logout.')
 } finally {
   await store.transaction(async tx => { const draft = await tx.get(draftPath); if (draft?.title === title && draft.updatedBy === owner.uid && draft.revision === 1) tx.delete(draftPath) })
   await browser.close()

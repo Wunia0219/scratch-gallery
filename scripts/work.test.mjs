@@ -125,6 +125,10 @@ test('cursor uses stable server ordering, excludes drafts and rejects stale revi
   assert.deepEqual(last.items.map(work => work.id), assets.slice(18).map(asset => asset.id))
   assert.equal((await listPublishedWorks(store, m, 'test', { role: 'student', q: '找到' })).items[0].title, '找到目標')
   assert.equal((await listPublishedWorks(store, m, 'test', { role: 'teacher' })).items.length, 0)
+  for (const item of assets.slice(18)) store.data.delete(`publicWorks/${item.id}`)
+  const fullLastPage = await listPublishedWorks(store, m, 'test', { cursor: first.cursor })
+  assert.equal(fullLastPage.items.length, 9)
+  assert.equal(fullLastPage.cursor, null)
   const previousCursor = JSON.parse(Buffer.from(first.cursor, 'base64url').toString())
   previousCursor.after = previousCursor.after[1]
   await assert.rejects(listPublishedWorks(store, m, 'test', { cursor: Buffer.from(JSON.stringify(previousCursor)).toString('base64url') }), error => error.status === 409)

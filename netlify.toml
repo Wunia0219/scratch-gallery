@@ -6,7 +6,7 @@
   directory = "netlify/functions"
 
 [functions.home]
-  included_files = [".netlify/server/**"]
+  included_files = [".netlify/server/**", ".netlify/catalog/assets.json"]
 
 [functions.catalog-pages]
   included_files = [".netlify/server/**", ".netlify/catalog/**"]

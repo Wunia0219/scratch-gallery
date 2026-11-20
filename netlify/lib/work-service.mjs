@@ -78,22 +78,27 @@ export async function listPublishedWorks(store, manifest, environment, filters =
     after = [publishedAt, sortKey]
   }
   const needle = q.trim().toLocaleLowerCase('zh-Hant'), items = []
-  let scanned = 0, hasMore = true
+  let scanned = 0, hasMore = true, foundNextMatch = false
   // Firestore has no substring search. Bound scans to 120 documents per request;
   // an empty page may still have a cursor, so clients can continue explicitly.
-  while (items.length < 9 && scanned < 120 && hasMore) {
-    const batch = await store.query('publicWorks', { where: { field: 'creatorType', value: role }, orderBy: 'publishedAt', direction: 'desc', thenBy: 'sortKey', after, limit: Math.min(12, 120 - scanned) })
-    if (!batch.length) { hasMore = false; break }
+  while (scanned < 120 && hasMore && !foundNextMatch) {
+    const limit = Math.min(12, 120 - scanned)
+    const batch = await store.query('publicWorks', { where: { field: 'creatorType', value: role }, orderBy: 'publishedAt', direction: 'desc', thenBy: 'sortKey', after, limit })
     for (const work of batch) {
-      after = [work.publishedAt, work.sortKey]; scanned++
       if ((!className || className === work.className) && (device === 'all' || work.devices.includes(device)) && (!needle || [work.title, work.description, work.category, work.student, work.className, ...work.tags].join(' ').toLocaleLowerCase('zh-Hant').includes(needle))) {
+        // Keep the first match of the next page on the far side of the cursor.
+        if (items.length === 9) {
+          foundNextMatch = true
+          break
+        }
         const asset = assetFor(manifest, work.id)
         if (work.assetVersion !== asset?.assetVersion || !assetsReady(await store.get(`workAssets/${work.id}`), asset, environment)) throw new ActivityError('作品資源正在確認，請稍後重試', 503)
         items.push(work)
       }
-      if (items.length === 9) break
+      after = [work.publishedAt, work.sortKey]
+      scanned++
     }
-    if (batch.length < 12 && items.length < 9) hasMore = false
+    hasMore = foundNextMatch || batch.length === limit
   }
   return { items, cursor: hasMore ? Buffer.from(JSON.stringify({ after, signature, revision: stats.revision })).toString('base64url') : null, revision: stats.revision, total: !needle && !className && device === 'all' ? stats.counts[role] : null, classes: ['全部', ...Object.keys(stats.classCounts).filter(key => stats.classCounts[key] > 0).sort()], mode: 'firebase' }
 }

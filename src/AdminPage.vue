@@ -14,11 +14,14 @@ const original = ref('')
 const WorkAdmin = defineAsyncComponent(() => import('./components/WorkAdmin.vue'))
 const VotingAdmin = defineAsyncComponent(() => import('./components/VotingAdmin.vue'))
 const section = ref('activities'), workAdmin = ref(null), workBusy = ref(false), voteAdmin = ref(null), voteBusy = ref(false)
+function canLeaveSection() {
+  if (busy.value || workBusy.value || voteBusy.value) return false
+  if (section.value === 'works') return workAdmin.value?.canLeave() ?? true
+  if (section.value === 'voting') return voteAdmin.value?.canLeave() ?? true
+  return !changed.value || window.confirm('活動有尚未儲存的修改，要捨棄並離開嗎？')
+}
 function switchSection(next) {
-  if (busy.value || workBusy.value || voteBusy.value || next === section.value) return
-  if (section.value === 'works' && !workAdmin.value?.canLeave()) return
-  if (section.value === 'voting' && !voteAdmin.value?.canLeave()) return
-  if (section.value === 'activities' && changed.value && !window.confirm('活動有尚未儲存的修改，要捨棄並切換嗎？')) return
+  if (next === section.value || !canLeaveSection()) return
   if (section.value === 'activities' && selected.value) { original.value = JSON.stringify(form); select(selected.value); preview.value = null }
   section.value = next
 }
@@ -113,7 +116,7 @@ onBeforeUnmount(() => { unsubscribe?.(); window.removeEventListener('beforeunloa
   <div class="admin-shell">
     <header class="admin-header">
       <a class="brand" href="/"><img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48"><span class="brand-name"><strong>東勢長頸鹿美語</strong><small>Scratch 創作館 · 管理後台</small></span></a>
-      <div class="admin-account"><span v-if="user">{{ user.email }}</span><button v-if="user" type="button" :disabled="busy || workBusy || voteBusy" @click="(!workAdmin || workAdmin.canLeave()) && (!voteAdmin || voteAdmin.canLeave()) && run(signOutAdmin)">登出</button><a href="/">返回網站</a></div>
+      <div class="admin-account"><span v-if="user">{{ user.email }}</span><button v-if="user" type="button" :disabled="busy || workBusy || voteBusy" @click="canLeaveSection() && run(signOutAdmin)">登出</button><a href="/">返回網站</a></div>
     </header>
     <main id="admin-main" class="admin-main">
       <div class="admin-title"><p class="eyebrow">創作館後台</p><h1>{{ section === 'works' ? '作品管理' : section === 'voting' ? '投票管理' : '活動管理' }}</h1><p>先儲存草稿，確認後再公開；投票結算會保留固定結果版本。</p></div>

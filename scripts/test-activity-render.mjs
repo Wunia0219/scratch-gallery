@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import handler from '../netlify/functions/home.mjs'
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
+import { halloweenTeaserIds } from '../src/lib/halloweenShowcase.js'
 import { renderHome } from '../.netlify/server/home.mjs'
 const original = process.env.ACTIVITY_DATA_MODE
 try {
@@ -52,14 +53,25 @@ try {
   assert.match(failedHtml, /活動資訊暫時無法載入/)
   assert.doesNotMatch(failedHtml, /萬聖節魔法 Scratch 創作挑戰|forms\.gle/)
   const config = await readFile('netlify.toml', 'utf8')
-  assert.match(config, /included_files = \["\.netlify\/server\/\*\*"\]/)
+  const homeFiles = config.match(/^\[functions\.home\]\s*included_files\s*=\s*(\[[^\r\n]+\])/m)
+  assert.ok(homeFiles, 'homepage Function needs an explicit bundle list')
+  const included = JSON.parse(homeFiles[1])
+  assert.ok(included.includes('.netlify/server/**'))
+  assert.ok(included.includes('.netlify/catalog/assets.json'))
   assert.equal((await readdir('.netlify/server')).includes('games'), false, 'the homepage Function must not include public game packages')
   const isolated = await mkdtemp(join(tmpdir(), 'scratch-gallery-ssr-'))
   assert.equal(dirname(resolve(isolated)), resolve(tmpdir()))
   try {
-    await cp('.netlify/server', isolated, { recursive: true })
-    const standalone = await import(pathToFileURL(join(isolated, 'home.mjs')).href)
+    for (const file of ['.netlify/server', '.netlify/catalog/assets.json']) {
+      await cp(file, join(isolated, file), { recursive: true })
+    }
+    const manifest = JSON.parse(await readFile(join(isolated, '.netlify/catalog/assets.json'), 'utf8'))
+    const cover = manifest.works.find(work => halloweenTeaserIds.includes(work.id))
+    assert.ok(cover?.thumbnail, 'homepage package includes the showcase cover manifest')
+    const standalone = await import(pathToFileURL(join(isolated, '.netlify/server/home.mjs')).href)
     assert.match(await standalone.renderHome(initialSiteState()), /萬聖節魔法 Scratch 創作挑戰/)
+    const withCover = await standalone.renderHome({ ...state, halloweenShowcase: { covers: [{ id: cover.id, title: '作品封面', thumbnail: cover.thumbnail }] } })
+    assert.ok(withCover.includes(cover.thumbnail))
   } finally { await rm(isolated, { recursive: true, force: true }) }
   console.log('PASS dynamic HTML, hidden activity without JavaScript, escaped content, failure response and runtime files.')
 } finally { original === undefined ? delete process.env.ACTIVITY_DATA_MODE : process.env.ACTIVITY_DATA_MODE = original }

@@ -429,26 +429,6 @@
     "publishedAt": "2026-11-20T07:16:54.522Z"
   },
   {
-    "description": "跳過迎面而來的仙人掌，挑戰沙漠跑酷。",
-    "category": "動作",
-    "age": "全年齡",
-    "tags": [
-      "萬聖節",
-      "動作"
-    ],
-    "id": "e6a3907c-2a71-4ac4-b692-e262713015ed",
-    "title": "萬聖節・仙人掌跳跳跑",
-    "playUrl": "/games/e6a3907c-2a71-4ac4-b692-e262713015ed/index.html",
-    "thumbnail": "/games/e6a3907c-2a71-4ac4-b692-e262713015ed/cover.webp",
-    "creatorId": "3ce55363-3928-4867-8dcf-5f94fca55411",
-    "controls": "按空白鍵跳過障礙。",
-    "objective": "抓準時機跳過障礙，持續前進。",
-    "devices": [
-      "desktop"
-    ],
-    "publishedAt": "2026-11-20T07:16:54.522Z"
-  },
-  {
     "description": "選擇難度，在不同關卡跳過障礙，挑戰頭目。",
     "category": "闖關",
     "age": "全年齡",

@@ -151,13 +151,11 @@ test('admin sorts existing releases by first publication and drafts by registrat
 test('Halloween showcase uses only its fixed works, keeps drafts private and sorts by first publication', async () => {
   assert.equal(new Set(halloweenWorkIds).size, 13)
   assert.ok(halloweenWorkIds.every(workId => games.some(game => game.id === workId)))
-  const cactusRunId = 'e6a3907c-2a71-4ac4-b692-e262713015ed'
-  assert.ok(games.some(game => game.id === cactusRunId))
   const entries = [
     { id: halloweenTeaserIds[0], publishedAt: '2026-11-14T12:00:00.000Z' },
     { id: halloweenTeaserIds[1], publishedAt: '2026-11-16T12:00:00.000Z' },
     { id: halloweenTeaserIds[2], releasePending: true },
-    { id: cactusRunId, tags: ['萬聖節'], publishedAt: '2026-11-17T12:00:00.000Z' },
+    { id: '123e4567-e89b-42d3-a456-426614174999', tags: ['萬聖節'], publishedAt: '2026-11-17T12:00:00.000Z' },
   ].map(work => ({ title: '作品', thumbnail: asset.thumbnail, creatorType: 'student', assetVersion: 'version1', ...work }))
   const visible = halloweenShowcaseData(entries).items
   assert.deepEqual(visible.map(work => work.id), [halloweenTeaserIds[1], halloweenTeaserIds[0]])

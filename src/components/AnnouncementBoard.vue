@@ -87,6 +87,7 @@ function updateSlide(event) {
   <section id="announcements" class="announcement-board" aria-labelledby="announcements-title">
     <div class="section-heading">
       <h2 id="announcements-title">{{ t('announcementsTitle') }}</h2>
+      <p v-if="slides.length && availability === 'unavailable'" role="status">{{ t('eventsUnavailable') }}</p>
     </div>
 
     <div class="announcement-stage" :class="{ 'announcement-stage-paged': slides.length > 1, 'announcement-stage-showcase': activeAnnouncement === 'showcase' }">
@@ -175,7 +176,7 @@ function updateSlide(event) {
             <svg viewBox="0 0 24 24"><path d="M6 3v4M18 3v4M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M9 14h6M12 11v6" /></svg>
           </span>
           <p class="eyebrow">{{ t('announcementsEyebrow') }}</p>
-          <h3>{{ availability === 'unavailable' ? (language === 'en' ? 'Events temporarily unavailable' : '活動資訊暫時無法載入') : availability === 'loading' ? (language === 'en' ? 'Loading events' : '正在讀取活動資訊') : t('activityComingSoon') }}</h3>
+          <h3>{{ availability === 'unavailable' ? t('eventsUnavailable') : availability === 'loading' ? (language === 'en' ? 'Loading events' : '正在讀取活動資訊') : t('activityComingSoon') }}</h3>
           <p>{{ availability === 'unavailable' ? (language === 'en' ? 'Please try again in a moment.' : '請稍後再試，或重新整理頁面。') : availability === 'loading' ? (language === 'en' ? 'Please wait a moment.' : '請稍候。') : t('activityComingSoonText') }}</p>
         </div>
       </article>

@@ -108,7 +108,7 @@ async function toggleHeroVideo(event) {
   <main id="main-content">
     <section id="top" class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="partner-pill"><span aria-hidden="true"></span>東勢長頸鹿 × 鹿多多素養程式</p>
+        <p class="partner-pill"><span aria-hidden="true"></span>{{ t('heroPartners') }}</p>
         <p class="eyebrow">{{ t('codeCreateShare') }}</p>
         <h1 id="hero-title">{{ t('hero') }}</h1><p class="hero-text">{{ t('heroText') }}</p>
         <div class="hero-actions">
@@ -147,8 +147,8 @@ async function toggleHeroVideo(event) {
         <span class="video-frame-accent video-frame-accent-top" aria-hidden="true"></span>
         <span class="video-frame-accent video-frame-accent-bottom" aria-hidden="true"></span>
         <div class="hero-brand-stamp">
-          <img src="/brand/dongshi-giraffe-logo.webp" alt="東勢長頸鹿美語台中東勢分校" width="104" height="104" />
-          <span><strong>東勢長頸鹿美語</strong><br />鹿多多 Scratch 創作課</span>
+          <img src="/brand/dongshi-giraffe-logo.webp" alt="" width="104" height="104" />
+          <span><strong>{{ t('brandName') }}</strong><br />{{ t('heroBrandCourse') }}</span>
         </div>
       </div>
       <a class="hero-scroll-cue" href="#announcements" :aria-label="t('viewAnnouncements')">

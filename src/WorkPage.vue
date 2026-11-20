@@ -6,7 +6,7 @@ import SiteFooter from './components/SiteFooter.vue'
 import { usePlayCounts } from './composables/usePlayCounts.js'
 import { useLanguage } from './i18n.js'
 defineProps({ game: { type: Object, required: true }, related: { type: Array, default: () => [] } })
-const { t } = useLanguage()
+const { t, categoryLabel } = useLanguage()
 const GamePlayerDialog = defineAsyncComponent(() => import('./components/GamePlayerDialog.vue'))
 const selectedGame = ref(null)
 const { counts: playCounts, loaded: playCountsLoaded, load: loadPlayCounts, record: recordPlay } = usePlayCounts()
@@ -19,20 +19,20 @@ function play(game) { selectedGame.value = game; void recordPlay(game.id) }
   <main id="main-content">
     <section class="work-intro">
       <p><a href="/">{{ t('home') }}</a> / <a :href="game.creatorType === 'teacher' ? '/teachers/' : '/students/'">{{ t(game.creatorType === 'teacher' ? 'teacherCollectionNav' : 'studentCollectionNav') }}</a> / {{ game.title }}</p>
-      <p class="eyebrow">Scratch · {{ game.category }}</p>
+      <p class="eyebrow">Scratch · {{ categoryLabel(game.category) }}</p>
       <h1>{{ game.title }}</h1>
       <p class="hero-text">{{ game.description }}</p>
-      <p>{{ t('creator') }}{{ game.student }} · {{ game.className }}</p>
+      <p>{{ t('workCredit', { name: game.student }) }} · {{ game.creatorType === 'teacher' ? t('teacherWorkLabel') : game.className }}</p>
       <p>{{ t('workDevices') }} · {{ (game.devices || []).map(device => t(device)).join(' · ') || t('workDevicesFallback') }}</p>
       <div class="work-cover"><GameCard :game="game" :play-count="playCountsLoaded ? (playCounts[game.id] ?? 0) : null" @play="play" /></div>
-      <noscript><p>作品介紹不需要 JavaScript；遊玩 Scratch 作品時，請開啟瀏覽器的 JavaScript。</p></noscript>
+      <noscript><p>{{ t('workNoScript') }}</p></noscript>
       <h2>{{ t('startPlaying') }}</h2>
       <p>{{ t('playingGuide') }}</p>
       <p v-if="game.controls">{{ game.controls }}</p>
       <p v-if="game.objective">{{ t('workGoal', { goal: game.objective }) }}</p>
     </section>
     <section v-if="related.length" class="work-related">
-      <h2>{{ t('relatedWorks', { category: game.category }) }}</h2>
+      <h2>{{ t('relatedWorks', { category: categoryLabel(game.category) }) }}</h2>
       <div class="game-grid"><GameCard v-for="item in related" :key="item.id" :game="item" :play-count="playCountsLoaded ? (playCounts[item.id] ?? 0) : null" @play="play" /></div>
     </section>
   </main>

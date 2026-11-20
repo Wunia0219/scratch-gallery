@@ -54,7 +54,7 @@ watch(() => state.value.catalogRevision, (revision, previous) => {
       <div class="exhibition-width exhibition-header-inner">
         <a class="exhibition-brand" href="/" :aria-label="t('homeLabel')">
           <img src="/brand/dongshi-giraffe-logo.webp" alt="" width="38" height="38" />
-          <span>{{ t('halloweenExhibitionBrand') }}</span>
+          <span>{{ t('brandName') }}</span>
         </a>
         <nav class="exhibition-nav" :aria-label="t('primaryNavigation')">
           <a href="/#announcements" class="exhibition-back">
@@ -92,10 +92,9 @@ watch(() => state.value.catalogRevision, (revision, previous) => {
           <div class="exhibition-copy">
             <p class="exhibition-classes">Scratch-114 <span aria-hidden="true">/</span><span class="sr-only"> &amp; </span> Scratch-115</p>
             <h1 id="halloween-showcase-title" :aria-label="t('halloweenShowcaseTitle')">
-              {{ t('halloweenExhibitionTitleMain') }}
-              <span>{{ t('halloweenExhibitionTitleSub') }}</span>
+              <span class="exhibition-title-main">{{ t('halloweenExhibitionTitleMain') }}</span>
+              <span class="exhibition-title-sub">{{ t('halloweenExhibitionTitleSub') }}</span>
             </h1>
-            <p class="exhibition-intro">{{ t('halloweenShowcaseIntro') }}</p>
             <a class="exhibition-enter" href="#exhibition-projects">
               {{ t('halloweenExhibitionEnter') }}
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6" /></svg>

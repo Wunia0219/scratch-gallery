@@ -29,7 +29,11 @@ try {
   const bothActivities = await renderHome({ ...initialSiteState(), halloweenShowcase: showcase })
   assert.match(bothActivities, /aria-controls="announcement-slides"/)
   assert.match(bothActivities, /<p class="sr-only" aria-live="polite">第 1 則，共 2 則公告<\/p>/)
-  assert.match(bothActivities, /class="announcement-stage announcement-stage-paged announcement-stage-showcase"/)
+  const stageClasses = [...bothActivities.matchAll(/class="([^"]+)"/g)]
+    .map(([, classes]) => classes.split(' '))
+    .find(classes => classes.includes('announcement-stage'))
+  assert.ok(stageClasses?.includes('announcement-stage-paged'))
+  assert.ok(stageClasses?.includes('announcement-stage-showcase'))
   assert.doesNotMatch(bothActivities, /從主題挑戰到成果分享|showcase-reel-play/)
   assert.match(bothActivities, /<article[^>]*class="announcement-slide announcement-card announcement-card-halloween"[^>]*inert/)
   assert.ok(bothActivities.indexOf('halloween-announcement-title') < bothActivities.indexOf('announcement-card-halloween'))

@@ -159,7 +159,7 @@ onBeforeUnmount(() => {
 
       <a class="brand" :href="isHome ? '#top' : '/'" :aria-label="t('homeLabel')">
         <img class="brand-logo" src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />
-        <span class="brand-name"><strong>東勢長頸鹿美語</strong><small>Scratch 創作館</small></span>
+        <span class="brand-name"><strong>{{ t('brandName') }}</strong><small>{{ t('brandGallery') }}</small></span>
       </a>
     </div>
 
@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
       <div class="nav-drawer-header">
         <a class="nav-drawer-brand" :href="isHome ? '#top' : '/'" :aria-label="t('homeLabel')" @click="closeDrawer({ restoreFocus: false })">
           <img src="/brand/dongshi-giraffe-logo.webp" alt="" width="48" height="48" />
-          <span><strong>東勢長頸鹿美語</strong><small>Scratch 創作館</small></span>
+          <span><strong>{{ t('brandName') }}</strong><small>{{ t('brandGallery') }}</small></span>
         </a>
         <button class="nav-drawer-close" type="button" :aria-label="t('closeMenu')" @click="closeDrawer()">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>

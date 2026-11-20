@@ -27,6 +27,11 @@
   }
   let language = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'zh-Hant'
   let paused = false
+  let expanded = false
+  let fullscreenPending = false
+  let fullscreenButton
+  const fullscreenChannel = 'scratch-gallery-player-fullscreen'
+  const fullscreenSelector = '#app .fullscreen-button, body > .standalone-fullscreen-button'
 
   function label(selector, text) {
     const element = document.querySelector(selector)
@@ -44,7 +49,62 @@
   function updateFullscreenLabel() {
     const { fullscreen, exitFullscreen } = translations[language]
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement
-    label('#app .fullscreen-button, body > .standalone-fullscreen-button', isFullscreen ? exitFullscreen : fullscreen)
+    label(fullscreenSelector, isFullscreen || expanded ? exitFullscreen : fullscreen)
+  }
+
+  function fullscreenIcon(isExpanded) {
+    const corners = isExpanded ? 'M3 9h6V3m12 6h-6V3M3 15h6v6m12-6h-6v6' : 'M9 3H3v6m12-6h6v6M9 21H3v-6m12 6h6v-6'
+    return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${corners}" fill="none" stroke="#575e75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`)
+  }
+
+  function requestExpansion(nextExpanded) {
+    window.parent.postMessage({ channel: fullscreenChannel, expanded: nextExpanded }, window.location.origin)
+  }
+
+  async function toggleFullscreen(event) {
+    event.stopImmediatePropagation()
+    if (fullscreenPending) return
+    if (expanded) {
+      requestExpansion(false)
+      return
+    }
+
+    fullscreenPending = true
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen
+        await exit?.call(document)
+      } else if (document.fullscreenEnabled && document.body.requestFullscreen) {
+        await document.body.requestFullscreen()
+      } else {
+        // The host can still expand the player when the iframe lacks promise-based fullscreen.
+        requestExpansion(true)
+      }
+    } catch {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) requestExpansion(true)
+    } finally {
+      fullscreenPending = false
+    }
+  }
+
+  function setupEmbeddedFullscreen() {
+    if (window.parent === window || !window.scaffolding) return
+    fullscreenButton = document.querySelector(fullscreenSelector)
+    if (!fullscreenButton) {
+      fullscreenButton = document.createElement('img')
+      fullscreenButton.className = 'control-button fullscreen-button'
+      fullscreenButton.src = fullscreenIcon(false)
+      fullscreenButton.draggable = false
+      window.scaffolding.addControlButton({ element: fullscreenButton, where: 'top-right' })
+    }
+    fullscreenButton.setAttribute('role', 'button')
+    fullscreenButton.tabIndex = 0
+    fullscreenButton.addEventListener('click', toggleFullscreen, { capture: true })
+    fullscreenButton.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      toggleFullscreen(event)
+    })
   }
 
   function renderLanguage() {
@@ -75,11 +135,18 @@
 
   window.addEventListener('message', ({ source, origin, data }) => {
     if (window.parent === window || source !== window.parent || origin !== window.location.origin) return
+    if (data?.channel === fullscreenChannel && typeof data.expanded === 'boolean' && fullscreenButton) {
+      expanded = data.expanded
+      fullscreenButton.src = fullscreenIcon(expanded)
+      updateFullscreenLabel()
+      return
+    }
     if (data?.channel !== 'scratch-gallery-player-language' || (data.language !== 'en' && data.language !== 'zh-Hant')) return
     if (language === data.language) return
     language = data.language
     renderLanguage()
   })
 
+  setupEmbeddedFullscreen()
   renderLanguage()
 })()

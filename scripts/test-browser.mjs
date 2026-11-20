@@ -8,7 +8,7 @@ import { chromium } from 'playwright-core'
 import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
-import { studentClasses } from '../src/lib/catalog.js'
+import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
 import worksHandler from '../netlify/functions/works.mjs'
 process.env.CATALOG_DATA_MODE = 'legacy'
 const root = path.resolve('dist')
@@ -49,15 +49,13 @@ let browser
 try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || (process.env.CI ? chromium.executablePath() : process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome'), headless: true })
   const page = await browser.newPage()
-  const games = JSON.parse(await readFile('public/games.json', 'utf8'))
-  const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
-  const creatorRoles = new Map(creators.map(creator => [creator.id, creator.role]))
-  const studentCount = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher').length
-  const teacherCount = games.filter(game => creatorRoles.get(game.creatorId) === 'teacher').length
-  const initialStudentCards = Math.min(studentCount, 9)
+  const games = legacyCatalog()
+  const pendingGames = JSON.parse(await readFile('public/games.json', 'utf8')).filter(game => game.releasePending)
+  const students = games.filter(game => game.creatorType === 'student')
+  const teacherCount = games.length - students.length
+  const initialStudentCards = Math.min(students.length, 9)
   const initialTeacherCards = Math.min(teacherCount, 9)
-  const newestStudentGame = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher')
-    .sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))[0]
+  const newestStudentGame = students[0]
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
   await page.goto(`${testOrigin}/admin/`)
@@ -133,7 +131,7 @@ try {
   await page.goto(`${testOrigin}/students/`)
   await page.getByRole('button', { name: 'English', exact: true }).click()
   assert.equal(await page.getByRole('button', { name: 'All classes', exact: true }).count(), 1)
-  for (const className of studentClasses(creators).slice(1)) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
+  for (const className of new Set(students.map(game => game.className))) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
   await page.locator('#gallery-search').fill('不存在的作品')
   await page.locator('.empty-state').waitFor({ state: 'visible' })
   assert.equal(await page.locator('.game-card').count(), 0)
@@ -147,17 +145,20 @@ try {
   await page.locator('.nav-drawer-trigger').click()
   assert.equal(await page.locator('.nav-drawer-nav a[href="/teachers/"] .nav-drawer-update').count(), 0, 'visiting teacher gallery should mark its update as seen')
   await page.locator('.nav-drawer-close').click()
+  await page.getByRole('button', { name: '中文', exact: true }).click()
   for (const game of games) {
     await page.goto(`${testOrigin}/works/${game.id}/`)
     await page.locator('.work-cover .play-count').waitFor({ state: 'visible' })
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '0', 'a loaded game without plays should show zero')
     await page.locator('.work-cover .game-cover').click()
-    const fullscreenButton = page.getByRole('button', { name: '全螢幕遊玩' })
-    await fullscreenButton.waitFor({ state: 'visible' })
-    const fullscreenButtonBox = await fullscreenButton.boundingBox()
-    assert.ok(fullscreenButtonBox.width >= 44 && fullscreenButtonBox.height >= 44, 'fullscreen control should be touch friendly')
+    const closeButton = page.getByRole('button', { name: '關閉遊戲播放器' })
+    await closeButton.waitFor({ state: 'visible' })
+    assert.equal(await page.locator('.game-dialog .dialog-bar button').count(), 1, 'only the close button belongs in the dialog bar')
+    const closeButtonBox = await closeButton.boundingBox()
+    assert.ok(closeButtonBox.width >= 44 && closeButtonBox.height >= 44, 'close control should be touch friendly')
     const iframe = page.frameLocator('dialog iframe')
     await iframe.locator('#launch').waitFor({ state: 'visible', timeout: 30000 })
+    await iframe.locator('.fullscreen-button').waitFor({ state: 'visible' })
     assert.equal(await iframe.locator('html').getAttribute('lang'), 'zh-Hant')
     assert.equal(await iframe.locator('#launch').getAttribute('title'), '點擊開始')
     const frame = page.frames().find(f => f.url().includes(game.id + '/index.html'))
@@ -166,7 +167,7 @@ try {
     assert.equal(await frame.evaluate(() => { try { localStorage.setItem('isolation-test', '1'); return true } catch { return false } }), false, 'game must not access gallery storage')
     await iframe.locator('#launch').click()
     await frame.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
-    await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
+    await closeButton.click()
     assert.equal(await page.locator('iframe').count(), 0)
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', 'localhost play count should increment')
     if (game === games[0]) {
@@ -186,6 +187,16 @@ try {
   await page.getByRole('button', { name: 'Close game player' }).click()
   await page.getByRole('button', { name: '中文', exact: true }).click()
   await testLeaderboardBrowser(browser, testOrigin, games.find(game => game.leaderboard)?.id)
+  for (const game of pendingGames) {
+    const detail = await page.goto(`${testOrigin}/works/${game.id}/`)
+    assert.equal(detail.status(), 404, 'pending work must not have a public detail page')
+    await page.goto(`${testOrigin}${game.playUrl}?lang=zh-Hant`)
+    const launch = page.locator('#launch')
+    await launch.waitFor({ state: 'visible', timeout: 30000 })
+    await launch.click()
+    await page.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
+    console.log(`PASS pending work: private detail + runnable package: ${game.id}`)
+  }
   const reduced = await browser.newContext({ reducedMotion: 'reduce' })
   await reduced.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage denied') } }) })
   const reducedPage = await reduced.newPage()
@@ -219,17 +230,19 @@ try {
   await page.goto(`${testOrigin}/works/${games[1].id}/`)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
   await page.locator('.work-cover .game-cover').click()
-  const mobileFullscreenButton = page.getByRole('button', { name: '全螢幕遊玩' })
-  await mobileFullscreenButton.waitFor({ state: 'visible' })
-  await page.locator('.game-dialog').evaluate(element => {
-    element.requestFullscreen = undefined
-    element.webkitRequestFullscreen = undefined
+  const mobilePlayer = page.frameLocator('dialog iframe')
+  await mobilePlayer.locator('#launch').click()
+  const mobileFullscreenButton = mobilePlayer.locator('.fullscreen-button')
+  await mobilePlayer.locator('body').evaluate(body => {
+    body.requestFullscreen = () => Promise.reject(new TypeError('Fullscreen blocked by the host'))
   })
   await mobileFullscreenButton.click()
-  assert.equal(await page.locator('.game-dialog').evaluate(element => element.classList.contains('player-expanded')), true, 'mobile fallback should expand without the Fullscreen API')
-  const expandedDialogBox = await page.locator('.game-dialog').boundingBox()
+  const expandedDialog = page.locator('.game-dialog.player-expanded')
+  await expandedDialog.waitFor({ state: 'visible' })
+  const expandedDialogBox = await expandedDialog.boundingBox()
   assert.ok(expandedDialogBox.width >= 374 && expandedDialogBox.height >= 811, 'expanded mobile player should fill the visual viewport')
-  await page.getByRole('button', { name: '縮小遊戲畫面' }).click()
+  await mobilePlayer.getByRole('button', { name: '離開全螢幕', exact: true }).click()
+  await expandedDialog.waitFor({ state: 'detached' })
   await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
   await page.locator('.nav-drawer-trigger').click()
   assert.equal(await page.locator('.nav-drawer-nav a').count(), 4)
@@ -247,5 +260,5 @@ try {
   await page.goto(`${testOrigin}/`)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'landscape layout should not overflow')
   assert.deepEqual(errors, [], 'uncaught browser errors')
-  console.log(`PASS no-JS SEO content, mobile width, all ${games.length} game runtimes.`)
+  console.log(`PASS no-JS SEO content, mobile width, all ${games.length + pendingGames.length} game runtimes.`)
 } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)) }

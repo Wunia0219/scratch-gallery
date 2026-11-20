@@ -32,6 +32,8 @@ npm run check:live -- https://giraffegallery.com
 
 `test:browser` 使用 127.0.0.1:4173 模擬 Netlify 標頭，檢查遊戲啟動、沙盒／localStorage 隔離、關閉釋放、無 JavaScript 內容與手機寬度。Chrome 路徑用 `CHROME_PATH`；更改 `BROWSER_TEST_PORT` 時建置與測試要一致，避免 CSP 來源不符。
 
+Windows ARM64 建置請用 `npm ci` 安裝鎖檔中的 Vite 與 Rolldown 配對。若 Windows 在更新後封鎖原生綁定，先隔離核對修補版本的載入及建置結果，再決定是否更新鎖檔。
+
 `check:live` 唯讀抽查正式標頭、canonical、sitemap、404；網域／標頭變更後必跑。Vite dev／preview 不是完整 Netlify 環境，聲音、全螢幕、手機操作與分享預覽仍需人工確認。
 
 ## CI 與套件

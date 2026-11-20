@@ -14,7 +14,6 @@ const playerFrame = ref(null)
 const playerExpanded = ref(false)
 const initialPlayerLanguage = ref(language.value)
 let closing = false
-let usingNativeFullscreen = false
 const leaderboardChannel = 'scratch-gallery-leaderboard-v1'
 const leaderboardStatus = ref('')
 const retrySubmission = ref(null)
@@ -24,6 +23,7 @@ watch(
   () => props.game,
   async (game) => {
     initialPlayerLanguage.value = language.value
+    playerExpanded.value = false
     leaderboardStatus.value = ''
     retrySubmission.value = null
     await nextTick()
@@ -42,50 +42,8 @@ function syncPlayerLanguage() {
 }
 
 function close() {
-  if (usingNativeFullscreen && getFullscreenElement() === dialog.value) exitFullscreen()
-  playerExpanded.value = false
-  usingNativeFullscreen = false
   if (dialog.value?.open) dialog.value.close()
   notifyClose()
-}
-
-function getFullscreenElement() {
-  return document.fullscreenElement || document.webkitFullscreenElement
-}
-
-function exitFullscreen() {
-  const exit = document.exitFullscreen || document.webkitExitFullscreen
-  return exit?.call(document)
-}
-
-async function togglePlayerSize() {
-  if (usingNativeFullscreen && getFullscreenElement() === dialog.value) {
-    await exitFullscreen()
-    return
-  }
-  if (playerExpanded.value) {
-    playerExpanded.value = false
-    return
-  }
-
-  const request = dialog.value?.requestFullscreen || dialog.value?.webkitRequestFullscreen
-  if (request) {
-    try {
-      await request.call(dialog.value)
-      usingNativeFullscreen = true
-      playerExpanded.value = true
-      return
-    } catch {
-      // Mobile browsers may expose the API but reject it for dialogs or iframes.
-    }
-  }
-  playerExpanded.value = true
-}
-
-function syncFullscreenState() {
-  if (!usingNativeFullscreen) return
-  playerExpanded.value = getFullscreenElement() === dialog.value
-  if (!playerExpanded.value) usingNativeFullscreen = false
 }
 
 function notifyClose() {
@@ -100,7 +58,18 @@ function closeFromBackdrop(event) {
 
 function cancel(event) {
   event.preventDefault()
+  if (playerExpanded.value) {
+    setPlayerExpanded(false)
+    return
+  }
   close()
+}
+
+const fullscreenChannel = 'scratch-gallery-player-fullscreen'
+
+function setPlayerExpanded(expanded) {
+  playerExpanded.value = expanded
+  playerFrame.value?.contentWindow?.postMessage({ channel: fullscreenChannel, expanded }, '*')
 }
 
 function sendLeaderboard(frame, gameId, leaderboard) {
@@ -114,7 +83,12 @@ function sendLeaderboard(frame, gameId, leaderboard) {
 
 function handleGameMessage(event) {
   const data = event.data
-  if (!props.game?.leaderboard || event.source !== playerFrame.value?.contentWindow) return
+  if (!props.game || event.source !== playerFrame.value?.contentWindow) return
+  if (data?.channel === fullscreenChannel && typeof data.expanded === 'boolean') {
+    setPlayerExpanded(data.expanded)
+    return
+  }
+  if (!props.game.leaderboard) return
   if (!data || data.channel !== leaderboardChannel || data.gameId !== props.game.id) return
   if (!['load', 'submit'].includes(data.action)) return
   const frame = event.source
@@ -155,14 +129,10 @@ function retryLeaderboard() {
 
 onMounted(() => {
   window.addEventListener('message', handleGameMessage)
-  document.addEventListener('fullscreenchange', syncFullscreenState)
-  document.addEventListener('webkitfullscreenchange', syncFullscreenState)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('message', handleGameMessage)
-  document.removeEventListener('fullscreenchange', syncFullscreenState)
-  document.removeEventListener('webkitfullscreenchange', syncFullscreenState)
   if (dialog.value?.open) dialog.value.close()
 })
 </script>
@@ -183,30 +153,19 @@ onBeforeUnmount(() => {
           <p class="eyebrow">{{ t('nowPlaying') }}</p>
           <h2 id="dialog-title">{{ game.title }}</h2>
         </div>
-        <div class="dialog-actions">
-          <button
-            class="icon-button"
-            type="button"
-            :aria-label="t(playerExpanded ? 'playerExitFullscreen' : 'playerFullscreen')"
-            :aria-pressed="playerExpanded"
-            @click="togglePlayerSize"
-          >
-            <svg v-if="playerExpanded" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" /></svg>
-            <svg v-else aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" /></svg>
-          </button>
-          <button class="icon-button" type="button" :aria-label="t('playerClose')" @click="close">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
-          </button>
-        </div>
+        <button class="icon-button" type="button" :aria-label="t('playerClose')" @click="close">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
       </div>
       <div class="player-shell">
+        <!-- allowfullscreen also covers the sandboxed frame's opaque origin. -->
         <iframe
           ref="playerFrame"
           :src="`${game.playUrl}?lang=${initialPlayerLanguage}`"
           :title="t('playerTitle', { title: game.title })"
           sandbox="allow-scripts allow-pointer-lock"
           referrerpolicy="no-referrer"
-          allow="fullscreen; autoplay"
+          allow="autoplay"
           allowfullscreen
           loading="lazy"
           @load="syncPlayerLanguage"

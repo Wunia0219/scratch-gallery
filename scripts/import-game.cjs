@@ -192,6 +192,7 @@ async function main() {
   packager.options.controls.greenFlag.enabled = true
   packager.options.controls.stopAll.enabled = true
   packager.options.controls.pause.enabled = true
+  // 網站共用播放器的全螢幕入口由打包後的遊戲工具列提供。
   packager.options.controls.fullscreen.enabled = true
   packager.options.app.windowTitle = title
   packager.options.app.packageName = `game-${id}`
@@ -202,7 +203,12 @@ async function main() {
 
   if (options['dry-run']) {
     const archive = await JSZip.loadAsync(result.data)
-    if (!archive.file('index.html')) throw new Error('測試 ZIP 缺少 index.html')
+    const index = archive.file('index.html')
+    if (!index) throw new Error('測試 ZIP 缺少 index.html')
+    const html = await index.async('string')
+    if (!html.includes("className = 'control-button fullscreen-button'")) {
+      throw new Error('測試 ZIP 缺少遊戲工具列的全螢幕控制')
+    }
     console.log(`\n驗證成功：已產生 ${(result.data.byteLength / 1024 / 1024).toFixed(2)} MB ZIP，未寫入網站。`)
     return
   }

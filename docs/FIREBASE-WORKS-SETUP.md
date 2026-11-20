@@ -13,7 +13,7 @@
 | 公開分頁 API、作品 HTML、SEO、動態 sitemap、404／503 | 已實作與本機驗證 |
 | 真實 Firestore 交易與隔離測試、Chrome 作品後台 | 已通過；隔離資料／測試草稿已清除 |
 | Netlify Firebase 環境設定、正式檔案驗證、正式切換 | **尚未進行，需站主當次部署核准** |
-| 投票統計 | 第三階段，尚未實作 |
+| 投票統計 | 本機實作與 Google 串接進度見[投票指南](FIREBASE-VOTING-SETUP.md)。 |
 
 本機 `.env.local` 使用 `CATALOG_DATA_MODE=firebase`、`CATALOG_LOCAL_ASSETS=true`。目前 `workAssets` 僅確認本機資源；這不代表正式網站已部署或新的待上架作品可以發布。活動連線沿用 [第一階段設定](FIREBASE-ADMIN-SETUP.md)。
 

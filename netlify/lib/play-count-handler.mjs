@@ -12,14 +12,12 @@ export function createPlayCountHandler(getStore, gameIds, eligibility) {
         const knownIds = new Set(ids)
         const store = getStore({ name: PLAY_EVENT_STORE, consistency: 'strong' })
         const counts = Object.fromEntries(ids.map(id => [id, 0]))
-        // Consume pages incrementally rather than collecting every event in RAM.
         for await (const { blobs } of store.list({ paginate: true })) {
           for (const { key } of blobs) {
             const id = key.split('/', 1)[0]
             if (knownIds.has(id)) counts[id]++
           }
         }
-        // Public aggregate only. Writes/errors never receive a CDN cache policy.
         return json({ counts }, 200, {
           'cache-control': 'public, max-age=0, must-revalidate',
           'netlify-cdn-cache-control': 'public, durable, max-age=60',

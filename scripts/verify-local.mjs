@@ -1,7 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
-// Run through npm so the installed, lockfile-controlled project tools are used.
 const npmCli = process.env.npm_execpath
 if (!npmCli) throw new Error('請使用 npm run verify:local 執行')
 const env = { ...process.env }

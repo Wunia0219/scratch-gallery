@@ -1,11 +1,22 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import path from 'node:path'
+import { isFileLoadingAllowed, normalizePath, resolveConfig } from 'vite'
 import { readFile } from 'node:fs/promises'
 import { validateCatalog, isLocalAsset } from '../src/lib/catalog.js'
 import { siteConfig, assertReleaseReady, galleryCsp, gameCsp, buildHeaders, runtimeSources } from './site-policy.mjs'
 import { countPlayEvents, isProductionPlayRequest, isValidPlayEvent, playEventKey } from '../netlify/lib/play-events.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
+test('Vite serves application code and blocks private workspace files', async () => {
+  const config = await resolveConfig({}, 'serve')
+  const mayServe = file => isFileLoadingAllowed(config, normalizePath(path.resolve(file)))
+  assert.equal(mayServe('src/main.js'), true)
+  for (const file of ['.packages/example/config.json', '.netlify/server/example.json', 'example.sb3',
+    'example-private-properties.json', 'service-account-test.json', 'example-firebase-adminsdk-test.json', '.env.local', '.git/config', 'example.pem']) {
+    assert.equal(mayServe(file), false, file)
+  }
+})
 test('catalog accepts real games and rejects executable URLs, traversal and duplicates', () => {
   assert.equal(validateCatalog(games, creators).length, games.length)
   for (const playUrl of ['javascript:alert(1)', '//evil.example/game', '/games/../index.html', 'https://evil.example/']) {

@@ -1,25 +1,18 @@
 # Scratch Gallery 安全維護
 
-訪客不需要登入；管理後台使用 Firebase Google 登入，沒有付款或公開上傳。計數只保存匿名事件；排行榜另保存玩家自行輸入的名稱與成績。`public/` 全部公開，不放權杖、私人 SB3 或未授權素材；noindex 不是存取控制。
+訪客可匿名遊玩。計數保存匿名事件，排行榜另存玩家輸入的名稱與成績。本站無付款或公開上傳。
 
 ## 防護界線
 
-- 活動管理 API 驗證 Firebase ID token（含撤銷狀態）與 `admins/{uid}` 的啟用 owner 權限。瀏覽器不能直接讀寫 Firestore；`firestore.rules` 預設全部拒絕，Admin SDK 的權限由 IAM 控制。服務帳號私鑰只能放在本機受保護檔案或 Netlify Functions 的秘密設定。
-- 投票管理沿用 owner／同源／版本／重試識別碼驗證；公開票數另採明確欄位投影。獨立 Google 投票表單限每帳號一次，不收姓名與電子郵件，僅一題必填選擇題，禁止修改回覆、其他選項、公開原始回覆摘要；帳號限制無法證明一人只有一帳號。
-- Apps Script 同步與控制使用各活動派生的不同 HMAC 金鑰、5 分鐘簽章時限與簽章用途分離；POST 本文最多 64 KB。來源僅傳完整彙總與版本，不傳回覆 ID、帳號或原始選票。控制網址限 Google Script 的 /exec，ContentService 跳轉只允許 Google 內容站的 GET，不轉送簽章本文。規則啟用後固定，過期／亂序統計不能覆寫新版本；關閉失敗不冒稱已停止 Google 收票。
-- 結算需要已確認關閉與最近完整統計，舊結算永久保留、更正另建版本並記錄原因。一般同步不覆寫公開結算；CSV 固定指定版本並跳脫公式。金鑰根值僅存本機私密 .env.local／Netlify Functions，活動金鑰存 Apps Script Properties；不進後台 HTML、Git、VITE_ 或公開 JSON。配置與仍待 Google 實測項目見 [投票指南](docs/FIREBASE-VOTING-SETUP.md)。
-- 草稿與公開活動／作品分開保存；發布／關閉、版本更新及稽核在同一個資料庫交易內完成。作品另保留私有版本紀錄，還原只建立草稿。管理寫入同源限定、JSON 大小限制、版本衝突與重試識別碼避免誤覆寫。公開回應採明確欄位投影，不回傳草稿、權限或稽核。
-- 遊戲與封面來源由建置資源清單限制；正式上架需要正式網址檔案的雜湊驗證及資源登錄，本機驗證不能啟動新作品首次上架。正式資源登錄後拒絕以 `--local` 覆寫該資料庫。Firebase 建置移除公開原始作品／作者 JSON 及靜態作品頁；動態 404／sitemap 與計數／排行榜資格都使用有效公開作品。
-- `/admin/` 使用獨立 CSP，僅增加 Google 登入需要的腳本、連線及 iframe 來源，no-store／noindex。公開首頁和遊戲的 CSP 維持隔離。
-- 預覽環境不能使用正式 Firebase 專案；未配置獨立測試專案時管理 API 拒絕服務。Firebase 正式模式遇到讀取失敗時不回復舊活動，避免已關閉活動再曝光。首頁與公開設定有 15 秒 CDN 快取，前台每 30 秒重新讀取；不可將活動開關當作敏感檔案的存取控制。
-- 新增 SDK 時以相容的 `@grpc/grpc-js` override 使用修補版，避免 Firebase Web SDK 固定舊的傳遞相依套件。移除 override 前重新掃描；不得降級 Firebase 或跳過弱點檢查。
-
-- 網站 CSP 禁止行內程式、eval、外部框架／嵌入、表單、外部 base URL 與外掛；遊戲所需行內 script／eval 只開放於隔離的 `/games/*`，連線限定本站及部署來源。
-- iframe 固定 `sandbox="allow-scripts allow-pointer-lock"`；Netlify CSP sandbox 另保護直接開啟的遊戲。不可加入 `allow-same-origin`。
-- 遊戲素材提供無 credentials 的 `Access-Control-Allow-Origin: *`，供 opaque-origin iframe 讀取；不能存私人內容。
-- 停用相機、麥克風、定位、付款與 USB；設定 nosniff、no-referrer、HSTS。作品／素材 URL 採本機白名單，拒絕重複 ID；輸出檢查阻擋常見秘密、私鑰、ZIP、SB3 與 source map，但不是完整秘密掃描。
-- 計數 API 驗證作品／事件 UUID，只接受正式站同源寫入；localhost 與預覽不寫入正式計數。成功 GET 可在 Netlify 快取 60 秒，POST／錯誤 no-store。30 分鐘冷卻是瀏覽器體驗機制，不是防灌票。
-- 排行榜另驗證啟用作品、1–8 個英數字名稱及成績上下限；父頁驗證訊息來源再呼叫 Function。無帳號、逐題驗證或同名寫入鎖定，屬友善排行；細節見[煉金塔筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
+- **管理權限**。API 核對 Firebase ID token（含撤銷狀態）及啟用的 owner。管理寫入限同源並檢查大小、版本及重試識別碼。Firestore 規則拒絕瀏覽器直接存取，Admin SDK 權限由 IAM 控制。
+- **草稿與發布**。草稿、公開資料分開保存；發布、關閉、版本及稽核在同一交易更新。還原作品會建立草稿。前台 API、頁面、sitemap、計數與排行榜均依公開作品判定。Firebase 首次上架須先驗證正式資源雜湊並登錄；正式登錄後禁止以 `--local` 覆寫。
+- **預覽與快取**。預覽須用獨立 Firebase 專案。正式資料讀取失敗時不回退舊活動。首頁／公開設定 CDN 快取 15 秒，前台每 30 秒更新；隱藏活動及 noindex 都無法保護公開檔案。
+- **私有檔案**。服務帳號限受保護的本機檔案或 Functions 秘密設定。Vite dev 封鎖 `.packages/`、`.netlify/`、SB3 與私密設定。建置檢查阻擋常見私鑰、憑證 JSON、ZIP、SB3 與 source map。`public/` 僅放已授權的公開素材。
+- **遊戲隔離**。iframe 固定 `sandbox="allow-scripts allow-pointer-lock"`，直接開啟遊戲另受 CSP sandbox 限制。遊戲 CSP 只對隔離頁允許行內程式與 eval，資源限指定來源。公開遊戲素材允許不帶憑證的跨來源讀取。
+- **網站標頭**。網站 CSP 限制 script、frame、form、base 與外掛，後台僅額外開放 Google 登入所需來源並設 no-store／noindex。保留 HSTS、nosniff、no-referrer，停用相機、麥克風、定位、付款與 USB。
+- **投票**。獨立表單限每帳號一次，採單題必填，不收姓名或 Email，關閉修改、其他選項與原始摘要。同步／控制分用活動 HMAC，簽章有效 5 分鐘，POST 最多 64 KB。只接版本化完整彙總，忽略過期資料。控制限 Google Script 的 `/exec`；Google 內容站轉址只送 GET。
+- **結算**。啟用後固定規則。須確認 Google 已停止收票並有最新完整統計才可結算；更正另存版本與原因。CSV 指定版本並跳脫公式。根金鑰限本機私密環境或 Functions，活動金鑰存 Apps Script Properties。詳見[投票指南](docs/FIREBASE-VOTING-SETUP.md)。
+- **公開寫入**。計數驗證作品、事件 UUID 及正式同源。GET 快取 60 秒，POST／錯誤 no-store；30 分鐘冷卻由瀏覽器執行。排行核對作品、1–8 位英數名稱、分數範圍及 iframe 訊息來源。匿名成績無法驗證實際遊玩，同名並行寫入可能競爭。詳見[煉金塔筆記](docs/WORD-ALCHEMY-TOWER-DESIGN.md)。
 
 ## 檢查與部署
 
@@ -30,7 +23,7 @@ npm run check:live -- https://giraffegallery.com
 
 `verify:local` 執行 verify、Chrome 全遊戲測試及 `npm audit --audit-level=high`，需要 Chrome 與網路；失敗即停止，不自動更新／推送。它清除正式部署環境設定，產出 noindex 測試版，正式部署交由 Netlify 重建。
 
-`test:browser` 使用 127.0.0.1:4173 模擬 Netlify 標頭，檢查遊戲啟動、沙盒／localStorage 隔離、關閉釋放、無 JavaScript 內容與手機寬度。Chrome 路徑用 `CHROME_PATH`；更改 `BROWSER_TEST_PORT` 時建置與測試要一致，避免 CSP 來源不符。
+`test:browser` 使用 127.0.0.1:4173 模擬 Netlify 標頭，檢查遊戲啟動、沙盒／localStorage 隔離、關閉釋放、無 JavaScript 內容，以及中英文頁面在 320–1920 px 的版面。Chrome 路徑用 `CHROME_PATH`；更改 `BROWSER_TEST_PORT` 時建置與測試要一致，避免 CSP 來源不符。
 
 Windows ARM64 建置請用 `npm ci` 安裝鎖檔中的 Vite 與 Rolldown 配對。若 Windows 在更新後封鎖原生綁定，先隔離核對修補版本的載入及建置結果，再決定是否更新鎖檔。
 
@@ -42,6 +35,7 @@ Windows ARM64 建置請用 `npm ci` 安裝鎖檔中的 Vite 與 Rolldown 配對�
 - `security.yml`：每月 1、15 日 02:17 UTC（台灣 10:17）及手動執行，另跑弱點掃描與 Chromium。排程需已合併預設分支、帳號可用，時間可能延遲。
 - Netlify 執行 verify 與高風險弱點掃描；失敗阻止新部署，但不移除既有版本。Netlify 不等待 GitHub 瀏覽器測試，合併前兩邊皆須確認成功。
 - Dependabot 每週檢查，npm minor／patch 與 Actions 分組，major 分開審查；不自動合併。
+- 移除 Firebase 間接相依套件的 `@grpc/grpc-js` override 前，先確認相容版本並重跑弱點掃描。
 - TypeScript 7 曾與目前 vue-tsc 不相容，維持 6.0.3 並暫排除 7.x；升級型別工具鏈時重新評估。不要 `npm audit fix --force`。
 
 雲端帳務阻擋時先跑本機備援並處理帳號問題，不把本機通過當作 CI 通過。平台帳號建議開啟雙因素驗證；本站沒有全天候入侵監控。

@@ -1,5 +1,3 @@
-// Local browser smoke test that serves the generated Netlify header rules.
-// This is not a replacement for check:live on an actual Netlify deployment.
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
@@ -8,6 +6,7 @@ import { chromium } from 'playwright-core'
 import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
+import { testResponsive } from './test-responsive.mjs'
 import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
 import worksHandler from '../netlify/functions/works.mjs'
 process.env.CATALOG_DATA_MODE = 'legacy'
@@ -50,6 +49,7 @@ try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || (process.env.CI ? chromium.executablePath() : process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome'), headless: true })
   const page = await browser.newPage()
   const games = legacyCatalog()
+  await testResponsive(browser, testOrigin, games)
   const pendingGames = JSON.parse(await readFile('public/games.json', 'utf8')).filter(game => game.releasePending)
   const students = games.filter(game => game.creatorType === 'student')
   const teacherCount = games.length - students.length

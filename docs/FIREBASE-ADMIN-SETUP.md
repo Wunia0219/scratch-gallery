@@ -1,18 +1,10 @@
 # Firebase 活動後台：第一階段設定與操作
 
-更新日期：2026-10-08。網站程式版本：1.4.0（第三階段保留版本待驗收）。第二階段作品管理見 [作品操作指南](FIREBASE-WORKS-SETUP.md)，第三階段投票與後台串接指南見 [投票操作指南](FIREBASE-VOTING-SETUP.md)。
+2026-10-08 紀錄，版本 1.4.0。[作品管理](FIREBASE-WORKS-SETUP.md) · [投票管理](FIREBASE-VOTING-SETUP.md)
 
-## 已實作的功能與目前狀態
+`/admin/` 可新增、預覽、儲存、發布與關閉活動。萬聖節模板支援中英文名稱、介紹、時程、表單與示範；更改獎項、規格或樣式需部署模板。
 
-- `/admin/`：Google 登入、站主權限檢查、活動清單、新增活動、儲存草稿、草稿預覽、確認發布與關閉。
-- 活動沿用已製作的萬聖節樣式；可修改中英文名稱與介紹、提醒／開始／截止時間、Google 表單及已部署示範。獎項、作品規格、視覺樣式仍屬程式模板；製作新模板需要另一次部署。
-- 公開首頁由 Netlify Function 渲染最新活動 HTML；瀏覽器另每 30 秒更新活動、提醒與導覽新內容提示。第二階段已加入作品庫／作品頁與 sitemap 的動態渲染。
-- Firestore 草稿、公開版本、設定與稽核分開儲存；管理 API 驗證 Google 登入 token 與啟用的 owner，瀏覽器不能直接讀寫資料庫。
-- 本機打包、作品目錄管理已接上第二階段；第三階段投票管理與內建串接指南已實作，本次按站主要求先不建立 Google 表單，來源授權／部署與實票驗收尚未完成。
-
-本機 `.env.local` 已設定公開 Web 應用程式參數、`ACTIVITY_DATA_MODE=firebase` 與私密金鑰路徑。Google 登入、站主權限、既有活動初始化與真實 Firestore 交易檢查均已通過。本機驗收不代表 Netlify 連線或正式發布已完成。
-
-專案：`scratch-gallery-c0e33`。站主帳號：`nini900219@gmail.com`。Web 應用程式：`Scratch Gallery Web`。Firebase Authentication 已啟用 Google；授權網域已包含 `localhost`、`127.0.0.1`、`giraffegallery.com` 與專案原有 Firebase 網域。Firestore 已建立於 `asia-east1`，未登入的 REST 讀取已驗證回傳 403。站主已成功在本機使用 Google 登入，Firebase 使用者與 owner 權限已建立。服務帳號、以下兩項 IAM 角色與本機憑證均已連接；Netlify 正式環境設定與部署待站主核准。
+本機已驗證 `scratch-gallery-c0e33` 的 Google 登入、owner 權限、活動初始化與 Firestore 交易。資料庫位於 `asia-east1`，先前未登入讀取測試回傳 403。Netlify 正式切換仍待站主核准。
 
 ## 1. Firebase 主控台準備
 

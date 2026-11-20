@@ -15,8 +15,7 @@ export async function testLeaderboardBrowser(browser, testOrigin, gameId) {
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  // Serve our local build under the production origin to exercise fetch/API code,
-  // while ALL requests are intercepted. Never send test scores to production.
+  // Intercept every request so test scores stay local.
   await context.route(`${origin}/**`, async route => {
     const request = route.request()
     const url = new URL(request.url())
@@ -93,7 +92,6 @@ export async function testLeaderboardBrowser(browser, testOrigin, gameId) {
     assert.ok(Date.now() - start < 7000, 'save must finish before eight-second ending dialog')
     await page.waitForTimeout(600)
     assert.deepEqual(await renderedRows(frame), ['LOL31060'])
-    // Return, ask again, and check clone counts do not grow with each response.
     for (let i = 0; i < 2; i++) {
       await frame.evaluate(() => { scaffolding.vm.runtime.startHats('event_whenbroadcastreceived', { BROADCAST_OPTION: '顯示主選單' }) })
       await openBoard(frame)

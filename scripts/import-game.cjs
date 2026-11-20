@@ -186,14 +186,12 @@ async function main() {
   const packager = new Packager.Packager()
   packager.project = loadedProject
   packager.options.target = 'zip'
-  // 保留 Scratch 的逐幀迴圈速度；Turbo 模式會讓沒有等待積木的移動迴圈瞬間跑完。
+  // Turbo 會跳過未使用等待積木的逐幀動畫。
   packager.options.turbo = false
-  // 讓展示網站保留 Scratch 式的遊戲控制列，避免載入後直接開始。
   packager.options.autoplay = false
   packager.options.controls.greenFlag.enabled = true
   packager.options.controls.stopAll.enabled = true
   packager.options.controls.pause.enabled = true
-  // 網站共用播放器的全螢幕入口由打包後的遊戲工具列提供。
   packager.options.controls.fullscreen.enabled = true
   packager.options.app.windowTitle = title
   packager.options.app.packageName = `game-${id}`

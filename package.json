@@ -1,6 +1,6 @@
 {
   "name": "scratch-gallery",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "A minimal Vue 3 gallery for packaged Scratch games.",

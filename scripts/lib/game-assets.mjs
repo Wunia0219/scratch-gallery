@@ -10,7 +10,6 @@ export async function buildAssetManifest(root = resolve('public')) {
     const absolute = resolve(root, path.replace(/^\//, ''))
     const inside = relative(root, absolute)
     if (inside.startsWith('..') || inside.includes(`..${sep}`)) throw new Error('資源路徑超出 public')
-    // The import pipeline creates regular files; symlinked assets are not accepted.
     const info = await lstat(absolute)
     if (!info.isFile()) throw new Error(`找不到資源：${path}`)
     if (!files.has(path)) files.set(path, hash(await readFile(absolute)))

@@ -21,6 +21,13 @@ export default defineConfig(({ mode }) => {
   server: {
     host: '127.0.0.1',
     port: 3000,
+    fs: {
+      // A custom deny list replaces Vite's defaults.
+      deny: [
+        '.env', '.env.*', '*.{crt,pem,key,p12,pfx,cer,der}', '.npmrc', '.yarnrc.yml', '**/.git/**',
+        '**/.packages/**', '**/.netlify/**', '*.sb3', 'service-account*.json', '*-firebase-adminsdk-*.json', '*-private-properties.json',
+      ],
+    },
   },
   }
 })

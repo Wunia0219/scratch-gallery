@@ -43,11 +43,23 @@ assert.doesNotMatch(sitemap, /\/admin\//)
 assert.doesNotMatch(admin, /PRIVATE KEY|FIREBASE_PRIVATE_KEY|GOOGLE_APPLICATION_CREDENTIALS/)
 const headers = await readFile('dist/_headers', 'utf8')
 assert.match(headers, /\/admin\/\n  Content-Security-Policy: [^\n]+\n  X-Frame-Options: DENY\n  X-Robots-Tag: noindex, nofollow\n  Cache-Control: no-store/)
-// Prevent common accidental secret/build-source publication; not a comprehensive secret scanner.
+const privateNames = [
+  /^\.(?:env(?:\..*)?|git|netlify|packages|npmrc|yarnrc\.yml)$/i,
+  /^(?:id_rsa|id_ed25519)$/i,
+  /\.(?:pem|key|p12|pfx|sb3|zip|map)$/i,
+  /(?:^service-account.*|-firebase-adminsdk-.*|-private-properties)\.json$/i,
+]
 async function inspect(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    assert.ok(!/^(?:\.env(?:\..*)?|\.git|\.netlify|id_rsa|id_ed25519)$|\.(?:pem|key|sb3|zip|map)$/i.test(entry.name), `private/source file in deploy: ${dir}/${entry.name}`)
-    if (entry.isDirectory()) await inspect(`${dir}/${entry.name}`)
+    const file = `${dir}/${entry.name}`
+    assert.ok(!privateNames.some(pattern => pattern.test(entry.name)), `private/source file in deploy: ${file}`)
+    if (entry.isDirectory()) await inspect(file)
+    else if (entry.name.toLowerCase().endsWith('.json')) {
+      const content = await readFile(file, 'utf8')
+      let data
+      try { data = JSON.parse(content) } catch { throw new Error(`invalid JSON in deploy: ${file}`) }
+      assert.ok(data?.type !== 'service_account' && !data?.private_key && !data?.SYNC_KEY && !data?.CONTROL_KEY, `credential JSON in deploy: ${file}`)
+    }
   }
 }
 await inspect('dist')

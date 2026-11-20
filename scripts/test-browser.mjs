@@ -7,6 +7,7 @@ import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
 import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
 import { testResponsive } from './test-responsive.mjs'
+import { halloweenShowcase, halloweenTeaserIds } from '../src/lib/halloweenShowcase.js'
 import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
 import worksHandler from '../netlify/functions/works.mjs'
 process.env.CATALOG_DATA_MODE = 'legacy'
@@ -68,7 +69,9 @@ try {
   const mediaRequests = []
   page.on('request', request => { if (/\.(?:MP4|mp4)(?:$|\?)/.test(request.url())) mediaRequests.push(request.url()) })
   await page.goto(`${testOrigin}/`)
-  await page.getByRole('heading', { name: featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待', exact: true }).waitFor()
+  const hasShowcase = students.some(game => halloweenTeaserIds.includes(game.id))
+  const firstAnnouncement = hasShowcase ? '萬聖節活動的作品' : featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待'
+  await page.getByRole('heading', { name: firstAnnouncement, exact: true }).waitFor()
   await page.locator('.hero-video-frame video').evaluate(video => video.play())
   assert.equal(mediaRequests.some(url => url.includes('IMG_3294')), false, 'homepage must not fetch full video')
   assert.equal(mediaRequests.some(url => url.includes('showcase-preview')), true, 'homepage should fetch small preview')
@@ -100,6 +103,11 @@ try {
     return top >= 0 && top < 160
   }), true, 'event navigation should scroll to the announcement section')
   if (featuredActivity.isPublished) {
+    if (hasShowcase) {
+      assert.equal(await page.getByRole('link', { name: '看同學的作品' }).getAttribute('href'), halloweenShowcase.path)
+      await page.getByRole('button', { name: /查看第.*萬聖節魔法 Scratch 創作挑戰/ }).click()
+      await page.getByRole('heading', { name: '萬聖節魔法 Scratch 創作挑戰' }).waitFor()
+    }
     assert.equal(await page.getByRole('heading', { name: '萬聖節魔法 Scratch 創作挑戰' }).isVisible(), true)
     assert.deepEqual(await page.locator('.announcement-prizes-list strong').allTextContents(), ['500 元獎學金', '300 元獎學金', '200 元獎學金'])
     assert.equal(await page.getByRole('button', { name: '播放萬聖節活動說明' }).count(), 1)
@@ -124,7 +132,7 @@ try {
     page.waitForURL(`${testOrigin}/#announcements`),
     page.locator('.nav-drawer-nav a[href="/#announcements"]').click(),
   ])
-  await page.getByRole('heading', { name: featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待' }).waitFor({ state: 'visible' })
+  await page.getByRole('heading', { name: firstAnnouncement, exact: true }).waitFor({ state: 'visible' })
   await page.waitForTimeout(700)
   const crossPageAnnouncementTop = await page.locator('#announcements').evaluate(element => element.getBoundingClientRect().top)
   assert.equal(crossPageAnnouncementTop >= 0 && crossPageAnnouncementTop < 160, true, `cross-page event navigation should land on the announcement section (top: ${crossPageAnnouncementTop})`)

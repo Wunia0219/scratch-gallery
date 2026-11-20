@@ -10,8 +10,8 @@ export const featuredActivity = {
 }
 
 export const contentUpdates = {
-  students: 'scratch-114-2026-09-29',
-  events: featuredActivity.isPublished ? 'halloween-challenge-2026-09-29' : null,
+  students: 'halloween-works-2026-11-20',
+  events: 'halloween-showcase-2026-11-20',
   teachers: 'word-alchemy-tower-2026-09-20',
 }
 

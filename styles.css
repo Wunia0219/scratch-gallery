@@ -817,15 +817,7 @@ dialog::backdrop { background: rgba(13,20,16,.72); backdrop-filter: blur(4px); }
   .exhibition-side:hover { transform: rotate(var(--tilt)); }
 }
 
-.exhibition-library { padding-block: clamp(34px, 5.2vw, 72px) clamp(53px, 7vw, 100px); scroll-margin-top: 10px; }
-.exhibition-library-heading { margin-bottom: 24px; }
-.exhibition-library-heading h2 {
-  margin-bottom: 8px;
-  font-family: var(--exhibition-display);
-  font-size: clamp(2rem, 4.4vw, 4rem);
-  letter-spacing: -.027em;
-}
-.exhibition-library-heading p { margin: 0; color: var(--exhibition-muted); }
+.exhibition-library { padding-block: clamp(16px, 2.4vw, 32px) clamp(53px, 7vw, 100px); scroll-margin-top: 10px; }
 .exhibition-tools {
   display: flex;
   flex-wrap: wrap;

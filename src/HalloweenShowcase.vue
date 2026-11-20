@@ -108,11 +108,7 @@ watch(() => state.value.catalogRevision, (revision, previous) => {
           </figure>
         </div>
       </section>
-      <section id="exhibition-projects" class="exhibition-width exhibition-library" aria-labelledby="exhibition-projects-title" tabindex="-1">
-        <div class="exhibition-library-heading">
-          <h2 id="exhibition-projects-title">{{ t('halloweenExhibitionProjects') }}</h2>
-          <p>{{ t('halloweenExhibitionGuide') }}</p>
-        </div>
+      <section id="exhibition-projects" class="exhibition-width exhibition-library" :aria-label="t('halloweenExhibitionEnter')" tabindex="-1">
         <div v-if="works.length" class="exhibition-tools">
           <div class="filters" role="group" :aria-label="t('class')">
             <button v-for="name in classes" :key="name" type="button" class="filter-button" :aria-pressed="selectedClass === name" @click="selectedClass = name">

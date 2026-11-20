@@ -1,21 +1,32 @@
-// Local browser smoke test that serves the generated Netlify header rules.
-// This is not a replacement for check:live on an actual Netlify deployment.
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
 import { featuredActivity, getActivityPhase } from '../src/contentUpdates.js'
+import { initialSiteState } from '../netlify/lib/activity-service.mjs'
 import { testLeaderboardBrowser } from './test-leaderboard-browser.mjs'
-import { studentClasses } from '../src/lib/catalog.js'
+import { testResponsive } from './test-responsive.mjs'
+import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
+import worksHandler from '../netlify/functions/works.mjs'
+process.env.CATALOG_DATA_MODE = 'legacy'
 const root = path.resolve('dist')
 const rules = (await readFile('dist/_headers', 'utf8')).trim().split(/\n\s*\n/).map(block => {
   const [pattern, ...lines] = block.split('\n')
   return { pattern, headers: lines.map(line => { const i = line.indexOf(':'); return [line.slice(0, i).trim(), line.slice(i + 1).trim()] }) }
 })
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.mp3': 'audio/mpeg' }
+// Browser tests never connect to the owner's cloud database.
+const publicStateFixture = { ...initialSiteState(), mode: 'firebase' }
 const server = createServer(async (req, res) => {
   try {
+    if (req.url === '/api/admin/config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"configured":false}'); return }
+    if (req.url === '/api/site-config') { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(publicStateFixture)); return }
+    if (req.url.startsWith('/api/voting/')) { res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end('{"voting":null}'); return }
+    if (req.url.startsWith('/api/works')) {
+      const response = await worksHandler(new Request(new URL(req.url, 'http://127.0.0.1')))
+      res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(await response.text()); return
+    }
     const urlPath = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname)
     let file = path.resolve(root, '.' + urlPath)
     if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(403).end(); return }
@@ -37,20 +48,27 @@ let browser
 try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || (process.env.CI ? chromium.executablePath() : process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/google-chrome'), headless: true })
   const page = await browser.newPage()
-  const games = JSON.parse(await readFile('public/games.json', 'utf8'))
-  const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
-  const creatorRoles = new Map(creators.map(creator => [creator.id, creator.role]))
-  const studentCount = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher').length
-  const teacherCount = games.filter(game => creatorRoles.get(game.creatorId) === 'teacher').length
-  const initialStudentCards = Math.min(studentCount, 9)
+  const games = legacyCatalog()
+  await testResponsive(browser, testOrigin, games)
+  const pendingGames = JSON.parse(await readFile('public/games.json', 'utf8')).filter(game => game.releasePending)
+  const students = games.filter(game => game.creatorType === 'student')
+  const teacherCount = games.length - students.length
+  const initialStudentCards = Math.min(students.length, 9)
   const initialTeacherCards = Math.min(teacherCount, 9)
-  const newestStudentGame = games.filter(game => creatorRoles.get(game.creatorId) !== 'teacher')
-    .sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0))[0]
+  const newestStudentGame = students[0]
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
+  await page.goto(`${testOrigin}/admin/`)
+  await page.getByText('後台已準備好，等待完成 Firebase 連接設定。完成後即可使用 Google 帳號登入。').waitFor()
+  assert.equal(await page.getByRole('button', { name: '確認發布' }).count(), 0, 'unauthenticated visitors must not receive an editor')
+  assert.equal(await page.getByRole('heading', { name: '活動管理', exact: true }).count(), 1)
+  await page.setViewportSize({ width: 375, height: 812 })
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'admin should fit a phone viewport')
+  await page.setViewportSize({ width: 1280, height: 720 })
   const mediaRequests = []
   page.on('request', request => { if (/\.(?:MP4|mp4)(?:$|\?)/.test(request.url())) mediaRequests.push(request.url()) })
   await page.goto(`${testOrigin}/`)
+  await page.getByRole('heading', { name: featuredActivity.isPublished ? '萬聖節魔法 Scratch 創作挑戰' : '敬請期待', exact: true }).waitFor()
   await page.locator('.hero-video-frame video').evaluate(video => video.play())
   assert.equal(mediaRequests.some(url => url.includes('IMG_3294')), false, 'homepage must not fetch full video')
   assert.equal(mediaRequests.some(url => url.includes('showcase-preview')), true, 'homepage should fetch small preview')
@@ -111,10 +129,11 @@ try {
   const crossPageAnnouncementTop = await page.locator('#announcements').evaluate(element => element.getBoundingClientRect().top)
   assert.equal(crossPageAnnouncementTop >= 0 && crossPageAnnouncementTop < 160, true, `cross-page event navigation should land on the announcement section (top: ${crossPageAnnouncementTop})`)
   await page.goto(`${testOrigin}/students/`)
-  await page.getByRole('button', { name: 'EN' }).click()
+  await page.getByRole('button', { name: 'English', exact: true }).click()
   assert.equal(await page.getByRole('button', { name: 'All classes', exact: true }).count(), 1)
-  for (const className of studentClasses(creators).slice(1)) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
+  for (const className of new Set(students.map(game => game.className))) assert.equal(await page.getByRole('button', { name: className, exact: true }).count(), 1)
   await page.locator('#gallery-search').fill('不存在的作品')
+  await page.locator('.empty-state').waitFor({ state: 'visible' })
   assert.equal(await page.locator('.game-card').count(), 0)
   await page.locator('#gallery-search').fill('')
   await page.goto(`${testOrigin}/teachers/`)
@@ -126,24 +145,29 @@ try {
   await page.locator('.nav-drawer-trigger').click()
   assert.equal(await page.locator('.nav-drawer-nav a[href="/teachers/"] .nav-drawer-update').count(), 0, 'visiting teacher gallery should mark its update as seen')
   await page.locator('.nav-drawer-close').click()
+  await page.getByRole('button', { name: '中文', exact: true }).click()
   for (const game of games) {
     await page.goto(`${testOrigin}/works/${game.id}/`)
     await page.locator('.work-cover .play-count').waitFor({ state: 'visible' })
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '0', 'a loaded game without plays should show zero')
     await page.locator('.work-cover .game-cover').click()
-    const fullscreenButton = page.getByRole('button', { name: '全螢幕遊玩' })
-    await fullscreenButton.waitFor({ state: 'visible' })
-    const fullscreenButtonBox = await fullscreenButton.boundingBox()
-    assert.ok(fullscreenButtonBox.width >= 44 && fullscreenButtonBox.height >= 44, 'fullscreen control should be touch friendly')
+    const closeButton = page.getByRole('button', { name: '關閉遊戲播放器' })
+    await closeButton.waitFor({ state: 'visible' })
+    assert.equal(await page.locator('.game-dialog .dialog-bar button').count(), 1, 'only the close button belongs in the dialog bar')
+    const closeButtonBox = await closeButton.boundingBox()
+    assert.ok(closeButtonBox.width >= 44 && closeButtonBox.height >= 44, 'close control should be touch friendly')
     const iframe = page.frameLocator('dialog iframe')
     await iframe.locator('#launch').waitFor({ state: 'visible', timeout: 30000 })
+    await iframe.locator('.fullscreen-button').waitFor({ state: 'visible' })
+    assert.equal(await iframe.locator('html').getAttribute('lang'), 'zh-Hant')
+    assert.equal(await iframe.locator('#launch').getAttribute('title'), '點擊開始')
     const frame = page.frames().find(f => f.url().includes(game.id + '/index.html'))
     assert.ok(frame, 'game frame loaded')
     assert.equal(await frame.evaluate(() => { try { return Boolean(parent.document.body) } catch { return false } }), false, 'game must not read parent document')
     assert.equal(await frame.evaluate(() => { try { localStorage.setItem('isolation-test', '1'); return true } catch { return false } }), false, 'game must not access gallery storage')
     await iframe.locator('#launch').click()
     await frame.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
-    await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
+    await closeButton.click()
     assert.equal(await page.locator('iframe').count(), 0)
     assert.equal(await page.locator('.work-cover .play-count span').textContent(), '1', 'localhost play count should increment')
     if (game === games[0]) {
@@ -153,7 +177,26 @@ try {
     }
     console.log(`PASS sandbox + gameplay + close: ${game.id}`)
   }
+  await page.getByRole('button', { name: 'English', exact: true }).click()
+  await page.locator('.work-cover .game-cover').click()
+  const englishPlayer = page.frameLocator('dialog iframe')
+  await englishPlayer.locator('#launch').waitFor({ state: 'visible', timeout: 30000 })
+  assert.equal(await englishPlayer.locator('html').getAttribute('lang'), 'en')
+  assert.equal(await englishPlayer.locator('#launch').getAttribute('title'), 'Click to start')
+  assert.equal(await englishPlayer.locator('.pause-button').getAttribute('title'), 'Pause')
+  await page.getByRole('button', { name: 'Close game player' }).click()
+  await page.getByRole('button', { name: '中文', exact: true }).click()
   await testLeaderboardBrowser(browser, testOrigin, games.find(game => game.leaderboard)?.id)
+  for (const game of pendingGames) {
+    const detail = await page.goto(`${testOrigin}/works/${game.id}/`)
+    assert.equal(detail.status(), 404, 'pending work must not have a public detail page')
+    await page.goto(`${testOrigin}${game.playUrl}?lang=zh-Hant`)
+    const launch = page.locator('#launch')
+    await launch.waitFor({ state: 'visible', timeout: 30000 })
+    await launch.click()
+    await page.waitForFunction(() => typeof scaffolding !== 'undefined' && scaffolding.vm.runtime.threads.length > 0)
+    console.log(`PASS pending work: private detail + runnable package: ${game.id}`)
+  }
   const reduced = await browser.newContext({ reducedMotion: 'reduce' })
   await reduced.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage denied') } }) })
   const reducedPage = await reduced.newPage()
@@ -165,7 +208,7 @@ try {
   await reducedPage.locator('.hero-video-frame video').waitFor()
   assert.equal(await reducedPage.locator('.hero-video-frame video').getAttribute('src'), null)
   assert.equal(reducedVideos.length, 0, 'reduced motion should not download either video by default')
-  await reducedPage.getByRole('button', { name: 'EN', exact: true }).click()
+  await reducedPage.getByRole('button', { name: 'English', exact: true }).click()
   assert.equal(await reducedPage.locator('html').getAttribute('lang'), 'en')
   assert.deepEqual(reducedErrors, [], 'denied storage must not break language or reminders')
   await reducedPage.screenshot({ path: '.packages/home-desktop.webp', type: 'webp' })
@@ -187,17 +230,19 @@ try {
   await page.goto(`${testOrigin}/works/${games[1].id}/`)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
   await page.locator('.work-cover .game-cover').click()
-  const mobileFullscreenButton = page.getByRole('button', { name: '全螢幕遊玩' })
-  await mobileFullscreenButton.waitFor({ state: 'visible' })
-  await page.locator('.game-dialog').evaluate(element => {
-    element.requestFullscreen = undefined
-    element.webkitRequestFullscreen = undefined
+  const mobilePlayer = page.frameLocator('dialog iframe')
+  await mobilePlayer.locator('#launch').click()
+  const mobileFullscreenButton = mobilePlayer.locator('.fullscreen-button')
+  await mobilePlayer.locator('body').evaluate(body => {
+    body.requestFullscreen = () => Promise.reject(new TypeError('Fullscreen blocked by the host'))
   })
   await mobileFullscreenButton.click()
-  assert.equal(await page.locator('.game-dialog').evaluate(element => element.classList.contains('player-expanded')), true, 'mobile fallback should expand without the Fullscreen API')
-  const expandedDialogBox = await page.locator('.game-dialog').boundingBox()
+  const expandedDialog = page.locator('.game-dialog.player-expanded')
+  await expandedDialog.waitFor({ state: 'visible' })
+  const expandedDialogBox = await expandedDialog.boundingBox()
   assert.ok(expandedDialogBox.width >= 374 && expandedDialogBox.height >= 811, 'expanded mobile player should fill the visual viewport')
-  await page.getByRole('button', { name: '縮小遊戲畫面' }).click()
+  await mobilePlayer.getByRole('button', { name: '離開全螢幕', exact: true }).click()
+  await expandedDialog.waitFor({ state: 'detached' })
   await page.getByRole('button', { name: '關閉遊戲播放器' }).click()
   await page.locator('.nav-drawer-trigger').click()
   assert.equal(await page.locator('.nav-drawer-nav a').count(), 4)
@@ -215,5 +260,5 @@ try {
   await page.goto(`${testOrigin}/`)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'landscape layout should not overflow')
   assert.deepEqual(errors, [], 'uncaught browser errors')
-  console.log(`PASS no-JS SEO content, mobile width, all ${games.length} game runtimes.`)
+  console.log(`PASS no-JS SEO content, mobile width, all ${games.length + pendingGames.length} game runtimes.`)
 } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)) }

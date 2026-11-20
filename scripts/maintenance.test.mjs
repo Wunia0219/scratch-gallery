@@ -15,6 +15,7 @@ import { createLeaderboardHandler, leaderboardKey, rankLeaderboard, scoreBounds,
 
 const require = createRequire(import.meta.url)
 const { createLeaderboardBridge } = require('./lib/leaderboard-bridge.cjs')
+const { optimizeGamePackage } = require('./optimize-game-package.cjs')
 
 const id = '123e4567-e89b-42d3-a456-426614174000'
 const author = { id, name: '作者', role: 'student', className: 'Scratch-116' }
@@ -36,6 +37,33 @@ async function fixture(t) {
   await fs.writeFile(manifestPath, JSON.stringify([original]))
   return { root, gamesRoot, gameDirectory, staging, manifestPath, backupRoot: root }
 }
+
+test('package optimization localizes the player shell without changing project assets', async t => {
+  const { gameDirectory } = await fixture(t)
+  const indexPath = path.join(gameDirectory, 'index.html')
+  const projectPath = path.join(gameDirectory, 'assets', 'project.json')
+  const project = '{"targets":[{"name":"Click to start","blocks":{}}]}'
+  await fs.mkdir(path.dirname(projectPath))
+  await fs.writeFile(projectPath, project)
+  await fs.writeFile(indexPath, `<html><body>
+    <div id="launch" title="Click to start"></div>
+    <noscript>Enable JavaScript</noscript>
+    <div id="error"><h1>Error</h1><details><summary id="error-message"></summary></details></div>
+    <script src="../_shared/runtime-abcdef.js"></script>
+    </body></html>`)
+
+  await optimizeGamePackage(gameDirectory)
+  const localized = await fs.readFile(indexPath, 'utf8')
+  assert.match(localized, /<html lang="zh-Hant">/)
+  assert.match(localized, /id="launch" title="點擊開始"/)
+  assert.match(localized, /id="player-error-details">技術詳細資訊<\/summary>/)
+  assert.match(localized, /<p id="error-message"><\/p>/)
+  assert.equal((localized.match(/player-locale\.js/g) || []).length, 1)
+  assert.equal(await fs.readFile(projectPath, 'utf8'), project)
+
+  await optimizeGamePackage(gameDirectory)
+  assert.equal(await fs.readFile(indexPath, 'utf8'), localized)
+})
 
 test('minimal replacement preserves metadata, publication date, cover and layers on disk', async t => {
   const f = await fixture(t)

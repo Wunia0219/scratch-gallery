@@ -41,8 +41,7 @@ async function preserveImages(existing, id, publicRoot, staging, replaceThumbnai
   }
 }
 
-// Backups live outside public/. A failed copy or manifest replacement restores
-// both old files and metadata; failed recovery deliberately retains the backup.
+// Keep the private backup if restoring files or metadata fails.
 async function commitImport({ gamesRoot, gameDirectory, staging, manifestPath, manifest, backupRoot, io = fs }) {
   gamesRoot = path.resolve(gamesRoot)
   gameDirectory = path.resolve(gameDirectory)

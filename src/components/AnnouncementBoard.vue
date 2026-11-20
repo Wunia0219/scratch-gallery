@@ -1,44 +1,108 @@
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { featuredActivity, formatActivityDate, getActivityPhase } from '../contentUpdates.js'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { formatActivityDate, getActivityPhase } from '../contentUpdates.js'
+import { useSiteState } from '../composables/useSiteState.js'
+import { catalogRequest } from '../composables/useGames.js'
 import { useLanguage } from '../i18n'
 import { useNow } from '../composables/useNow.js'
+import { halloweenShowcase } from '../lib/halloweenShowcase.js'
+import HalloweenAnnouncement from './HalloweenAnnouncement.vue'
 import previews from '../../public/standalone-games.json'
 
 const GamePlayerDialog = defineAsyncComponent(() => import('./GamePlayerDialog.vue'))
+const VotingResults = defineAsyncComponent(() => import('./VotingResults.vue'))
 const { t, language } = useLanguage()
 const now = useNow()
-const phase = computed(() => getActivityPhase(now.value))
-const dates = computed(() => ({ start: formatActivityDate(featuredActivity.startsAt, language.value, true), end: formatActivityDate(featuredActivity.endsAt, language.value, true) }))
-const status = computed(() => phase.value === 'upcoming' ? t('halloweenStatus', { date: formatActivityDate(featuredActivity.startsAt, language.value) }) : phase.value === 'closed' ? t('activityClosed') : t(phase.value === 'closing' ? 'activityReminderClosing' : 'activityReminderOpen'))
-const submissionUrl = featuredActivity.submissionUrl
+const { activity, state } = useSiteState()
+const availability = computed(() => state.value.availability)
+const phase = computed(() => getActivityPhase(now.value, activity.value))
+const dates = computed(() => activity.value ? ({ start: formatActivityDate(activity.value.startsAt, language.value, true), end: formatActivityDate(activity.value.endsAt, language.value, true) }) : {})
+const status = computed(() => phase.value === 'upcoming' ? t('halloweenStatus', { date: formatActivityDate(activity.value.startsAt, language.value) }) : phase.value === 'closed' ? t('activityClosed') : t(phase.value === 'closing' ? 'activityReminderClosing' : 'activityReminderOpen'))
+const submissionUrl = computed(() => activity.value?.submissionUrl)
+const title = computed(() => language.value === 'en' ? activity.value?.titleEn || activity.value?.title || t('halloweenTitle') : activity.value?.title || t('halloweenTitle'))
+const summary = computed(() => language.value === 'en' ? activity.value?.descriptionEn || activity.value?.description || t('halloweenSummary') : activity.value?.description || t('halloweenSummary'))
 const previewOpen = ref(false)
-const activityPublished = featuredActivity.isPublished
-const halloweenPreview = previews.find(preview => preview.id === featuredActivity.previewId)
-if (!halloweenPreview) throw new Error('活動預覽未登錄')
+const activityPublished = computed(() => Boolean(activity.value?.isPublished))
+const halloweenPreview = computed(() => previews.find(preview => preview.id === activity.value?.previewId))
+watch([activityPublished, halloweenPreview], () => { previewOpen.value = false })
 
+const initialShowcase = state.value.halloweenShowcase
+const covers = ref(initialShowcase?.covers ?? [])
+const slides = computed(() => {
+  const items = []
+  if (covers.value.length) items.push({ id: 'showcase', title: t('halloweenAnnouncementTitle'), date: halloweenShowcase.announcementDate })
+  if (activityPublished.value) items.push({ id: 'challenge', title: title.value, date: activity.value.remindFrom || activity.value.startsAt })
+  return items.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
+})
+const currentSlide = ref(0)
+const activeAnnouncement = computed(() => slides.value[currentSlide.value]?.id)
+const settled = ref(true)
+const viewport = ref(null)
+const navigation = ref(null)
+let teaserRequest = 0
+
+async function refreshShowcase() {
+  const request = ++teaserRequest
+  try {
+    const data = await catalogRequest(halloweenShowcase.api + '?view=teaser')
+    if (request === teaserRequest) covers.value = data.covers
+  } catch {
+    if (request === teaserRequest) covers.value = []
+  }
+}
+onMounted(() => { if (!initialShowcase) void refreshShowcase() })
+watch(() => state.value.catalogRevision, (revision, previous) => {
+  if (revision && previous && revision !== previous) void refreshShowcase()
+})
+watch(() => slides.value.map(slide => slide.id).join(','), async () => {
+  currentSlide.value = 0
+  settled.value = true
+  await nextTick()
+  viewport.value?.scrollTo({ left: 0, behavior: 'instant' })
+})
+
+function showSlide(index) {
+  if (index < 0 || index >= slides.value.length || (index === currentSlide.value && settled.value)) return
+  const carousel = viewport.value
+  if (carousel) {
+    settled.value = false
+    carousel.scrollTo({ left: carousel.children[index].offsetLeft })
+  }
+}
+function updateSlide(event) {
+  if (slides.value.length < 2) return
+  const carousel = event.currentTarget
+  if (!carousel.clientWidth) return
+  const index = Math.min(slides.value.length - 1, Math.max(0, Math.round(carousel.scrollLeft / carousel.clientWidth)))
+  settled.value = Math.abs(carousel.scrollLeft - carousel.children[index].offsetLeft) < 2
+  if (index === currentSlide.value) return
+  if (carousel.contains(document.activeElement)) {
+    navigation.value?.querySelectorAll('button')[index ? 0 : 1]?.focus({ preventScroll: true })
+  }
+  currentSlide.value = index
+}
 </script>
 
 <template>
   <section id="announcements" class="announcement-board" aria-labelledby="announcements-title">
-    <div class="section-heading announcement-heading">
-      <div>
-        <p class="eyebrow">WHAT'S HAPPENING</p>
-        <h2 id="announcements-title">{{ t('announcementsTitle') }}</h2>
-      </div>
-      <p class="section-note">{{ t('announcementsIntro') }}</p>
+    <div class="section-heading">
+      <h2 id="announcements-title">{{ t('announcementsTitle') }}</h2>
     </div>
 
-    <article class="announcement-card announcement-card-halloween" :class="{ 'announcement-card-coming-soon': !activityPublished }">
-      <template v-if="activityPublished">
+    <div class="announcement-stage" :class="{ 'announcement-stage-paged': slides.length > 1, 'announcement-stage-showcase': activeAnnouncement === 'showcase' }">
+    <div id="announcement-slides" ref="viewport" class="announcement-carousel" @scroll.passive="updateSlide">
+      <template v-for="(slide, index) in slides" :key="slide.id">
+      <HalloweenAnnouncement v-if="slide.id === 'showcase'" class="announcement-slide" :covers="covers"
+        :active="index === currentSlide && settled" :inert="index !== currentSlide" />
+      <article v-else class="announcement-slide announcement-card announcement-card-halloween" :inert="index !== currentSlide">
       <div class="announcement-copy">
         <div class="announcement-meta">
           <span class="announcement-status"><span aria-hidden="true"></span>{{ status }}</span>
           <span class="announcement-label">{{ t('halloweenLabel') }}</span>
         </div>
-        <p class="announcement-kicker">SCRATCH HALLOWEEN CHALLENGE</p>
-        <h3>{{ t('halloweenTitle') }}</h3>
-        <p class="announcement-summary">{{ t('halloweenSummary') }}</p>
+        <p class="announcement-kicker">{{ t('challengeEyebrow') }}</p>
+        <h3>{{ title }}</h3>
+        <p class="announcement-summary">{{ summary }}</p>
 
         <section class="announcement-prizes" aria-labelledby="announcement-prizes-title">
           <h4 id="announcement-prizes-title">{{ t('halloweenPrizesTitle') }}</h4>
@@ -83,7 +147,7 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
         </svg>
         <span class="halloween-bat halloween-bat-one"></span>
         <span class="halloween-bat halloween-bat-two"></span>
-        <button class="announcement-preview" type="button" :aria-label="t('halloweenPreviewPlay')" @click="previewOpen = true">
+        <button v-if="halloweenPreview" class="announcement-preview" type="button" :aria-label="t('halloweenPreviewPlay')" @click="previewOpen = true">
           <img :src="halloweenPreview.thumbnail" :alt="t('halloweenPreviewAlt')" width="480" height="360" loading="lazy" decoding="async" />
           <span class="announcement-preview-badge">{{ t('halloweenPreviewLabel') }}</span>
           <span class="announcement-preview-play" aria-hidden="true">
@@ -92,9 +156,10 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
         </button>
         <p>{{ t('halloweenArtLine') }}</p>
       </div>
+      </article>
       </template>
 
-      <template v-else>
+      <article v-if="!slides.length" class="announcement-slide announcement-card announcement-card-halloween announcement-card-coming-soon">
         <div class="announcement-private-preview" aria-hidden="true">
           <div class="announcement-private-copy">
             <span class="announcement-private-pill"></span>
@@ -103,21 +168,43 @@ if (!halloweenPreview) throw new Error('活動預覽未登錄')
             <span class="announcement-private-line announcement-private-line-short"></span>
             <div class="announcement-private-details"><span></span><span></span><span></span></div>
           </div>
-          <div class="announcement-private-art">
-            <img :src="halloweenPreview.thumbnail" alt="" width="480" height="360" loading="lazy" decoding="async" />
-          </div>
+          <div class="announcement-private-art"></div>
         </div>
         <div class="announcement-coming-soon" role="status">
           <span class="announcement-coming-soon-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M6 3v4M18 3v4M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M9 14h6M12 11v6" /></svg>
           </span>
-          <p class="eyebrow">COMING SOON</p>
-          <h3>{{ t('activityComingSoon') }}</h3>
-          <p>{{ t('activityComingSoonText') }}</p>
+          <p class="eyebrow">{{ t('announcementsEyebrow') }}</p>
+          <h3>{{ availability === 'unavailable' ? (language === 'en' ? 'Events temporarily unavailable' : '活動資訊暫時無法載入') : availability === 'loading' ? (language === 'en' ? 'Loading events' : '正在讀取活動資訊') : t('activityComingSoon') }}</h3>
+          <p>{{ availability === 'unavailable' ? (language === 'en' ? 'Please try again in a moment.' : '請稍後再試，或重新整理頁面。') : availability === 'loading' ? (language === 'en' ? 'Please wait a moment.' : '請稍候。') : t('activityComingSoonText') }}</p>
         </div>
-      </template>
-    </article>
+      </article>
+    </div>
 
-    <GamePlayerDialog v-if="activityPublished && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
+      <div v-if="slides.length > 1" ref="navigation" class="announcement-navigation" role="group" :aria-label="t('announcementNavigation')"
+        @keydown.left.prevent="showSlide(currentSlide - 1)" @keydown.right.prevent="showSlide(currentSlide + 1)">
+        <button type="button" :aria-label="t('previousAnnouncement')" :aria-disabled="currentSlide === 0" aria-controls="announcement-slides" @click="showSlide(currentSlide - 1)">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12H4m7-7-7 7 7 7" /></svg>
+        </button>
+        <button type="button" :aria-label="t('nextAnnouncement')" :aria-disabled="currentSlide === slides.length - 1" aria-controls="announcement-slides" @click="showSlide(currentSlide + 1)">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12h17m-7-7 7 7-7 7" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="slides.length > 1" class="announcement-indicators" role="group" :aria-label="t('announcementNavigation')"
+      @keydown.left.prevent="showSlide(currentSlide - 1)" @keydown.right.prevent="showSlide(currentSlide + 1)">
+      <button v-for="(slide, index) in slides" :key="slide.id" type="button" aria-controls="announcement-slides"
+        :aria-label="t('announcementJump', { current: index + 1, title: slide.title })"
+        :aria-current="index === currentSlide ? 'true' : undefined" @click="showSlide(index)">
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+    <p v-if="slides.length" class="sr-only" aria-live="polite">
+      {{ t('announcementPosition', { current: currentSlide + 1, count: slides.length }) }}
+    </p>
+
+    <VotingResults v-if="activityPublished" v-show="activeAnnouncement === 'challenge'" :key="activity.id" :activity-id="activity.id" />
+    <GamePlayerDialog v-if="activityPublished && halloweenPreview && previewOpen" :game="halloweenPreview" @close="previewOpen = false" />
   </section>
 </template>

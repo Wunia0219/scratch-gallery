@@ -1,11 +1,22 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import path from 'node:path'
+import { isFileLoadingAllowed, normalizePath, resolveConfig } from 'vite'
 import { readFile } from 'node:fs/promises'
 import { validateCatalog, isLocalAsset } from '../src/lib/catalog.js'
 import { siteConfig, assertReleaseReady, galleryCsp, gameCsp, buildHeaders, runtimeSources } from './site-policy.mjs'
 import { countPlayEvents, isProductionPlayRequest, isValidPlayEvent, playEventKey } from '../netlify/lib/play-events.mjs'
 const games = JSON.parse(await readFile('public/games.json', 'utf8'))
 const creators = JSON.parse(await readFile('public/creators.json', 'utf8'))
+test('Vite serves application code and blocks private workspace files', async () => {
+  const config = await resolveConfig({}, 'serve')
+  const mayServe = file => isFileLoadingAllowed(config, normalizePath(path.resolve(file)))
+  assert.equal(mayServe('src/main.js'), true)
+  for (const file of ['.packages/example/config.json', '.netlify/server/example.json', 'example.sb3',
+    'example-private-properties.json', 'service-account-test.json', 'example-firebase-adminsdk-test.json', '.env.local', '.git/config', 'example.pem']) {
+    assert.equal(mayServe(file), false, file)
+  }
+})
 test('catalog accepts real games and rejects executable URLs, traversal and duplicates', () => {
   assert.equal(validateCatalog(games, creators).length, games.length)
   for (const playUrl of ['javascript:alert(1)', '//evil.example/game', '/games/../index.html', 'https://evil.example/']) {
@@ -31,6 +42,7 @@ test('production URL and preview indexing fail safely', () => {
   assert.throws(() => siteConfig({ CONTEXT: 'production' }))
 })
 test('only an indexable production build requires release timestamps', () => {
+  assert.doesNotThrow(() => assertReleaseReady([{ releasePending: true }], true, true), 'Firebase separates asset deployment from metadata publication')
   const pending = [{ id: '123e4567-e89b-42d3-a456-426614174000', releasePending: true }]
   assert.doesNotThrow(() => assertReleaseReady(pending, false))
   assert.throws(() => assertReleaseReady(pending, true), /尚未標記發布時間/)

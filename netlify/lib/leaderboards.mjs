@@ -51,7 +51,7 @@ async function loadEvents(store, gameId) {
   return events
 }
 
-export function createLeaderboardHandler(getStore, gameIds, clock = () => new Date().toISOString()) {
+export function createLeaderboardHandler(getStore, gameIds, clock = () => new Date().toISOString(), eligibility) {
   const knownGames = new Set(gameIds)
   return async request => {
     if (!['GET', 'POST'].includes(request.method)) return new Response(null, { status: 405, headers: { ...headers, allow: 'GET, POST' } })
@@ -59,7 +59,7 @@ export function createLeaderboardHandler(getStore, gameIds, clock = () => new Da
       const store = getStore({ name: LEADERBOARD_STORE, consistency: 'strong' })
       if (request.method === 'GET') {
         const gameId = new URL(request.url).searchParams.get('gameId') || ''
-        if (!knownGames.has(gameId)) return json({ error: 'Unknown leaderboard' }, 404)
+        if (!(eligibility ? await eligibility(gameId) : knownGames.has(gameId))) return json({ error: 'Unknown leaderboard' }, 404)
         return json({ leaderboard: rankLeaderboard(await loadEvents(store, gameId)) })
       }
       if (!isProductionPlayRequest(request.url, request.headers.get('origin'))) return json({ error: 'Production writes only' }, 403)
@@ -68,7 +68,8 @@ export function createLeaderboardHandler(getStore, gameIds, clock = () => new Da
       if (body === null) return json({ error: 'Request too large' }, 413)
       let submitted
       try { submitted = JSON.parse(body) } catch { return json({ error: 'Invalid JSON' }, 400) }
-      const event = validateLeaderboardEvent(submitted, knownGames)
+      const allowed = eligibility ? new Set(submitted && await eligibility(submitted.gameId) ? [submitted.gameId] : []) : knownGames
+      const event = validateLeaderboardEvent(submitted, allowed)
       if (!event) return json({ error: 'Invalid leaderboard event' }, 400)
       const key = leaderboardKey(event.gameId, event.player)
       const existing = await store.get(key, { type: 'json' })

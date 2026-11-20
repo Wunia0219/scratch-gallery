@@ -1,26 +1,33 @@
 import { createApp } from 'vue'
 import '../styles.css'
+import { createSiteState, siteStateKey } from './composables/useSiteState.js'
+import { catalogStateKey } from './composables/useGames.js'
+import { halloweenShowcase } from './lib/halloweenShowcase.js'
 
 const path = window.location.pathname.replace(/index\.html$/, '')
 let component
 let props = {}
 
-if (path === '/students/') {
+if (path === '/admin/') {
+  component = (await import('./AdminPage.vue')).default
+} else if (path === '/students/') {
   component = (await import('./GalleryPage.vue')).default
   props = { creatorType: 'student' }
 } else if (path === '/teachers/') {
   component = (await import('./GalleryPage.vue')).default
   props = { creatorType: 'teacher' }
+} else if (path === halloweenShowcase.path) {
+  component = (await import('./HalloweenShowcase.vue')).default
 } else if (path.startsWith('/works/')) {
-  const [{ default: WorkPage }, { catalog }] = await Promise.all([
-    import('./WorkPage.vue'),
-    import('./composables/useGames.js'),
-  ])
-  const game = catalog.find(item => item.detailUrl === path)
-  component = game ? WorkPage : (await import('./App.vue')).default
-  if (game) props = { game }
+  component = (await import('./WorkRoute.vue')).default
+  props = { id: path.split('/')[2] }
 } else {
   component = (await import('./App.vue')).default
 }
 
-createApp(component, props).mount('#app')
+const bootstrap = document.getElementById('site-state')
+const siteState = createSiteState(bootstrap ? JSON.parse(bootstrap.textContent) : undefined)
+const catalogBootstrap = document.getElementById('catalog-state')
+createApp(component, props).provide(siteStateKey, siteState).provide(catalogStateKey, catalogBootstrap ? JSON.parse(catalogBootstrap.textContent) : null).mount('#app')
+if (path !== '/admin/') siteState.start()
+window.addEventListener('pagehide', () => siteState.stop())

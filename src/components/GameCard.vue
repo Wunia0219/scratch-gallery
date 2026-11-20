@@ -11,17 +11,15 @@ const props = defineProps({
 
 defineEmits(['play'])
 
-const { t, isEnglish } = useLanguage()
+const { t, isEnglish, categoryLabel } = useLanguage()
 
 const deviceLabels = {
   desktop: 'desktop',
   mobile: 'mobile',
 }
-const categoryLabels = { '冒險': 'Adventure', '創意': 'Creativity' }
 const now = useNow()
 const workUpdate = computed(() => getWorkUpdate(props.game, now.value))
 const updateLabel = computed(() => t('newWork'))
-const categoryLabel = computed(() => isEnglish.value ? (categoryLabels[props.game.category] || props.game.category || 'Scratch game') : (props.game.category || 'Scratch 作品'))
 const formattedPlayCount = computed(() => Number.isSafeInteger(props.playCount) && props.playCount >= 0
   ? new Intl.NumberFormat(isEnglish.value ? 'en' : 'zh-Hant').format(props.playCount)
   : '')
@@ -30,7 +28,7 @@ const playButtonLabel = computed(() => {
   const label = props.game.playUrl
     ? t('playWork', { title: props.game.title })
     : t('unavailableWork', { title: props.game.title })
-  return workUpdate.value ? `${label}，${updateLabel.value}` : label
+  return workUpdate.value ? `${label}${isEnglish.value ? ', ' : '，'}${updateLabel.value}` : label
 })
 
 const supportedDevices = computed(() => (props.game.devices || []).filter((device) => deviceLabels[device]))
@@ -49,7 +47,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         <img
           class="game-cover-image"
           :src="game.thumbnail"
-          :alt="`${game.title} 的遊戲畫面`"
+          :alt="t('workCoverAlt', { title: game.title })"
           width="480"
           height="360"
           loading="lazy"
@@ -79,7 +77,7 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
         <span class="work-update-emblem">
           <svg viewBox="0 0 24 24"><path d="m12 3 1.25 4.25L17.5 8.5l-4.25 1.25L12 14l-1.25-4.25L6.5 8.5l4.25-1.25L12 3Z" /><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" /></svg>
         </span>
-        <span class="work-update-copy"><small>NEW</small><strong>{{ updateLabel }}</strong></span>
+        <span class="work-update-copy"><small>{{ t('newBadge') }}</small><strong>{{ updateLabel }}</strong></span>
       </span>
       <span v-if="game.playUrl" class="cover-play" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /></svg>
@@ -88,20 +86,24 @@ const supportedDevices = computed(() => (props.game.devices || []).filter((devic
 
     <div class="game-body">
       <div class="game-meta">
-        <span>{{ game.className || '學生創作' }}</span>
-        <span>{{ categoryLabel }}</span>
+        <span>{{ game.creatorType === 'teacher' ? t('teacherWorkLabel') : game.className || t('studentWorkLabel') }}</span>
+        <span>{{ categoryLabel(game.category) }}</span>
       </div>
-      <div v-if="supportedDevices.length" class="device-badges" :aria-label="`${t('devices')}：${supportedDevices.map((device) => t(deviceLabels[device])).join('、')}`">
+      <div v-if="supportedDevices.length" class="device-badges" :aria-label="t('devicesList', { devices: supportedDevices.map((device) => t(deviceLabels[device])).join(isEnglish ? ', ' : '、') })">
         <span v-for="device in supportedDevices" :key="device" class="device-badge">
           <svg v-if="device === 'desktop'" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
           <svg v-else aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="11" height="16" rx="2" /><rect x="16" y="7" width="5" height="11" rx="1.5" /><path d="M7 17h3M18 15.5h1" /></svg>
           {{ t(deviceLabels[device]) }}
         </span>
       </div>
-      <h3><a :href="game.detailUrl">{{ game.title || '精彩作品' }}<span class="sr-only">：{{ game.student }}的作品介紹</span></a></h3>
-      <p>{{ game.description || '一起來看看這件作品吧。' }}</p>
+      <h3><a :href="game.detailUrl">{{ game.title || t('featuredWorkFallback') }}<span class="sr-only"> · {{ t('workAuthorDetail', { name: game.student || t('studentCreatorFallback') }) }}</span></a></h3>
+      <p>{{ game.description || t('workDescriptionFallback') }}</p>
+      <dl v-if="game.creatorType === 'student' && game.controls" class="game-card-controls">
+        <dt>{{ t('workControls') }}</dt>
+        <dd>{{ game.controls }}</dd>
+      </dl>
       <div class="game-card-footer">
-        <p class="student-credit">{{ t('creator') }}{{ game.student || '學生創作者' }}</p>
+        <p class="student-credit">{{ t('workCredit', { name: game.student || t('studentCreatorFallback') }) }}</p>
         <p
           class="play-count"
           :class="{ 'play-count-pending': !formattedPlayCount }"

@@ -1,15 +1,17 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { activityReminderStorageKey, featuredActivity, formatActivityDate, getActivityReminder } from '../contentUpdates.js'
+import { activityReminderStorageKey, formatActivityDate, getActivityReminder } from '../contentUpdates.js'
+import { useSiteState } from '../composables/useSiteState.js'
 import { useLanguage } from '../i18n.js'
 import { useNow } from '../composables/useNow.js'
 import { readStoredObject, writeStored } from '../lib/storage.js'
 const { t, language } = useLanguage()
 const now = useNow()
-const reminder = computed(() => getActivityReminder(now.value))
+const { activity } = useSiteState()
+const reminder = computed(() => getActivityReminder(now.value, activity.value))
 const dismissedVersions = ref(readStoredObject(activityReminderStorageKey))
 const dismissed = computed(() => reminder.value && dismissedVersions.value[reminder.value.version] === true)
-const dates = computed(() => ({ start: formatActivityDate(featuredActivity.startsAt, language.value), end: formatActivityDate(featuredActivity.endsAt, language.value) }))
+const dates = computed(() => activity.value ? ({ start: formatActivityDate(activity.value.startsAt, language.value), end: formatActivityDate(activity.value.endsAt, language.value) }) : {})
 function dismissReminder() {
   if (!reminder.value) return
   dismissedVersions.value = { ...readStoredObject(activityReminderStorageKey), ...dismissedVersions.value, [reminder.value.version]: true }

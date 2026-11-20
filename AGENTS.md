@@ -2,11 +2,13 @@
 
 ## 專案與閱讀入口
 
-- Vue 3 + Vite，Node.js 24，繁體中文介面；靜態前端搭配 Netlify Functions／Blobs，無登入、傳統資料庫或公開上傳。
+- Vue 3 + Vite，Node.js 24，繁體中文介面；Netlify Functions／Blobs 提供計數與排行，Firebase 提供站主登入及活動、作品、投票管理；無公開上傳。Firebase 正式切換狀態見 `docs/FIREBASE-ADMIN-SETUP.md`，不可將本機功能完成當作雲端設定完成。
 - 先讀 [README.md](README.md) 的架構與操作；安全、部署或套件變更另讀 [SECURITY.md](SECURITY.md)。作品維護見 `docs/`，不要將過期規劃當作現況。
 - `src/main.js` 按網址拆分首頁、師生作品庫與作品頁；首頁不載入作品目錄，作品庫每批 9 件。不新增 Router／全域狀態套件。
 - `games.json` 以永久 creatorId 關聯 `creators.json`，作者 role 衍生 creatorType。catalog.js 驗證、useGames.js 提供資料；standalone-games.json 為獨立示範。
-- build-site.mjs 預先渲染，瀏覽器重新掛載 Vue；site-policy.mjs 集中 SEO／CSP。Netlify 發佈 dist/ 與 Functions，不手改產出或加入 SPA catch-all。
+- build-site.mjs 建立首頁／作品伺服器模板與後台；Firebase 作品庫、作品頁與 sitemap 由 catalog-pages Function 讀取公開投影，legacy 才靜態預渲染。首頁由 home Function 渲染；site-policy.mjs 集中 SEO／CSP。Netlify 發佈 dist/ 與 Functions，不手改產出或加入 SPA catch-all。
+- 活動草稿不得進公開 API／HTML；所有管理寫入需驗證 owner、同源、資料及版本。Firebase 正式模式不得自動回復舊活動設定；預覽不得連正式專案。服務帳號金鑰不得放公開目錄、Git 或 VITE_ 變數。
+- 投票另用獨立 Google 表單，來源與控制 HMAC 用途分離、完整重算、版本去重；只接彙總，不接身份／逐票資料。規則啟用後固定，結算保存版本，更正另建新版本。後台內建串接指南；Google 來源、觸發器與正式設定狀態見 `docs/FIREBASE-VOTING-SETUP.md`，不可把模擬票數當真票。
 
 ## Netlify 維護入口與建議時機
 
@@ -23,10 +25,9 @@
 
 ## 正式發布核准
 
-- 使用者準備合併或發布時，主動檢查並提醒待發布作品與 release:mark 步驟；不可把本機／預覽驗證通過當作正式發布就緒。取得核准、標記上架時間後，以正式環境設定執行 verify，再推送或合併。
-- 未取得站主當次明確同意，不得合併／推送 main 或觸發 Netlify 正式發布。每次新發布重新取得核准，不沿用先前授權。
-- 本機、非 main 分支及 Deploy Preview 不代表正式發布授權。
-- 新作品維持 `releasePending: true`；取得當次核准且準備合併前才執行 `npm run release:mark -- <UUID>`，publishedAt 與 NEW 的 15 天由此起算。
+- 使用者準備合併或發布時，主動檢查待部署／待上架作品；不可把本機／預覽通過當作正式發布就緒。依資料模式區分檔案部署與上架，正式環境設定執行 verify 後才推送或合併。
+- 每次合併／推送 main 或觸發 Netlify 正式發布前，須取得站主當次明確核准。本機、非 main 分支、Deploy Preview 及先前授權均不適用。
+- 新作品維持 `releasePending: true`。Firebase 模式依站主選定的兩段流程：先核准部署資源、驗證正式檔案並登錄，再由後台首次上架起算 NEW 15 天；`release:mark` 呼叫共用發布交易，不修改 JSON。legacy 模式才於核准且準備合併前標記 JSON。詳細流程見 `docs/FIREBASE-WORKS-SETUP.md`。
 
 ## 產品與安全
 
@@ -42,5 +43,5 @@
 - 更新明確指定原 --id 與 --replace；新作品使用新 UUID。保留 turbo／autoplay 關閉及播放、暫停、停止、全螢幕控制，不手改打包結果。
 - 網站圖片優先 WebP／AVIF；Scratch 內部 PNG／SVG／音效由來源與打包流程維護，不直接轉檔。預算與媒體命令見 README.md，新增素材跑 audit:assets。
 - 用 optimize:games 清除未引用共用資源，不刪整個 _shared/。不預載所有遊戲／大型媒體；離開畫面或背景暫停影片，關閉釋放資源，保留雜湊快取。
-- 每當使用者確認一項主要工作完成後，順便清理該次工作產生的暫存檔、匯出 ZIP、未選封面、檢查截圖、快取及不再需要的可重建輸出。清理前確認相關驗證已完成，完成後簡短回報清理結果。
+- 使用者確認主要工作完成且驗證通過後，清理該次暫存、匯出 ZIP、未選封面、截圖、快取及可重建輸出，並簡報清理結果。
 - 保留 SB3、題庫、選定成果、生成腳本、必要母片及仍供回復使用的備份。`.packages/` 混有來源與暫存，不可整批清空；匯入中斷／回復失敗的備份先核對再處理。

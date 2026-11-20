@@ -10,6 +10,13 @@ async function main() {
   if (!id || extra.length || !UUID_PATTERN.test(id)) {
     throw new Error('用法：npm run release:mark -- <待發布作品 UUID>')
   }
+  const { loadEnv } = await import('vite')
+  Object.assign(process.env, loadEnv('development', process.cwd(), ''))
+  if (process.env.CATALOG_DATA_MODE === 'firebase') {
+    process.argv = [process.argv[0], process.argv[1], '--publish', id, '--apply', ...(process.env.CATALOG_LOCAL_ASSETS === 'true' && !process.env.CONTEXT ? ['--local'] : [])]
+    await import('./firebase-catalog.mjs')
+    return
+  }
   const games = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
   const game = markGamePublished(games, id)
   await fs.writeFile(manifestPath, `${JSON.stringify(games, null, 2)}\n`, 'utf8')

@@ -6,6 +6,7 @@ let users = 0
 let timer
 const refresh = () => { now.value = Date.now() }
 export function useNow() {
+  if (typeof window === 'undefined') return ref(Date.now())
   onMounted(() => {
     if (users++ === 0) {
       refresh()

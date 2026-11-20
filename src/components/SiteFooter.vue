@@ -9,8 +9,7 @@ const versionLabel = version.endsWith('-beta') ? `Beta ${version.slice(0, -5)}` 
 
 <template>
   <footer>
-    <p><strong>東勢長頸鹿美語</strong> · {{ t('footer') }} <span class="footer-version">{{ versionLabel }}</span></p>
-    <p v-if="workPage">本網站並非 Scratch 官方網站。</p>
-    <p v-else>Knowledge gives us power. Character guides how we use it.</p>
+    <p><strong>{{ t('brandName') }}</strong> · {{ t('footer') }} <span class="footer-version">{{ versionLabel }}</span></p>
+    <p>{{ t(workPage ? 'scratchDisclaimer' : 'footerMotto') }}</p>
   </footer>
 </template>

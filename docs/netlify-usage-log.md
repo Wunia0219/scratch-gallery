@@ -1,6 +1,6 @@
 # Netlify 用量觀察紀錄
 
-保留使用者提供的歷史顯示值。比較增量須確認同一 billing period；web requests 不是訪客／遊玩人次，`< 1` 不是精確數字。
+下表為歷史畫面讀值。只比較同帳期增量；requests 按請求計，`< 1` 為概數。
 
 | 日期／階段 | Production deploys | Deploy credits | Web requests | Request credits | Compute credits | Bandwidth credits | Total credits |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -22,4 +22,4 @@
 - 以上已隨 2026-09-20 晚間煉金塔正式上架發布，正式站已確認更新。9/20 圖一是發布前觀察；9/21 截圖為發布後的帳期累積值，包含優化前用量，尚不能用來判定節省比例或實際 CDN 命中。
 - 排行榜緊急修正另已提交至 `codex/leaderboard-hotfix`（`d0d8ac4`），截至本次記錄尚未推送／部署，不計為本次已確認上線的修改。
 
-後續每次記錄日期、帳期、部署數、requests、bandwidth、compute、總 credits，以及新增作品／特殊流量；不同帳期分開記錄。操作與發布流程見 [README.md](../README.md)。
+新紀錄按帳期分開，註明日期、部署、requests、bandwidth、compute、總 credits 與特殊流量。流程見[維護指南](netlify-maintenance.md)。

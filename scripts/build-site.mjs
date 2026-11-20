@@ -1,13 +1,23 @@
 import { readFile, writeFile, mkdir, unlink, rmdir } from 'node:fs/promises'
-import { createServer } from 'vite'
+import { createServer, build, loadEnv } from 'vite'
 import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { siteConfig, assertReleaseReady, buildHeaders, runtimeSources } from './site-policy.mjs'
+import { initialSiteState } from '../netlify/lib/activity-service.mjs'
+import { legacyCatalog } from '../netlify/lib/catalog-runtime.mjs'
+import { buildAssetManifest } from './lib/game-assets.mjs'
+import { copyReleasedFiles, releasedFilesOnly } from './lib/released-files.mjs'
+import { halloweenShowcase } from '../src/lib/halloweenShowcase.js'
+import { halloweenShowcaseData, halloweenTeaserData } from '../netlify/lib/halloween-showcase.mjs'
 
+Object.assign(process.env, loadEnv('production', process.cwd(), ''))
+const onlyReleased = releasedFilesOnly()
+if (onlyReleased) await copyReleasedFiles()
 export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const { origin, indexable } = siteConfig()
 const template = await readFile('dist/index.html', 'utf8')
 const manifest = JSON.parse(await readFile('dist/.vite/manifest.json', 'utf8'))
+let runtimeTemplate
 function productionAssets(html) {
   for (const asset of Object.values(manifest)) {
     if (asset.src) html = html.replaceAll(`/${asset.src}`, `/${asset.file}`)
@@ -18,29 +28,59 @@ const server = await createServer({ server: { middlewareMode: true }, appType: '
 try {
   const { default: App } = await server.ssrLoadModule('/src/App.vue')
   const { default: GalleryPage } = await server.ssrLoadModule('/src/GalleryPage.vue')
+  const { default: HalloweenShowcase } = await server.ssrLoadModule('/src/HalloweenShowcase.vue')
   const { default: WorkPage } = await server.ssrLoadModule('/src/WorkPage.vue')
-  const { catalog } = await server.ssrLoadModule('/src/composables/useGames.js')
-  assertReleaseReady(catalog, indexable)
+  const { default: AdminPage } = await server.ssrLoadModule('/src/AdminPage.vue')
+  const { createSiteState, siteStateKey, emptySiteState } = await server.ssrLoadModule('/src/composables/useSiteState.js')
+  const { catalogStateKey } = await server.ssrLoadModule('/src/composables/useGames.js')
+  const catalog = legacyCatalog(), firebaseCatalog = process.env.CATALOG_DATA_MODE === 'firebase'
+  const initialState = {
+    ...(process.env.ACTIVITY_DATA_MODE === 'firebase' ? emptySiteState() : initialSiteState()),
+    ...(!firebaseCatalog ? { halloweenShowcase: halloweenTeaserData(catalog) } : {}),
+  }
+  const showcaseCatalog = halloweenShowcaseData(catalog)
+  assertReleaseReady(JSON.parse(await readFile('dist/games.json', 'utf8')), indexable, firebaseCatalog)
   const pages = [{ path: '/', title: '東勢長頸鹿美語｜Scratch 遊戲與學生創作成果展', description: '探索東勢長頸鹿美語的 Scratch 學生與老師作品，線上遊玩互動遊戲、欣賞程式創作成果。', component: App },
     { path: '/students/', title: '學生 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿學生完成的 Scratch 遊戲與互動創作，依班級、裝置或關鍵字探索作品。', component: GalleryPage, props: { creatorType: 'student' } },
     { path: '/teachers/', title: '老師 Scratch 作品集｜東勢長頸鹿', description: '瀏覽東勢長頸鹿老師設計的 Scratch 遊戲、教學示範與互動創作。', component: GalleryPage, props: { creatorType: 'teacher' } },
+    { path: halloweenShowcase.path, title: halloweenShowcase.title + '｜東勢長頸鹿', description: halloweenShowcase.description, component: HalloweenShowcase, catalogData: showcaseCatalog, thumbnail: showcaseCatalog.items.find(work => work.thumbnail)?.thumbnail, noindex: !showcaseCatalog.items.length },
     ...catalog.map(game => ({ path: game.detailUrl, title: `${game.title}｜${game.student}的 Scratch 作品｜東勢長頸鹿`, description: `${game.description} 探索${game.student}的 Scratch 創作，點選封面即可線上遊玩。`, component: WorkPage, game }))]
-  for (const page of pages) {
+  const adminPage = { path: '/admin/', title: '管理後台｜Scratch 創作館', description: '站主管理活動與作品。', component: AdminPage, private: true }
+  for (const page of [...(firebaseCatalog ? pages.slice(0, 1) : pages), adminPage]) {
     const canonical = origin + page.path
-    const image = origin + (page.game?.thumbnail?.endsWith('.webp') ? page.game.thumbnail : '/brand/dongshi-giraffe-logo.webp')
-    const metadata = `<meta name="robots" content="${indexable ? 'index, follow' : 'noindex, nofollow'}">\n${indexable ? `<link rel="canonical" href="${escapeHtml(canonical)}">` : ''}\n<meta property="og:type" content="website"><meta property="og:locale" content="zh_TW"><meta property="og:site_name" content="東勢長頸鹿 Scratch 創作館"><meta property="og:title" content="${escapeHtml(page.title)}"><meta property="og:description" content="${escapeHtml(page.description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(image)}"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="${escapeHtml(page.title)}"><meta name="twitter:description" content="${escapeHtml(page.description)}"><meta name="twitter:image" content="${escapeHtml(image)}">`
+    const thumbnail = page.thumbnail ?? page.game?.thumbnail
+    const image = origin + (thumbnail?.endsWith('.webp') ? thumbnail : '/brand/dongshi-giraffe-logo.webp')
+    const pageIndexable = indexable && !page.private && !page.noindex
+    const metadata = `<meta name="robots" content="${pageIndexable ? 'index, follow' : 'noindex, nofollow'}">\n${pageIndexable ? `<link rel="canonical" href="${escapeHtml(canonical)}">` : ''}\n<meta property="og:type" content="website"><meta property="og:locale" content="zh_TW"><meta property="og:site_name" content="東勢長頸鹿 Scratch 創作館"><meta property="og:title" content="${escapeHtml(page.title)}"><meta property="og:description" content="${escapeHtml(page.description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(image)}"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="${escapeHtml(page.title)}"><meta name="twitter:description" content="${escapeHtml(page.description)}"><meta name="twitter:image" content="${escapeHtml(image)}">`
     const html = template.replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(page.title)}</title>`)
       .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escapeHtml(page.description)}">`)
       .replace('</head>', `${metadata}\n</head>`)
-      .replace('<div id="app"></div>', `<div id="app">${await renderToString(createSSRApp(page.component, page.props || (page.game ? { game: page.game } : {})))}</div>`)
+      .replace('<div id="app"></div>', '<div id="app">__GALLERY_CONTENT__</div>')
+    if (page.path === '/') {
+      runtimeTemplate = { html: productionAssets(html), assets: manifest, indexable }
+    }
+    const role = page.props?.creatorType, items = role ? catalog.filter(game => game.creatorType === role) : []
+    const catalogData = page.catalogData ?? (role ? { items: items.slice(0, 9), cursor: items.length > 9 ? '9' : null, total: items.length, classes: ['全部', ...new Set(catalog.filter(game => game.creatorType === 'student').map(game => game.className))], revision: 1 } : page.game ? { game: page.game, related: catalog.filter(game => game.id !== page.game.id && game.category === page.game.category).slice(0, 3), revision: 1 } : null)
+    const rendered = await renderToString(createSSRApp(page.component, page.props || (page.game ? { game: page.game, related: catalogData.related } : {})).provide(siteStateKey, createSiteState(initialState)).provide(catalogStateKey, catalogData))
+    const bootstrap = `<script type="application/json" id="site-state">${JSON.stringify(initialState).replaceAll('<', '\\u003c')}</script>`
     await mkdir(`dist${page.path}`, { recursive: true })
-    await writeFile(`dist${page.path}index.html`, productionAssets(html))
+    await writeFile(`dist${page.path}index.html`, productionAssets(html.replace('__GALLERY_CONTENT__', () => rendered).replace('</body>', `${page.private ? '' : bootstrap}${catalogData ? `<script type="application/json" id="catalog-state">${JSON.stringify(catalogData).replaceAll('<', '\\u003c')}</script>` : ''}</body>`)))
   }
   await writeFile('dist/robots.txt', `User-agent: *\nAllow: /\n${indexable ? `Sitemap: ${origin}/sitemap.xml\n` : ''}`)
-  await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${indexable ? pages.map(p => `<url><loc>${escapeHtml(origin + p.path)}</loc></url>`).join('') : ''}</urlset>`)
-  await writeFile('dist/_headers', buildHeaders(origin, indexable, ['/students/', '/teachers/', ...catalog.map(g => g.detailUrl)], runtimeSources(origin)))
+  await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${indexable ? pages.filter(page => !page.noindex).map(p => `<url><loc>${escapeHtml(origin + p.path)}</loc></url>`).join('') : ''}</urlset>`)
+  await writeFile('dist/_headers', buildHeaders(origin, indexable, ['/students/', '/teachers/', halloweenShowcase.path, ...catalog.map(g => g.detailUrl)], runtimeSources(origin)))
   await writeFile('dist/404.html', '<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>找不到頁面｜Scratch 創作館</title><main><h1>找不到這個頁面</h1><p>作品可能已移動或下架。</p><a href="/">返回創作館</a></main></html>')
-  console.log(`已產生 ${pages.length} 個靜態頁面；${indexable ? `正式收錄網址：${origin}` : '預覽模式：不收錄，無正式 sitemap 網址'}。`)
+  if (firebaseCatalog) { await unlink('dist/games.json'); await unlink('dist/creators.json'); await writeFile('dist/sitemap.xml', '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>') }
+  console.log(`${firebaseCatalog ? '已建立首頁與後台；作品庫、作品頁與 sitemap 由 Function 提供' : `已產生 ${pages.length} 個靜態頁面`}；${indexable ? `正式收錄網址：${origin}` : '預覽模式：不收錄，無正式 sitemap 網址'}。`)
   await unlink('dist/.vite/manifest.json')
   await rmdir('dist/.vite')
 } finally { await server.close() }
+// Functions load this generated module at runtime; keep its Vue dependencies in the bundle.
+await build({ ssr: { noExternal: true }, build: { ssr: 'src/home-server.js', outDir: '.netlify/server', emptyOutDir: true, copyPublicDir: false, manifest: false, rollupOptions: { output: { entryFileNames: 'home.mjs' } } } })
+await writeFile('.netlify/server/template.json', JSON.stringify(runtimeTemplate))
+await build({ ssr: { noExternal: true }, build: { ssr: 'src/catalog-server.js', outDir: '.netlify/server', emptyOutDir: false, copyPublicDir: false, manifest: false, rollupOptions: { output: { entryFileNames: 'catalog.mjs' } } } })
+await writeFile('.netlify/server/catalog-template.json', JSON.stringify({ html: productionAssets(template), assets: manifest, origin, indexable }))
+await mkdir('.netlify/catalog', { recursive: true })
+const assets = await buildAssetManifest(onlyReleased ? 'dist' : 'public')
+await writeFile('.netlify/catalog/assets.json', JSON.stringify(assets))
+await writeFile('dist/game-assets.json', JSON.stringify(assets))

@@ -1,7 +1,9 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showcaseVideoUrl } from '../media'
+import { useLanguage } from '../i18n'
 
+const { t } = useLanguage()
 const emit = defineEmits(['close'])
 const dialog = ref(null)
 const video = ref(null)
@@ -53,19 +55,19 @@ onBeforeUnmount(releaseVideo)
   >
     <div class="dialog-bar video-dialog-bar">
       <div>
-        <p class="eyebrow">精彩影片</p>
-        <h2 id="video-dialog-title">Scratch 創作展</h2>
+        <p class="eyebrow">{{ t('videoLabel') }}</p>
+        <h2 id="video-dialog-title">{{ t('videoTitle') }}</h2>
       </div>
-      <button class="icon-button" type="button" aria-label="關閉影片" @click="close">
+      <button class="icon-button" type="button" :aria-label="t('videoClose')" @click="close">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </div>
     <div class="video-player-shell">
       <video ref="video" controls autoplay playsinline preload="none">
         <source :src="showcaseVideoUrl" type="video/mp4" />
-        您的瀏覽器不支援影片播放。
+        {{ t('videoUnsupported') }}
       </video>
     </div>
-    <p class="dialog-note">可使用播放器下方的音量按鈕調整或關閉聲音。</p>
+    <p class="dialog-note">{{ t('videoVolumeHelp') }}</p>
   </dialog>
 </template>

@@ -8,3 +8,6 @@ dist/
 .env.*
 !.env.example
 .netlify/
+service-account*.json
+*-firebase-adminsdk-*.json
+*-private-properties.json

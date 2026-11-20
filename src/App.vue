@@ -101,15 +101,15 @@ async function toggleHeroVideo(event) {
 </script>
 
 <template>
-  <a class="skip-link" href="#main-content">跳到主要內容</a>
+  <a class="skip-link" href="#main-content">{{ t('skipToMain') }}</a>
 
   <SiteHeader active="home" />
 
   <main id="main-content">
     <section id="top" class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="partner-pill"><span aria-hidden="true"></span>東勢長頸鹿 × 鹿多多素養程式</p>
-        <p class="eyebrow">CODE · CREATE · SHARE</p>
+        <p class="partner-pill"><span aria-hidden="true"></span>{{ t('heroPartners') }}</p>
+        <p class="eyebrow">{{ t('codeCreateShare') }}</p>
         <h1 id="hero-title">{{ t('hero') }}</h1><p class="hero-text">{{ t('heroText') }}</p>
         <div class="hero-actions">
           <a class="button button-primary" href="/students/">
@@ -125,7 +125,7 @@ async function toggleHeroVideo(event) {
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
           </a>
         </div>
-        <ul class="hero-highlights" aria-label="課程特色">
+        <ul class="hero-highlights" :aria-label="t('courseHighlights')">
           <li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('learnByDoing') }}</li><li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('crossCurricular') }}</li><li><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>{{ t('confidentSharing') }}</li>
         </ul>
       </div>
@@ -135,11 +135,11 @@ async function toggleHeroVideo(event) {
           <video ref="heroVideo" :src="previewEnabled ? showcasePreviewUrl : undefined" :poster="showcasePosterUrl" muted loop playsinline preload="none" tabindex="-1" aria-hidden="true">
           </video>
           <div class="hero-video-actions">
-            <button class="hero-video-control" type="button" :title="heroVideoPaused ? '播放影片' : '暫停影片'" :aria-label="heroVideoPaused ? '播放預覽影片' : '暫停預覽影片'" @click="toggleHeroVideo">
+            <button class="hero-video-control" type="button" :title="t(heroVideoPaused ? 'videoPlay' : 'videoPause')" :aria-label="t(heroVideoPaused ? 'videoPlay' : 'videoPause')" @click="toggleHeroVideo">
               <svg v-if="heroVideoPaused" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /></svg>
               <svg v-else aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7v10M15 7v10" /></svg>
             </button>
-            <button class="hero-video-control" type="button" title="全螢幕播放" aria-label="全螢幕播放並開啟聲音" @click="videoOpen = true">
+            <button class="hero-video-control" type="button" :title="t('videoFullscreen')" :aria-label="t('videoFullscreenSound')" @click="videoOpen = true">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /></svg>
             </button>
           </div>
@@ -147,8 +147,8 @@ async function toggleHeroVideo(event) {
         <span class="video-frame-accent video-frame-accent-top" aria-hidden="true"></span>
         <span class="video-frame-accent video-frame-accent-bottom" aria-hidden="true"></span>
         <div class="hero-brand-stamp">
-          <img src="/brand/dongshi-giraffe-logo.webp" alt="東勢長頸鹿美語台中東勢分校" width="104" height="104" />
-          <span><strong>東勢長頸鹿美語</strong><br />鹿多多 Scratch 創作課</span>
+          <img src="/brand/dongshi-giraffe-logo.webp" alt="" width="104" height="104" />
+          <span><strong>{{ t('brandName') }}</strong><br />{{ t('heroBrandCourse') }}</span>
         </div>
       </div>
       <a class="hero-scroll-cue" href="#announcements" :aria-label="t('viewAnnouncements')">
@@ -160,7 +160,7 @@ async function toggleHeroVideo(event) {
 
     <section id="learning" class="learning-story" aria-labelledby="learning-title">
       <div class="learning-intro">
-        <p class="eyebrow">ENGLISH × CODING</p>
+        <p class="eyebrow">{{ t('englishAndCoding') }}</p>
         <h2 id="learning-title">{{ t('learningTitle') }}</h2><p>{{ t('learningText') }}</p>
       </div>
       <div class="learning-grid">
@@ -173,25 +173,25 @@ async function toggleHeroVideo(event) {
 
     <section class="collection-gateways" aria-labelledby="collections-title">
       <div class="section-heading">
-        <div><p class="eyebrow">EXPLORE THE GALLERY</p><h2 id="collections-title">{{ t('chooseCollection') }}</h2></div>
+        <div><p class="eyebrow">{{ t('exploreGallery') }}</p><h2 id="collections-title">{{ t('chooseCollection') }}</h2></div>
         <p class="section-note">{{ t('collectionIntro') }}</p>
       </div>
       <div class="collection-grid">
         <a class="collection-card collection-card-student" href="/students/">
           <span class="collection-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><path d="M3 20c0-3 2-5 5-5s5 2 5 5M11 20c0-3 2-5 5-5s5 2 5 5" /></svg></span>
-          <span><small>STUDENT SHOWCASE</small><strong>{{ t('studentCollectionTitle') }}</strong><span>{{ t('studentCollectionText') }}</span></span>
+          <span><small>{{ t('studentShowcase') }}</small><strong>{{ t('studentCollectionTitle') }}</strong><span>{{ t('studentCollectionText') }}</span></span>
           <svg class="collection-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
         </a>
         <a class="collection-card collection-card-teacher" href="/teachers/">
           <span class="collection-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 16 14c-1 .8-1.5 1.6-1.5 2.5h-5c0-.8-.4-1.4-1-2Z" /></svg></span>
-          <span><small>TEACHER'S LAB</small><strong>{{ t('teacherCollectionTitle') }}</strong><span>{{ t('teacherCollectionText') }}</span></span>
+          <span><small>{{ t('teacherShowcase') }}</small><strong>{{ t('teacherCollectionTitle') }}</strong><span>{{ t('teacherCollectionText') }}</span></span>
           <svg class="collection-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
         </a>
       </div>
     </section>
 
     <section class="about" aria-labelledby="about-title">
-      <div><p class="eyebrow">THE MAKING OF</p><h2 id="about-title">{{ t('making') }}</h2></div>
+      <div><p class="eyebrow">{{ t('makingEyebrow') }}</p><h2 id="about-title">{{ t('making') }}</h2></div>
       <div class="about-points">
         <article><span>01</span><h3>{{ t('idea') }}</h3><p>{{ t('ideaText') }}</p></article>
         <article><span>02</span><h3>{{ t('build') }}</h3><p>{{ t('buildText') }}</p></article>

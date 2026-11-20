@@ -16,7 +16,8 @@
       "mobile"
     ],
     "playUrl": "/games/c9ad37ed-2add-4be5-b6d5-12c40833009d/index.html",
-    "thumbnail": "/games/c9ad37ed-2add-4be5-b6d5-12c40833009d/cover.webp"
+    "thumbnail": "/games/c9ad37ed-2add-4be5-b6d5-12c40833009d/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "id": "8222d9d9-05e6-4dfe-8adc-c47307032f54",
@@ -35,7 +36,8 @@
       "mobile"
     ],
     "playUrl": "/games/8222d9d9-05e6-4dfe-8adc-c47307032f54/index.html",
-    "thumbnail": "/games/8222d9d9-05e6-4dfe-8adc-c47307032f54/cover.webp"
+    "thumbnail": "/games/8222d9d9-05e6-4dfe-8adc-c47307032f54/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "id": "6c1c84e6-e295-4a36-a723-4118713df52d",
@@ -54,7 +56,8 @@
       "mobile"
     ],
     "playUrl": "/games/6c1c84e6-e295-4a36-a723-4118713df52d/index.html",
-    "thumbnail": "/games/6c1c84e6-e295-4a36-a723-4118713df52d/cover.webp"
+    "thumbnail": "/games/6c1c84e6-e295-4a36-a723-4118713df52d/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "id": "e7f9682a-7d39-42be-a34a-6f246b72c959",
@@ -73,7 +76,8 @@
       "mobile"
     ],
     "playUrl": "/games/e7f9682a-7d39-42be-a34a-6f246b72c959/index.html",
-    "thumbnail": "/games/e7f9682a-7d39-42be-a34a-6f246b72c959/cover.webp"
+    "thumbnail": "/games/e7f9682a-7d39-42be-a34a-6f246b72c959/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "id": "6c5ea09a-9284-405b-ba54-f2f45f5da0fe",
@@ -92,7 +96,8 @@
       "mobile"
     ],
     "playUrl": "/games/6c5ea09a-9284-405b-ba54-f2f45f5da0fe/index.html",
-    "thumbnail": "/games/6c5ea09a-9284-405b-ba54-f2f45f5da0fe/cover.webp"
+    "thumbnail": "/games/6c5ea09a-9284-405b-ba54-f2f45f5da0fe/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "id": "943e725d-327a-4565-a349-e81751c5a6aa",
@@ -111,7 +116,8 @@
       "mobile"
     ],
     "playUrl": "/games/943e725d-327a-4565-a349-e81751c5a6aa/index.html",
-    "thumbnail": "/games/943e725d-327a-4565-a349-e81751c5a6aa/cover.webp"
+    "thumbnail": "/games/943e725d-327a-4565-a349-e81751c5a6aa/cover.webp",
+    "controls": "電腦按空白鍵或點舞台放煙火，手機輕點舞台。"
   },
   {
     "description": "辨認英文詞綴與字根，煉成正確單字、擊敗塔中魔物，挑戰更高樓層與排行榜。",
@@ -298,5 +304,291 @@
       "mobile"
     ],
     "publishedAt": "2026-09-29T08:04:29.591Z"
+  },
+  {
+    "description": "南瓜在舞台邊緣反彈，擋板跟著玩家移動。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "e76333e7-ccb4-48cd-b6a3-911ac633bd43",
+    "title": "萬聖節・南瓜彈彈樂",
+    "playUrl": "/games/e76333e7-ccb4-48cd-b6a3-911ac633bd43/index.html",
+    "thumbnail": "/games/e76333e7-ccb4-48cd-b6a3-911ac633bd43/cover.webp",
+    "creatorId": "75fabb95-044a-45aa-b4ac-0ea4db316a9d",
+    "releasePending": true,
+    "controls": "左右移動滑鼠或在舞台上左右滑動，控制擋板。",
+    "objective": "移動擋板，觀察南瓜的反彈。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "一隻小狗走進萬聖節墓園，遇到一把會說話的鑰匙。",
+    "category": "動畫",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "動畫"
+    ],
+    "id": "5887c58c-baa0-42fa-ace1-26a18f37cb8a",
+    "title": "萬聖節・小狗的墓園奇遇",
+    "playUrl": "/games/5887c58c-baa0-42fa-ace1-26a18f37cb8a/index.html",
+    "thumbnail": "/games/5887c58c-baa0-42fa-ace1-26a18f37cb8a/cover.webp",
+    "creatorId": "62b2d050-33b3-4160-9144-4954e423df34",
+    "releasePending": true,
+    "controls": "點綠旗播放動畫。",
+    "objective": "看小狗如何遇見墓園裡的神祕鑰匙。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "走進萬聖節戰場，邊躲避追擊邊使用三種召喚技能。",
+    "category": "動作",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "動作"
+    ],
+    "id": "76ca8942-38b2-4591-b4f2-d3ef26f23df5",
+    "title": "萬聖節・召喚師對決",
+    "playUrl": "/games/76ca8942-38b2-4591-b4f2-d3ef26f23df5/index.html",
+    "thumbnail": "/games/76ca8942-38b2-4591-b4f2-d3ef26f23df5/cover.webp",
+    "creatorId": "a1e1341c-e575-45b1-9d74-11f05102b674",
+    "releasePending": true,
+    "controls": "用滑鼠點「開始遊戲」，按 W／A／S／D 移動，按 1／2／3 召喚。",
+    "objective": "在自己的生命值耗盡前擊退追來的怪物。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "在萬聖節場景中閃躲橫穿舞台與追蹤玩家的怪物。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "38481121-72a0-4dc1-af55-2c3cee997c4a",
+    "title": "萬聖節・午夜閃避戰",
+    "playUrl": "/games/38481121-72a0-4dc1-af55-2c3cee997c4a/index.html",
+    "thumbnail": "/games/38481121-72a0-4dc1-af55-2c3cee997c4a/cover.webp",
+    "creatorId": "9bcd4f62-cc30-47f2-9a28-b5bf80487f3d",
+    "releasePending": true,
+    "controls": "按 W／A／S／D 移動並閃躲。",
+    "objective": "保住生命值，盡量撐久一點。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "選地圖和對手，用衝刺與三種技能挑戰怪物。",
+    "category": "動作",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "動作"
+    ],
+    "id": "86df55bd-9bde-4c1e-911b-4c5d63d04194",
+    "title": "RICKY驅邪",
+    "playUrl": "/games/86df55bd-9bde-4c1e-911b-4c5d63d04194/index.html",
+    "thumbnail": "/games/86df55bd-9bde-4c1e-911b-4c5d63d04194/cover.webp",
+    "creatorId": "bb5cfc93-bdfc-40a0-9a03-760196eb1f26",
+    "releasePending": true,
+    "controls": "點開始，依提示輸入 1、2 或 3 選地圖，再點選怪物。W／A／S／D 移動、Q 衝刺、1／2／3 選技能，滑鼠按住舞台施放。",
+    "objective": "選擇合適的技能與時機，把對手的生命值降到零。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "走進屋子接糖果，同時避開會扣分的球。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "8c539740-899c-41cd-a1e2-66e0f78c486b",
+    "title": "哈樂WIN",
+    "playUrl": "/games/8c539740-899c-41cd-a1e2-66e0f78c486b/index.html",
+    "thumbnail": "/games/8c539740-899c-41cd-a1e2-66e0f78c486b/cover.webp",
+    "creatorId": "b15baecc-2d0b-4538-9f2c-05d93c8648c1",
+    "releasePending": true,
+    "controls": "角色進屋後，在舞台移動滑鼠或以手指滑動，引導角色去接糖果。",
+    "objective": "接糖果加分，躲開掉落的球。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "跳過迎面而來的仙人掌，挑戰沙漠跑酷。",
+    "category": "動作",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "動作"
+    ],
+    "id": "e6a3907c-2a71-4ac4-b692-e262713015ed",
+    "title": "萬聖節・仙人掌跳跳跑",
+    "playUrl": "/games/e6a3907c-2a71-4ac4-b692-e262713015ed/index.html",
+    "thumbnail": "/games/e6a3907c-2a71-4ac4-b692-e262713015ed/cover.webp",
+    "creatorId": "3ce55363-3928-4867-8dcf-5f94fca55411",
+    "releasePending": true,
+    "controls": "按空白鍵跳過障礙。",
+    "objective": "抓準時機跳過障礙，持續前進。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "選擇難度，在不同關卡跳過障礙，挑戰頭目。",
+    "category": "闖關",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "闖關"
+    ],
+    "id": "7164bc9d-2c75-4a78-b53e-85669bb1cb40",
+    "title": "跑酷遊戲",
+    "playUrl": "/games/7164bc9d-2c75-4a78-b53e-85669bb1cb40/index.html",
+    "thumbnail": "/games/7164bc9d-2c75-4a78-b53e-85669bb1cb40/cover.webp",
+    "creatorId": "6609410b-ba7b-4fb2-b547-2ba58f3c1502",
+    "releasePending": true,
+    "controls": "點開始，等開場動畫結束後再點中央按鈕，接著選難度與關卡。按 A／D 左右移動、空白鍵跳躍，頭目戰按 Q／E 攻擊。",
+    "objective": "避開尖刺和幽靈，抵達終點或打倒頭目。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "操控角色穿過舞台，找出另一端的魔法棒。",
+    "category": "探險",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "探險"
+    ],
+    "id": "eb77070d-2ce9-463d-85ad-0eed1d790442",
+    "title": "萬聖節・魔法棒在哪裡",
+    "playUrl": "/games/eb77070d-2ce9-463d-85ad-0eed1d790442/index.html",
+    "thumbnail": "/games/eb77070d-2ce9-463d-85ad-0eed1d790442/cover.webp",
+    "creatorId": "1d6b699b-2437-45ae-b90b-4b10c0ebf973",
+    "releasePending": true,
+    "controls": "按上、下、左、右方向鍵移動，碰到魔法棒即結束。",
+    "objective": "碰到魔法棒即完成挑戰。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "點擊來回飛動的恐龍、飛龍和其他角色，觀察各角色帶來的分數變化。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "25e0877c-2718-4ab2-8de1-14d0249d0126",
+    "title": "萬聖節・怪獸點點名",
+    "playUrl": "/games/25e0877c-2718-4ab2-8de1-14d0249d0126/index.html",
+    "thumbnail": "/games/25e0877c-2718-4ab2-8de1-14d0249d0126/cover.webp",
+    "creatorId": "cf543adf-62f5-4896-a307-9cbcac05d9b6",
+    "releasePending": true,
+    "controls": "用滑鼠點擊或在手機上輕點移動中的角色。",
+    "objective": "認出高分角色，避開扣分角色。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "點擊在舞台上移動的南瓜鬼和小女巫；它們會躲一下再出現。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "eac415f6-9288-4c46-ad6c-c63f1b443a0a",
+    "title": "萬聖節・南瓜鬼捉迷藏",
+    "playUrl": "/games/eac415f6-9288-4c46-ad6c-c63f1b443a0a/index.html",
+    "thumbnail": "/games/eac415f6-9288-4c46-ad6c-c63f1b443a0a/cover.webp",
+    "creatorId": "7ead1390-b2ee-4c8f-ae81-58aaa24997c9",
+    "releasePending": true,
+    "controls": "用滑鼠點擊或在手機上輕點南瓜鬼、小女巫等角色。",
+    "objective": "找出移動中的角色，累積分數。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "看兔子變換動作，和會變色的 HALLOWEEN 字母互動。",
+    "category": "互動動畫",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "互動動畫"
+    ],
+    "id": "c92c573e-c549-4386-bdb6-24681547c28d",
+    "title": "萬聖節・彩燈與蹦蹦兔",
+    "playUrl": "/games/c92c573e-c549-4386-bdb6-24681547c28d/index.html",
+    "thumbnail": "/games/c92c573e-c549-4386-bdb6-24681547c28d/cover.webp",
+    "creatorId": "bdfe11eb-f38d-4c2d-ac7f-42daddf9f424",
+    "releasePending": true,
+    "controls": "把滑鼠移過字母，字母就會變色。",
+    "objective": "把指標移過字母，看看每個字母的色彩變化。",
+    "devices": [
+      "desktop"
+    ]
+  },
+  {
+    "description": "看角色化成一串變色分身，在萬聖節舞台上旋轉。",
+    "category": "動畫",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "動畫"
+    ],
+    "id": "d3c85a72-2b17-4875-bda3-d0ba359369bb",
+    "title": "萬聖節・奇幻變色遊行",
+    "playUrl": "/games/d3c85a72-2b17-4875-bda3-d0ba359369bb/index.html",
+    "thumbnail": "/games/d3c85a72-2b17-4875-bda3-d0ba359369bb/cover.webp",
+    "creatorId": "9bbf384e-0d99-4d21-a04d-42b5436aae7c",
+    "releasePending": true,
+    "controls": "點綠旗播放動畫。",
+    "objective": "觀察分身的走位、旋轉與背景變化。",
+    "devices": [
+      "desktop",
+      "mobile"
+    ]
+  },
+  {
+    "description": "在舞台上移動、閃躲角色，也可點擊角色讓牠暫時消失。",
+    "category": "反應",
+    "age": "全年齡",
+    "tags": [
+      "萬聖節",
+      "反應"
+    ],
+    "id": "88d3d009-e5df-45b6-a9d4-1a9602329a64",
+    "title": "萬聖節・怪獸穿越記",
+    "playUrl": "/games/88d3d009-e5df-45b6-a9d4-1a9602329a64/index.html",
+    "thumbnail": "/games/88d3d009-e5df-45b6-a9d4-1a9602329a64/cover.webp",
+    "creatorId": "e1c50351-fabe-45f5-92a8-21a3c221d28a",
+    "releasePending": true,
+    "controls": "按方向鍵移動，滑鼠點怪獸可讓牠暫時消失。碰到怪獸即結束，點綠旗可以重玩。",
+    "objective": "避開碰撞，觀察點擊不同角色時的分數變化。",
+    "devices": [
+      "desktop"
+    ]
   }
 ]

@@ -1,6 +1,6 @@
 # 字根煉金塔維護筆記
 
-目前已有 Scratch 遊戲、像素素材、網站排行榜 Function 與本機模擬；已取得本次正式發布核准並標記上架時間，日期以 `public/games.json` 的 `publishedAt` 為準。
+作品含 Scratch 遊戲、像素素材與網站排行榜。legacy 上架日期見 `public/games.json` 的 `publishedAt`。
 
 ## 來源與更新
 
@@ -36,4 +36,4 @@ npm run verify:local
 - `word-alchemy-leaderboard` Function 使用獨立 Blobs，以作品 UUID／正規化名稱 SHA-256 為 key，儲存成績及時間；只允許正式站同源寫入，目前 GET／POST 均為 no-store。
 - localhost 使用 localStorage，不碰正式榜；直接開啟原版 SB3 的榜單則只在當次遊戲期間保留。
 
-這是無帳號的友善排行。名稱不是身分認證，分數上下限不能證明真實遊玩；目前儲存為讀取後比較再寫入，同名併發提交仍有競爭限制。不要宣稱完全防作弊或原子更新最佳紀錄。安全界線與驗證見 [SECURITY.md](../SECURITY.md)。
+匿名排行無法驗證身分或實際遊玩。同名提交採先讀後寫，併發時可能覆寫最佳紀錄。詳見 [SECURITY.md](../SECURITY.md)。

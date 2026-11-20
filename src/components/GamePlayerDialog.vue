@@ -1,7 +1,9 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadLeaderboard, submitLeaderboard } from '../lib/leaderboardClient.js'
+import { useLanguage } from '../i18n'
 
+const { t, language } = useLanguage()
 const props = defineProps({
   game: { type: Object, default: null },
 })
@@ -10,8 +12,8 @@ const emit = defineEmits(['close'])
 const dialog = ref(null)
 const playerFrame = ref(null)
 const playerExpanded = ref(false)
+const initialPlayerLanguage = ref(language.value)
 let closing = false
-let usingNativeFullscreen = false
 const leaderboardChannel = 'scratch-gallery-leaderboard-v1'
 const leaderboardStatus = ref('')
 const retrySubmission = ref(null)
@@ -20,6 +22,8 @@ let leaderboardQueue = Promise.resolve()
 watch(
   () => props.game,
   async (game) => {
+    initialPlayerLanguage.value = language.value
+    playerExpanded.value = false
     leaderboardStatus.value = ''
     retrySubmission.value = null
     await nextTick()
@@ -27,52 +31,19 @@ watch(
   },
   { immediate: true },
 )
+watch(language, syncPlayerLanguage)
+
+function syncPlayerLanguage() {
+  // The sandboxed frame has an opaque origin. The message carries only the locale.
+  playerFrame.value?.contentWindow?.postMessage({
+    channel: 'scratch-gallery-player-language',
+    language: language.value,
+  }, '*')
+}
 
 function close() {
-  if (usingNativeFullscreen && getFullscreenElement() === dialog.value) exitFullscreen()
-  playerExpanded.value = false
-  usingNativeFullscreen = false
   if (dialog.value?.open) dialog.value.close()
   notifyClose()
-}
-
-function getFullscreenElement() {
-  return document.fullscreenElement || document.webkitFullscreenElement
-}
-
-function exitFullscreen() {
-  const exit = document.exitFullscreen || document.webkitExitFullscreen
-  return exit?.call(document)
-}
-
-async function togglePlayerSize() {
-  if (usingNativeFullscreen && getFullscreenElement() === dialog.value) {
-    await exitFullscreen()
-    return
-  }
-  if (playerExpanded.value) {
-    playerExpanded.value = false
-    return
-  }
-
-  const request = dialog.value?.requestFullscreen || dialog.value?.webkitRequestFullscreen
-  if (request) {
-    try {
-      await request.call(dialog.value)
-      usingNativeFullscreen = true
-      playerExpanded.value = true
-      return
-    } catch {
-      // Mobile browsers may expose the API but reject it for dialogs or iframes.
-    }
-  }
-  playerExpanded.value = true
-}
-
-function syncFullscreenState() {
-  if (!usingNativeFullscreen) return
-  playerExpanded.value = getFullscreenElement() === dialog.value
-  if (!playerExpanded.value) usingNativeFullscreen = false
 }
 
 function notifyClose() {
@@ -87,7 +58,18 @@ function closeFromBackdrop(event) {
 
 function cancel(event) {
   event.preventDefault()
+  if (playerExpanded.value) {
+    setPlayerExpanded(false)
+    return
+  }
   close()
+}
+
+const fullscreenChannel = 'scratch-gallery-player-fullscreen'
+
+function setPlayerExpanded(expanded) {
+  playerExpanded.value = expanded
+  playerFrame.value?.contentWindow?.postMessage({ channel: fullscreenChannel, expanded }, '*')
 }
 
 function sendLeaderboard(frame, gameId, leaderboard) {
@@ -101,7 +83,12 @@ function sendLeaderboard(frame, gameId, leaderboard) {
 
 function handleGameMessage(event) {
   const data = event.data
-  if (!props.game?.leaderboard || event.source !== playerFrame.value?.contentWindow) return
+  if (!props.game || event.source !== playerFrame.value?.contentWindow) return
+  if (data?.channel === fullscreenChannel && typeof data.expanded === 'boolean') {
+    setPlayerExpanded(data.expanded)
+    return
+  }
+  if (!props.game.leaderboard) return
   if (!data || data.channel !== leaderboardChannel || data.gameId !== props.game.id) return
   if (!['load', 'submit'].includes(data.action)) return
   const frame = event.source
@@ -115,22 +102,22 @@ function handleGameMessage(event) {
 
 async function syncLeaderboard(frame, gameId, submission) {
   const isCurrent = () => frame === playerFrame.value?.contentWindow && gameId === props.game?.id
-  const showStatus = message => {
-    leaderboardStatus.value = message
-    frame.postMessage({ channel: leaderboardChannel, action: 'status', gameId, message }, '*')
+  const showStatus = status => {
+    leaderboardStatus.value = status
+    frame.postMessage({ channel: leaderboardChannel, action: 'status', gameId, message: t(status) }, '*')
   }
   if (!isCurrent()) return
-  showStatus(submission ? '成績儲存中，請稍候…' : '排行榜載入中…')
+  showStatus(submission ? 'scoreSaving' : 'leaderboardLoading')
   try {
     const leaderboard = submission ? await submitLeaderboard(submission) : await loadLeaderboard(gameId)
     if (!isCurrent()) return
     if (submission) retrySubmission.value = null
-    showStatus(retrySubmission.value ? '成績尚未儲存，請重試。' : submission ? '成績已儲存。' : '排行榜已更新。')
+    showStatus(retrySubmission.value ? 'scorePending' : submission ? 'scoreSaved' : 'leaderboardUpdated')
     sendLeaderboard(frame, gameId, leaderboard)
   } catch (error) {
     if (!isCurrent()) return
     if (submission) retrySubmission.value = submission
-    showStatus(retrySubmission.value ? '成績儲存失敗，請在播放器下方重試；離開頁面將無法保留本次成績。' : '排行榜載入失敗，請返回選單後重試。')
+    showStatus(retrySubmission.value ? 'scoreSaveFailed' : 'leaderboardLoadFailed')
     console.warn('Leaderboard unavailable', error)
   }
 }
@@ -142,14 +129,10 @@ function retryLeaderboard() {
 
 onMounted(() => {
   window.addEventListener('message', handleGameMessage)
-  document.addEventListener('fullscreenchange', syncFullscreenState)
-  document.addEventListener('webkitfullscreenchange', syncFullscreenState)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('message', handleGameMessage)
-  document.removeEventListener('fullscreenchange', syncFullscreenState)
-  document.removeEventListener('webkitfullscreenchange', syncFullscreenState)
   if (dialog.value?.open) dialog.value.close()
 })
 </script>
@@ -167,41 +150,31 @@ onBeforeUnmount(() => {
     <template v-if="game">
       <div class="dialog-bar">
         <div>
-          <p class="eyebrow">正在遊玩</p>
+          <p class="eyebrow">{{ t('nowPlaying') }}</p>
           <h2 id="dialog-title">{{ game.title }}</h2>
         </div>
-        <div class="dialog-actions">
-          <button
-            class="icon-button"
-            type="button"
-            :aria-label="playerExpanded ? '縮小遊戲畫面' : '全螢幕遊玩'"
-            :aria-pressed="playerExpanded"
-            @click="togglePlayerSize"
-          >
-            <svg v-if="playerExpanded" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" /></svg>
-            <svg v-else aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" /></svg>
-          </button>
-          <button class="icon-button" type="button" aria-label="關閉遊戲播放器" @click="close">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
-          </button>
-        </div>
+        <button class="icon-button" type="button" :aria-label="t('playerClose')" @click="close">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
       </div>
       <div class="player-shell">
+        <!-- allowfullscreen also covers the sandboxed frame's opaque origin. -->
         <iframe
           ref="playerFrame"
-          :src="game.playUrl"
-          :title="`${game.title} 遊戲播放器`"
+          :src="`${game.playUrl}?lang=${initialPlayerLanguage}`"
+          :title="t('playerTitle', { title: game.title })"
           sandbox="allow-scripts allow-pointer-lock"
           referrerpolicy="no-referrer"
-          allow="fullscreen; autoplay"
+          allow="autoplay"
           allowfullscreen
           loading="lazy"
+          @load="syncPlayerLanguage"
         />
       </div>
-      <p class="dialog-note">關閉這個視窗即可結束遊戲。</p>
+      <p class="dialog-note">{{ t('closeGame') }}</p>
       <p v-if="game.leaderboard" class="dialog-note" role="status">
-        {{ leaderboardStatus }}
-        <button v-if="retrySubmission" class="button" type="button" @click="retryLeaderboard">重試儲存成績</button>
+        {{ leaderboardStatus && t(leaderboardStatus) }}
+        <button v-if="retrySubmission" class="button" type="button" @click="retryLeaderboard">{{ t('scoreRetry') }}</button>
       </p>
     </template>
   </dialog>

@@ -6,6 +6,18 @@ const projectRoot = path.resolve(__dirname, '..')
 const gamesRoot = path.join(projectRoot, 'public', 'games')
 const sharedRoot = path.join(gamesRoot, '_shared')
 const sharedAssetsRoot = path.join(sharedRoot, 'assets')
+const playerLocaleScript = '<script src="../_shared/player-locale.js"></script>'
+
+function localizePlayerShell(html) {
+  if (!/<script src="\.\.\/_shared\/runtime-[a-f0-9]+\.js"><\/script>/.test(html) || html.includes(playerLocaleScript)) return html
+  return html
+    .replace('<html>', '<html lang="zh-Hant">')
+    .replace('title="Click to start"', 'title="點擊開始"')
+    .replace('<noscript>Enable JavaScript</noscript>', '<noscript>請啟用 JavaScript 以播放作品。</noscript>')
+    .replace('<h1>Error</h1>', '<h1 id="player-error-title">作品無法載入</h1>')
+    .replace('<summary id="error-message"></summary>', '<summary id="player-error-details">技術詳細資訊</summary>\n      <p id="error-message"></p>')
+    .replace('</body>', `  ${playerLocaleScript}\n</body>`)
+}
 
 async function exists(target) {
   try {
@@ -66,7 +78,7 @@ async function optimizeGamePackage(gameDirectory) {
     /new URL\(['"]\.\/assets\/['"] \+ asset\.assetId \+ ['"]\.['"] \+ asset\.dataFormat, location\)\.href/g,
     "new URL('../_shared/assets/' + asset.assetId + '.' + asset.dataFormat, location).href",
   )
-  await fs.writeFile(indexPath, html, 'utf8')
+  await fs.writeFile(indexPath, localizePlayerShell(html), 'utf8')
   return { pooledBytes, pooledFiles }
 }
 

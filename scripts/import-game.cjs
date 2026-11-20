@@ -163,8 +163,9 @@ async function main() {
   const manifest = standaloneSlug ? await readStandaloneManifest() : await readManifest()
   const existingIndex = manifest.findIndex((game) => game.id === id)
   const existingEntry = existingIndex === -1 ? null : manifest[existingIndex]
-  const title = options.title ?? existingEntry?.title ?? baseName
   const creatorId = standaloneSlug ? '' : (options['creator-id'] || existingEntry?.creatorId)
+  const entry = buildEntry({ existing: existingEntry, options, id, creatorId, baseName, standalone: Boolean(standaloneSlug) })
+  const title = entry.title
   if (!standaloneSlug) {
     if (!creatorId) throw new Error('新作品必須使用 --creator-id 指定已註冊作者的 UUID')
     validateId(creatorId)
@@ -185,9 +186,8 @@ async function main() {
   const packager = new Packager.Packager()
   packager.project = loadedProject
   packager.options.target = 'zip'
-  // 保留 Scratch 的逐幀迴圈速度；Turbo 模式會讓沒有等待積木的移動迴圈瞬間跑完。
+  // Turbo 會跳過未使用等待積木的逐幀動畫。
   packager.options.turbo = false
-  // 讓展示網站保留 Scratch 式的遊戲控制列，避免載入後直接開始。
   packager.options.autoplay = false
   packager.options.controls.greenFlag.enabled = true
   packager.options.controls.stopAll.enabled = true
@@ -195,14 +195,24 @@ async function main() {
   packager.options.controls.fullscreen.enabled = true
   packager.options.app.windowTitle = title
   packager.options.app.packageName = `game-${id}`
-  if (options.leaderboard) packager.options.custom.js = createLeaderboardBridge(id)
+  if (entry.leaderboard?.type === 'word-alchemy-v1' || (standaloneSlug && options.leaderboard)) {
+    packager.options.custom.js = createLeaderboardBridge(id)
+  }
   console.log('[3/5] 正在打包網站 ZIP')
   const result = await packager.package()
   if (result.type !== 'application/zip') throw new Error(`預期 ZIP，實際得到 ${result.type}`)
 
   if (options['dry-run']) {
     const archive = await JSZip.loadAsync(result.data)
-    if (!archive.file('index.html')) throw new Error('測試 ZIP 缺少 index.html')
+    const index = archive.file('index.html')
+    if (!index) throw new Error('測試 ZIP 缺少 index.html')
+    const html = await index.async('string')
+    if (entry.leaderboard && !html.includes('scratch-gallery-leaderboard-v1')) {
+      throw new Error('測試 ZIP 缺少作品設定的排行榜橋接')
+    }
+    if (!html.includes("className = 'control-button fullscreen-button'")) {
+      throw new Error('測試 ZIP 缺少遊戲工具列的全螢幕控制')
+    }
     console.log(`\n驗證成功：已產生 ${(result.data.byteLength / 1024 / 1024).toFixed(2)} MB ZIP，未寫入網站。`)
     return
   }
@@ -211,7 +221,6 @@ async function main() {
 
   console.log('[4/5] 正在安全解壓到 public/games')
   const stagingDirectory = await fs.mkdtemp(path.join(packagesRoot, 'import-staging-'))
-  let thumbnailExtension = ''
   try {
     await extractZip(result.data, stagingDirectory)
     console.log('正在共用 TurboWarp 執行核心與重複素材')
@@ -219,7 +228,7 @@ async function main() {
     await preserveImages(existingEntry, id, publicRoot, stagingDirectory, Boolean(options.thumbnail))
     if (options.thumbnail) {
       const thumbnailPath = path.resolve(options.thumbnail)
-      thumbnailExtension = path.extname(thumbnailPath).toLowerCase()
+      const thumbnailExtension = path.extname(thumbnailPath).toLowerCase()
       if (!['.avif', '.webp', '.png', '.jpg', '.jpeg'].includes(thumbnailExtension)) {
         throw new Error('封面只支援 AVIF、WebP、PNG 或 JPG')
       }
@@ -228,13 +237,13 @@ async function main() {
         console.warn(`提醒：封面大小為 ${(thumbnailSize / 1024 / 1024).toFixed(2)} MB，建議先轉成 WebP/AVIF 並控制在 1.5 MB 以下。`)
       }
       await fs.copyFile(thumbnailPath, path.join(stagingDirectory, `cover${thumbnailExtension}`))
+      entry.thumbnail = `/games/${id}/cover${thumbnailExtension}`
       const previewsRoot = path.join(packagesRoot, 'previews')
       const thumbnailDirectory = path.dirname(thumbnailPath)
       if (thumbnailDirectory.startsWith(`${previewsRoot}${path.sep}`)) {
         previewCandidatesDirectory = thumbnailDirectory
       }
     }
-    const entry = buildEntry({ existing: existingEntry, options, id, creatorId, baseName, standalone: Boolean(standaloneSlug), thumbnail: thumbnailExtension ? `/games/${id}/cover${thumbnailExtension}` : undefined })
     if (existingIndex === -1) manifest.push(entry)
     else manifest[existingIndex] = entry
     const { validateCatalog } = require('../src/lib/catalog.js')

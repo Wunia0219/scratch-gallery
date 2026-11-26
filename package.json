@@ -33,11 +33,11 @@
     "voting:prepare": "node scripts/voting-prepare.mjs"
   },
   "dependencies": {
-    "@netlify/blobs": "^11.1.9",
+    "@netlify/blobs": "^11.1.10",
     "@netlify/functions": "^6.1.1",
     "firebase": "^13.4.0",
     "firebase-admin": "^14.5.1",
-    "vue": "^3.5.45"
+    "vue": "^3.5.46"
   },
   "devDependencies": {
     "@turbowarp/jszip": "3.12.0",
